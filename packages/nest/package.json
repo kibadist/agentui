@@ -1,6 +1,7 @@
 {
   "name": "@agentui/nest",
   "version": "0.1.0",
+  "description": "NestJS module for serving AgentUI streams via SSE",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,8 +15,20 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
   },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kibadist/agentui.git",
+    "directory": "packages/nest"
+  },
+  "homepage": "https://github.com/kibadist/agentui/tree/main/packages/nest#readme",
+  "bugs": {
+    "url": "https://github.com/kibadist/agentui/issues"
+  },
+  "keywords": ["agentui", "nestjs", "sse", "ai", "agent", "backend"],
   "dependencies": {
     "@agentui/protocol": "workspace:*",
     "@agentui/validate": "workspace:*"

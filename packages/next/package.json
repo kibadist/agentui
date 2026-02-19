@@ -1,6 +1,7 @@
 {
   "name": "@agentui/next",
   "version": "0.1.0",
+  "description": "Next.js API route helpers for proxying AgentUI streams and actions",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,8 +15,20 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
   },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kibadist/agentui.git",
+    "directory": "packages/next"
+  },
+  "homepage": "https://github.com/kibadist/agentui/tree/main/packages/next#readme",
+  "bugs": {
+    "url": "https://github.com/kibadist/agentui/issues"
+  },
+  "keywords": ["agentui", "nextjs", "api-routes", "proxy", "sse", "ai"],
   "dependencies": {
     "@agentui/protocol": "workspace:*",
     "@agentui/validate": "workspace:*"

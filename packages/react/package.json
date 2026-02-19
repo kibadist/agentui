@@ -1,6 +1,7 @@
 {
   "name": "@agentui/react",
   "version": "0.1.0",
+  "description": "React components and hooks for rendering AgentUI streams",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,8 +15,20 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
   },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kibadist/agentui.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/kibadist/agentui/tree/main/packages/react#readme",
+  "bugs": {
+    "url": "https://github.com/kibadist/agentui/issues"
+  },
+  "keywords": ["agentui", "react", "components", "hooks", "ai", "agent", "ui"],
   "dependencies": {
     "@agentui/protocol": "workspace:*",
     "@agentui/validate": "workspace:*"
