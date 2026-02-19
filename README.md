@@ -32,7 +32,23 @@ echo "PORT=3001" >> examples/nest-api/.env
 pnpm dev
 ```
 
-Open http://localhost:3000 and send a message.
+Open http://localhost:3000 and try these prompts:
+
+```
+Show me a summary of recent sales
+```
+```
+Compare pricing plans for a SaaS product in a table
+```
+```
+List the top 5 programming languages with their pros and cons
+```
+```
+Show system health status for production servers
+```
+```
+Create a project task board with backlog, in progress, and done columns
+```
 
 ### Run individually
 
