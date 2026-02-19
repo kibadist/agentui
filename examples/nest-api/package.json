@@ -1,0 +1,28 @@
+{
+  "name": "@agentui/example-nest-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "node --env-file=.env --import tsx src/main.ts"
+  },
+  "dependencies": {
+    "@agentui/nest": "workspace:*",
+    "@agentui/openai": "workspace:*",
+    "@agentui/protocol": "workspace:*",
+    "@agentui/validate": "workspace:*",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "openai": "^4.85.4",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.3"
+  }
+}
