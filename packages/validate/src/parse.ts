@@ -1,4 +1,4 @@
-import type { UIEvent, ActionEvent } from "@agentui/protocol";
+import type { UIEvent, ActionEvent } from "@kibadist/agentui-protocol";
 import { uiEventSchema, actionEventSchema } from "./schemas.js";
 
 // ─── UIEvent parsers ─────────────────────────────────────────────────────────

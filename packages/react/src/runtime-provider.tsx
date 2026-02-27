@@ -1,5 +1,5 @@
 import { useCallback, type ReactNode } from "react";
-import type { ActionEvent } from "@agentui/protocol";
+import type { ActionEvent } from "@kibadist/agentui-protocol";
 import { AgentActionProvider } from "./action-context.js";
 import { useAgentStream, type StreamStatus } from "./use-agent-stream.js";
 import type { AgentState } from "./reducer.js";

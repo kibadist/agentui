@@ -2,7 +2,7 @@
 # Quick smoke test for the nest-api example.
 # Usage: ./test-client.sh
 #
-# 1. Start the server:  pnpm --filter @agentui/example-nest-api dev
+# 1. Start the server:  pnpm --filter @kibadist/agentui-example-nest-api dev
 # 2. In another terminal: ./test-client.sh
 
 BASE="http://localhost:3001"

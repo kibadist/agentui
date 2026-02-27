@@ -1,5 +1,5 @@
 import { createElement, type ReactNode } from "react";
-import type { UINode } from "@agentui/protocol";
+import type { UINode } from "@kibadist/agentui-protocol";
 import type { Registry } from "./registry.js";
 import type { AgentState } from "./reducer.js";
 

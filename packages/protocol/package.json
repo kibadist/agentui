@@ -1,6 +1,16 @@
 {
-  "name": "@agentui/protocol",
+  "name": "@kibadist/agentui-protocol",
   "version": "0.1.0",
+  "description": "AgentUI protocol types and interfaces",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kibadist/agentui.git",
+    "directory": "packages/protocol"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

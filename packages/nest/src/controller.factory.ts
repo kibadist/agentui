@@ -1,7 +1,7 @@
 import { map } from "rxjs";
 import type { Observable } from "rxjs";
-import type { UIEvent, ActionEvent } from "@agentui/protocol";
-import { parseActionEvent } from "@agentui/validate";
+import type { UIEvent, ActionEvent } from "@kibadist/agentui-protocol";
+import { parseActionEvent } from "@kibadist/agentui-validate";
 import type { AgentSessionService } from "./session.service.js";
 
 /**

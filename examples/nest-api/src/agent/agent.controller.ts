@@ -1,6 +1,6 @@
 import { Controller, Post, Param, Body, Sse, Inject, Logger } from "@nestjs/common";
 import type { Observable } from "rxjs";
-import { createAgentController, type SseMessageEvent } from "@agentui/nest";
+import { createAgentController, type SseMessageEvent } from "@kibadist/agentui-nest";
 import { AgentService } from "./agent.service.js";
 
 @Controller("agent")

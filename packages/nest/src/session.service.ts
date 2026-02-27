@@ -1,5 +1,5 @@
 import { Subject, type Observable } from "rxjs";
-import type { UIEvent, ActionEvent } from "@agentui/protocol";
+import type { UIEvent, ActionEvent } from "@kibadist/agentui-protocol";
 
 export interface SessionEntry {
   ui$: Subject<UIEvent>;

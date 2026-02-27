@@ -1,5 +1,5 @@
 {
-  "name": "@agentui/example-next-app",
+  "name": "@kibadist/agentui-example-next-app",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,9 +9,9 @@
     "start": "next start"
   },
   "dependencies": {
-    "@agentui/protocol": "workspace:*",
-    "@agentui/react": "workspace:*",
-    "@agentui/validate": "workspace:*",
+    "@kibadist/agentui-protocol": "workspace:*",
+    "@kibadist/agentui-react": "workspace:*",
+    "@kibadist/agentui-validate": "workspace:*",
     "next": "^15.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

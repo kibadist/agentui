@@ -5,7 +5,7 @@ import type {
   UIReplaceEvent,
   UIRemoveEvent,
   UIToastEvent,
-} from "@agentui/protocol";
+} from "@kibadist/agentui-protocol";
 
 export interface Toast {
   id: string;

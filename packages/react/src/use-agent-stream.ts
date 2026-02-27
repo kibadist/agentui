@@ -1,6 +1,6 @@
 import { useEffect, useRef, useReducer, useCallback, useState } from "react";
-import type { UIEvent } from "@agentui/protocol";
-import { safeParseUIEvent } from "@agentui/validate";
+import type { UIEvent } from "@kibadist/agentui-protocol";
+import { safeParseUIEvent } from "@kibadist/agentui-validate";
 import { agentReducer, initialAgentState, type AgentState } from "./reducer.js";
 
 export type StreamStatus = "idle" | "connecting" | "open" | "closed" | "error";

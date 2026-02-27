@@ -14,16 +14,16 @@ importers:
 
   examples/nest-api:
     dependencies:
-      '@agentui/nest':
+      '@kibadist/agentui-nest':
         specifier: workspace:*
         version: link:../../packages/nest
-      '@agentui/openai':
+      '@kibadist/agentui-openai':
         specifier: workspace:*
         version: link:../../packages/openai
-      '@agentui/protocol':
+      '@kibadist/agentui-protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
-      '@agentui/validate':
+      '@kibadist/agentui-validate':
         specifier: workspace:*
         version: link:../../packages/validate
       '@nestjs/common':
@@ -57,13 +57,13 @@ importers:
 
   examples/next-app:
     dependencies:
-      '@agentui/protocol':
+      '@kibadist/agentui-protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
-      '@agentui/react':
+      '@kibadist/agentui-react':
         specifier: workspace:*
         version: link:../../packages/react
-      '@agentui/validate':
+      '@kibadist/agentui-validate':
         specifier: workspace:*
         version: link:../../packages/validate
       next:
@@ -94,10 +94,10 @@ importers:
 
   packages/nest:
     dependencies:
-      '@agentui/protocol':
+      '@kibadist/agentui-protocol':
         specifier: workspace:*
         version: link:../protocol
-      '@agentui/validate':
+      '@kibadist/agentui-validate':
         specifier: workspace:*
         version: link:../validate
     devDependencies:
@@ -113,10 +113,10 @@ importers:
 
   packages/next:
     dependencies:
-      '@agentui/protocol':
+      '@kibadist/agentui-protocol':
         specifier: workspace:*
         version: link:../protocol
-      '@agentui/validate':
+      '@kibadist/agentui-validate':
         specifier: workspace:*
         version: link:../validate
     devDependencies:
@@ -126,10 +126,10 @@ importers:
 
   packages/openai:
     dependencies:
-      '@agentui/protocol':
+      '@kibadist/agentui-protocol':
         specifier: workspace:*
         version: link:../protocol
-      '@agentui/validate':
+      '@kibadist/agentui-validate':
         specifier: workspace:*
         version: link:../validate
     devDependencies:
@@ -148,10 +148,10 @@ importers:
 
   packages/react:
     dependencies:
-      '@agentui/protocol':
+      '@kibadist/agentui-protocol':
         specifier: workspace:*
         version: link:../protocol
-      '@agentui/validate':
+      '@kibadist/agentui-validate':
         specifier: workspace:*
         version: link:../validate
     devDependencies:
@@ -167,7 +167,7 @@ importers:
 
   packages/validate:
     dependencies:
-      '@agentui/protocol':
+      '@kibadist/agentui-protocol':
         specifier: workspace:*
         version: link:../protocol
       zod:

@@ -1,4 +1,4 @@
-import { createRegistry } from "@agentui/react";
+import { createRegistry } from "@kibadist/agentui-react";
 import { TextBlock } from "./text-block";
 import { InfoCard } from "./info-card";
 import { ActionCard } from "./action-card";

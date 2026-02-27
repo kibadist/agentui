@@ -1,5 +1,5 @@
 {
-  "name": "@agentui/example-nest-api",
+  "name": "@kibadist/agentui-example-nest-api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,10 +9,10 @@
     "dev": "node --env-file=.env --import tsx src/main.ts"
   },
   "dependencies": {
-    "@agentui/nest": "workspace:*",
-    "@agentui/openai": "workspace:*",
-    "@agentui/protocol": "workspace:*",
-    "@agentui/validate": "workspace:*",
+    "@kibadist/agentui-nest": "workspace:*",
+    "@kibadist/agentui-openai": "workspace:*",
+    "@kibadist/agentui-protocol": "workspace:*",
+    "@kibadist/agentui-validate": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",

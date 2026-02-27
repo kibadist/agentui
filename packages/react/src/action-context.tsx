@@ -1,5 +1,5 @@
 import { createContext, useContext, useCallback, type ReactNode } from "react";
-import type { ActionEvent } from "@agentui/protocol";
+import type { ActionEvent } from "@kibadist/agentui-protocol";
 
 export type ActionSender = (action: ActionEvent) => Promise<void>;
 

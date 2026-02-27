@@ -5,9 +5,9 @@
     "build": "pnpm -r --filter './packages/*' run build",
     "clean": "pnpm -r run clean",
     "typecheck": "pnpm -r run typecheck",
-    "dev": "pnpm build && pnpm --filter @agentui/example-nest-api dev & pnpm --filter @agentui/example-next-app dev",
-    "dev:api": "pnpm --filter @agentui/example-nest-api dev",
-    "dev:app": "pnpm --filter @agentui/example-next-app dev"
+    "dev": "pnpm build && pnpm --filter @kibadist/agentui-example-nest-api dev & pnpm --filter @kibadist/agentui-example-next-app dev",
+    "dev:api": "pnpm --filter @kibadist/agentui-example-nest-api dev",
+    "dev:app": "pnpm --filter @kibadist/agentui-example-next-app dev"
   },
   "devDependencies": {
     "typescript": "^5.7.3"

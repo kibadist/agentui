@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { ActionEvent } from "@agentui/protocol";
+import type { ActionEvent } from "@kibadist/agentui-protocol";
 import {
   useAgentStream,
   AgentRenderer,
   AgentActionProvider,
   type ActionSender,
-} from "@agentui/react";
+} from "@kibadist/agentui-react";
 import { registry } from "@/components/registry";
 import { ChatInput } from "@/components/chat-input";
 import { ToastList } from "@/components/toast-list";

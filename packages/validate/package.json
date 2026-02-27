@@ -1,6 +1,16 @@
 {
-  "name": "@agentui/validate",
+  "name": "@kibadist/agentui-validate",
   "version": "0.1.0",
+  "description": "AgentUI validation utilities",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kibadist/agentui.git",
+    "directory": "packages/validate"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,7 +27,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@agentui/protocol": "workspace:*",
+    "@kibadist/agentui-protocol": "workspace:*",
     "zod": "^3.24.2"
   },
   "devDependencies": {

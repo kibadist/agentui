@@ -1,8 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import OpenAI from "openai";
-import { AgentSessionService } from "@agentui/nest";
-import { runAgentLoop } from "@agentui/openai";
-import type { ActionEvent } from "@agentui/protocol";
+import { AgentSessionService } from "@kibadist/agentui-nest";
+import { runAgentLoop } from "@kibadist/agentui-openai";
+import type { ActionEvent } from "@kibadist/agentui-protocol";
 
 /** Component types the agent is allowed to emit */
 const ALLOWED_TYPES = [

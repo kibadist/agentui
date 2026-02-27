@@ -61,22 +61,22 @@ pnpm dev:app   # just the Next.js frontend on :3000
 
 | Package | Purpose |
 |---|---|
-| `@agentui/protocol` | TypeScript types for the wire protocol (UIEvent, ActionEvent, UINode) |
-| `@agentui/validate` | Zod schemas + parsers (`parseUIEvent`, `safeParseUIEvent`, etc.) |
-| `@agentui/react` | Registry, renderer, SSE hook, action context for React apps |
-| `@agentui/nest` | Session event bus + controller factory for NestJS |
-| `@agentui/openai` | Tool-call adapter for OpenAI-compatible APIs (GPT, DeepSeek, etc.) |
-| `@agentui/next` | SSE proxy + action proxy helpers for Next.js App Router |
+| `@kibadist/agentui-protocol` | TypeScript types for the wire protocol (UIEvent, ActionEvent, UINode) |
+| `@kibadist/agentui-validate` | Zod schemas + parsers (`parseUIEvent`, `safeParseUIEvent`, etc.) |
+| `@kibadist/agentui-react` | Registry, renderer, SSE hook, action context for React apps |
+| `@kibadist/agentui-nest` | Session event bus + controller factory for NestJS |
+| `@kibadist/agentui-openai` | Tool-call adapter for OpenAI-compatible APIs (GPT, DeepSeek, etc.) |
+| `@kibadist/agentui-next` | SSE proxy + action proxy helpers for Next.js App Router |
 
 ### Dependency graph
 
 ```
-@agentui/protocol          (zero deps — pure types)
-     ├── @agentui/validate (+zod)
-     ├── @agentui/react    (+react)
-     ├── @agentui/nest     (+@nestjs/common, rxjs)
-     ├── @agentui/openai   (+openai)
-     └── @agentui/next     (no runtime deps)
+@kibadist/agentui-protocol          (zero deps — pure types)
+     ├── @kibadist/agentui-validate (+zod)
+     ├── @kibadist/agentui-react    (+react)
+     ├── @kibadist/agentui-nest     (+@nestjs/common, rxjs)
+     ├── @kibadist/agentui-openai   (+openai)
+     └── @kibadist/agentui-next     (no runtime deps)
 ```
 
 ## Using in your own project
@@ -86,7 +86,7 @@ pnpm dev:app   # just the Next.js frontend on :3000
 Install the packages:
 
 ```bash
-pnpm add @agentui/protocol @agentui/validate @agentui/nest @agentui/openai openai
+pnpm add @kibadist/agentui-protocol @kibadist/agentui-validate @kibadist/agentui-nest @kibadist/agentui-openai openai
 ```
 
 Create a service that wires the agent loop to the session bus:
@@ -95,9 +95,9 @@ Create a service that wires the agent loop to the session bus:
 // agent.service.ts
 import { Injectable } from "@nestjs/common";
 import OpenAI from "openai";
-import { AgentSessionService } from "@agentui/nest";
-import { runAgentLoop } from "@agentui/openai";
-import type { ActionEvent } from "@agentui/protocol";
+import { AgentSessionService } from "@kibadist/agentui-nest";
+import { runAgentLoop } from "@kibadist/agentui-openai";
+import type { ActionEvent } from "@kibadist/agentui-protocol";
 
 @Injectable()
 export class AgentService {
@@ -133,7 +133,7 @@ Create a controller using the factory:
 ```ts
 // agent.controller.ts
 import { Controller, Post, Param, Body, Sse, Inject } from "@nestjs/common";
-import { createAgentController } from "@agentui/nest";
+import { createAgentController } from "@kibadist/agentui-nest";
 import { AgentService } from "./agent.service";
 
 @Controller("agent")
@@ -174,14 +174,14 @@ This gives you three endpoints:
 Install the packages:
 
 ```bash
-pnpm add @agentui/protocol @agentui/react @agentui/validate
+pnpm add @kibadist/agentui-protocol @kibadist/agentui-react @kibadist/agentui-validate
 ```
 
 Define a component registry — this is the allowlist of components the agent can render:
 
 ```tsx
 // components/registry.ts
-import { createRegistry } from "@agentui/react";
+import { createRegistry } from "@kibadist/agentui-react";
 import { TextBlock } from "./text-block";
 import { InfoCard } from "./info-card";
 import { DataTable } from "./data-table";
@@ -213,8 +213,8 @@ Wire it up with the SSE hook and renderer:
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { ActionEvent } from "@agentui/protocol";
-import { useAgentStream, AgentRenderer, AgentActionProvider } from "@agentui/react";
+import type { ActionEvent } from "@kibadist/agentui-protocol";
+import { useAgentStream, AgentRenderer, AgentActionProvider } from "@kibadist/agentui-react";
 import { registry } from "./components/registry";
 
 const API = "http://localhost:3001";
@@ -258,15 +258,15 @@ function AgentView({ sessionId }: { sessionId: string }) {
 
 ### 3. Optional: Next.js BFF proxy
 
-If you want the Next.js app to proxy requests to the NestJS backend (for auth, cookies, etc.), use `@agentui/next`:
+If you want the Next.js app to proxy requests to the NestJS backend (for auth, cookies, etc.), use `@kibadist/agentui-next`:
 
 ```bash
-pnpm add @agentui/next
+pnpm add @kibadist/agentui-next
 ```
 
 ```ts
 // app/api/agent/[sessionId]/stream/route.ts
-import { createSSEProxyHandler } from "@agentui/next";
+import { createSSEProxyHandler } from "@kibadist/agentui-next";
 
 export const GET = createSSEProxyHandler({
   targetUrl: "http://localhost:3001",
@@ -278,7 +278,7 @@ export const GET = createSSEProxyHandler({
 
 ```ts
 // app/api/agent/[sessionId]/action/route.ts
-import { createActionProxyHandler } from "@agentui/next";
+import { createActionProxyHandler } from "@kibadist/agentui-next";
 
 export const POST = createActionProxyHandler({
   targetUrl: "http://localhost:3001",
@@ -289,7 +289,7 @@ Then point your frontend at `/api/agent` instead of the NestJS URL directly.
 
 ### 4. Using a different LLM provider
 
-`@agentui/openai` works with any OpenAI-compatible API. Just change `baseURL`:
+`@kibadist/agentui-openai` works with any OpenAI-compatible API. Just change `baseURL`:
 
 ```ts
 // DeepSeek
@@ -351,7 +351,7 @@ Components dispatch actions back to the agent via `useAgentAction()`:
 All events are validated with Zod before rendering. Invalid events are dropped — never "best-effort" fixed:
 
 ```ts
-import { safeParseUIEvent } from "@agentui/validate";
+import { safeParseUIEvent } from "@kibadist/agentui-validate";
 
 const result = safeParseUIEvent(raw);
 if (result.ok) {

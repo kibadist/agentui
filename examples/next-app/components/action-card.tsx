@@ -1,7 +1,7 @@
 "use client";
 
-import { useAgentAction } from "@agentui/react";
-import type { ActionEvent } from "@agentui/protocol";
+import { useAgentAction } from "@kibadist/agentui-react";
+import type { ActionEvent } from "@kibadist/agentui-protocol";
 
 interface ActionDef {
   name: string;

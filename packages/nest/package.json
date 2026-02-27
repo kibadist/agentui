@@ -1,6 +1,16 @@
 {
-  "name": "@agentui/nest",
+  "name": "@kibadist/agentui-nest",
   "version": "0.1.0",
+  "description": "AgentUI NestJS module and decorators",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kibadist/agentui.git",
+    "directory": "packages/nest"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,8 +27,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@agentui/protocol": "workspace:*",
-    "@agentui/validate": "workspace:*"
+    "@kibadist/agentui-protocol": "workspace:*",
+    "@kibadist/agentui-validate": "workspace:*"
   },
   "peerDependencies": {
     "@nestjs/common": "^10.0.0 || ^11.0.0",

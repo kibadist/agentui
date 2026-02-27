@@ -1,6 +1,6 @@
 import type OpenAI from "openai";
-import type { UIEvent } from "@agentui/protocol";
-import { safeParseUIEvent } from "@agentui/validate";
+import type { UIEvent } from "@kibadist/agentui-protocol";
+import { safeParseUIEvent } from "@kibadist/agentui-validate";
 import { createUIEmitterTool, UI_EMITTER_TOOL_NAME } from "./tool.js";
 
 export interface RunAgentLoopOptions {
