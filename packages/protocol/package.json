@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-protocol",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AgentUI protocol types and interfaces",
   "license": "MIT",
   "repository": {
@@ -20,7 +20,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
