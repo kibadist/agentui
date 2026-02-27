@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-validate",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "AgentUI validation utilities",
   "license": "MIT",
   "repository": {
@@ -8,6 +8,7 @@
     "url": "https://github.com/kibadist/agentui.git",
     "directory": "packages/validate"
   },
+  "homepage": "https://github.com/kibadist/agentui#readme",
   "publishConfig": {
     "access": "public"
   },
