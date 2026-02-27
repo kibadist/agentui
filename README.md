@@ -61,12 +61,12 @@ pnpm dev:app   # just the Next.js frontend on :3000
 
 | Package | Purpose |
 |---|---|
-| `@kibadist/agentui-protocol` | TypeScript types for the wire protocol (UIEvent, ActionEvent, UINode) |
-| `@kibadist/agentui-validate` | Zod schemas + parsers (`parseUIEvent`, `safeParseUIEvent`, etc.) |
-| `@kibadist/agentui-react` | Registry, renderer, SSE hook, action context for React apps |
-| `@kibadist/agentui-nest` | Session event bus + controller factory for NestJS |
-| `@kibadist/agentui-openai` | Tool-call adapter for OpenAI-compatible APIs (GPT, DeepSeek, etc.) |
-| `@kibadist/agentui-next` | SSE proxy + action proxy helpers for Next.js App Router |
+| [`@kibadist/agentui-protocol`](https://www.npmjs.com/package/@kibadist/agentui-protocol) | TypeScript types for the wire protocol (UIEvent, ActionEvent, UINode) |
+| [`@kibadist/agentui-validate`](https://www.npmjs.com/package/@kibadist/agentui-validate) | Zod schemas + parsers (`parseUIEvent`, `safeParseUIEvent`, etc.) |
+| [`@kibadist/agentui-react`](https://www.npmjs.com/package/@kibadist/agentui-react) | Registry, renderer, SSE hook, action context for React apps |
+| [`@kibadist/agentui-nest`](https://www.npmjs.com/package/@kibadist/agentui-nest) | Session event bus + controller factory for NestJS |
+| [`@kibadist/agentui-openai`](https://www.npmjs.com/package/@kibadist/agentui-openai) | Tool-call adapter for OpenAI-compatible APIs (GPT, DeepSeek, etc.) |
+| [`@kibadist/agentui-next`](https://www.npmjs.com/package/@kibadist/agentui-next) | SSE proxy + action proxy helpers for Next.js App Router |
 
 ### Dependency graph
 
