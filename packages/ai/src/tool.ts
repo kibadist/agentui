@@ -30,7 +30,7 @@ export function createUIEmitterTool(opts: CreateUIEmitterToolOptions) {
     node: z.object({
       key: z.string().min(1),
       type: typesEnum,
-      props: z.record(z.unknown()),
+      props: z.record(z.any()),
       slot: z.string().optional(),
     }),
     index: z.number().int().nonnegative().optional(),
@@ -39,7 +39,7 @@ export function createUIEmitterTool(opts: CreateUIEmitterToolOptions) {
   const replaceSchema = z.object({
     op: z.literal("ui.replace"),
     key: z.string().min(1),
-    props: z.record(z.unknown()),
+    props: z.record(z.any()),
     replace: z.boolean().optional(),
   });
 
