@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-openai",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "AgentUI OpenAI integration",
   "license": "MIT",
   "repository": {
