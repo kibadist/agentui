@@ -30,7 +30,7 @@ export const uiNodeSchema: z.ZodType<{
   z.object({
     key: z.string().min(1),
     type: z.string().min(1),
-    props: z.record(z.any()),
+    props: z.record(z.string(), z.any()),
     slot: z.string().optional(),
     children: z.array(uiNodeSchema).optional(),
     meta: uiNodeMetaSchema.optional(),
@@ -48,7 +48,7 @@ const uiAppendSchema = baseEventSchema.extend({
 const uiReplaceSchema = baseEventSchema.extend({
   op: z.literal("ui.replace"),
   key: z.string().min(1),
-  props: z.record(z.any()),
+  props: z.record(z.string(), z.any()),
   replace: z.boolean().optional(),
 });
 
@@ -82,7 +82,7 @@ export const uiEventSchema = z.discriminatedUnion("op", [
 const actionBaseFields = {
   kind: z.literal("action" as const),
   name: z.string().min(1),
-  payload: z.record(z.any()).optional(),
+  payload: z.record(z.string(), z.any()).optional(),
   uiKey: z.string().optional(),
 };
 
