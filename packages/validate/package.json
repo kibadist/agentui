@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-validate",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "AgentUI validation utilities",
   "license": "MIT",
   "repository": {
