@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-nest",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "AgentUI NestJS module and decorators",
   "license": "MIT",
   "repository": {
