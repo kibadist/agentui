@@ -66,6 +66,7 @@ pnpm dev:app   # just the Next.js frontend on :3000
 | [`@kibadist/agentui-react`](https://www.npmjs.com/package/@kibadist/agentui-react) | Registry, renderer, SSE hook, action context for React apps |
 | [`@kibadist/agentui-nest`](https://www.npmjs.com/package/@kibadist/agentui-nest) | Session event bus + controller factory for NestJS |
 | [`@kibadist/agentui-openai`](https://www.npmjs.com/package/@kibadist/agentui-openai) | Tool-call adapter for OpenAI-compatible APIs (GPT, DeepSeek, etc.) |
+| [`@kibadist/agentui-ai`](https://www.npmjs.com/package/@kibadist/agentui-ai) | Provider-agnostic adapter via Vercel AI SDK (OpenAI, Anthropic, Google, etc.) |
 | [`@kibadist/agentui-next`](https://www.npmjs.com/package/@kibadist/agentui-next) | SSE proxy + action proxy helpers for Next.js App Router |
 
 ### Dependency graph
@@ -76,6 +77,7 @@ pnpm dev:app   # just the Next.js frontend on :3000
      ├── @kibadist/agentui-react    (+react)
      ├── @kibadist/agentui-nest     (+@nestjs/common, rxjs)
      ├── @kibadist/agentui-openai   (+openai)
+     ├── @kibadist/agentui-ai      (+ai)
      └── @kibadist/agentui-next     (no runtime deps)
 ```
 
