@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-next",
-  "version": "0.1.7",
+  "version": "0.2.2",
   "description": "AgentUI Next.js integration",
   "license": "MIT",
   "repository": {
@@ -26,6 +26,7 @@
     "dist"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm run build",
     "build": "tsc",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit"
