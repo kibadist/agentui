@@ -7,7 +7,9 @@
     "typecheck": "pnpm -r run typecheck",
     "dev": "pnpm build && pnpm --filter @kibadist/agentui-example-nest-api dev & pnpm --filter @kibadist/agentui-example-next-app dev",
     "dev:api": "pnpm --filter @kibadist/agentui-example-nest-api dev",
-    "dev:app": "pnpm --filter @kibadist/agentui-example-next-app dev"
+    "dev:app": "pnpm --filter @kibadist/agentui-example-next-app dev",
+    "release": "./scripts/bump-and-publish.sh",
+    "release:dry": "./scripts/bump-and-publish.sh patch --dry-run"
   },
   "devDependencies": {
     "typescript": "^5.7.3"
