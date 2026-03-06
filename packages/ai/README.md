@@ -16,7 +16,7 @@ npm install @kibadist/agentui-ai ai zod
 import { openai } from "@ai-sdk/openai";
 import { runAgentLoop } from "@kibadist/agentui-ai";
 
-await runAgentLoop({
+const { text, responseMessages } = await runAgentLoop({
   model: openai("gpt-4o"),
   system: "You are a helpful assistant. Use emit_ui_event to render UI.",
   prompt: "Show me a summary of recent sales",
@@ -25,6 +25,40 @@ await runAgentLoop({
   onUIEvent: (event) => {
     console.log(event);
   },
+});
+```
+
+## Multi-turn conversations
+
+Pass `messages` instead of `prompt` to continue a conversation. Use `responseMessages` from the previous turn to build the history.
+
+```ts
+import type { ModelMessage } from "ai";
+
+const history: ModelMessage[] = [];
+
+// First turn
+const turn1 = await runAgentLoop({
+  model: openai("gpt-4o"),
+  system: "You are a helpful assistant.",
+  prompt: "Show me recent sales",
+  allowedTypes: ["data-table"],
+  sessionId: "session-123",
+  onUIEvent: (event) => console.log(event),
+});
+
+history.push({ role: "user", content: "Show me recent sales" }, ...turn1.responseMessages);
+
+// Follow-up turn
+history.push({ role: "user", content: "Now filter by region" });
+
+const turn2 = await runAgentLoop({
+  model: openai("gpt-4o"),
+  system: "You are a helpful assistant.",
+  messages: history,
+  allowedTypes: ["data-table"],
+  sessionId: "session-123",
+  onUIEvent: (event) => console.log(event),
 });
 ```
 
@@ -53,7 +87,7 @@ const model = deepseek("deepseek-chat");
 
 `runAgentLoop` creates an `emit_ui_event` tool whose Zod schema constrains the agent to only emit your registered component types. It calls the AI SDK's `generateText` with multi-step tool calling — no manual loop, no JSON.parse, no message management.
 
-The tool uses a `z.discriminatedUnion("op", [...])` so the model receives a precise schema for each operation (append, replace, remove, toast, navigate).
+The tool uses a flat Zod object schema so the model receives a precise schema for each operation (append, replace, remove, toast, navigate).
 
 ## Using the tool directly
 
@@ -86,7 +120,8 @@ const { text } = await generateText({
 |---|---|---|---|
 | `model` | `LanguageModel` | required | Any AI SDK model instance |
 | `system` | `string` | required | Agent instructions |
-| `prompt` | `string` | required | Current user message |
+| `prompt` | `string` | — | Single user prompt (first turn). Ignored when `messages` is provided |
+| `messages` | `ModelMessage[]` | — | Full conversation history (multi-turn). Takes precedence over `prompt` |
 | `allowedTypes` | `string[]` | required | Component types the agent can emit |
 | `sessionId` | `string` | required | Session ID injected into events |
 | `onUIEvent` | `(event: UIEvent) => void` | required | Callback for each emitted UIEvent |
@@ -149,6 +184,8 @@ await runAgentLoop({
 | `createUIEmitterTool` | function | Generate the `emit_ui_event` AI SDK tool |
 | `UI_EMITTER_TOOL_NAME` | constant | `"emit_ui_event"` |
 | `RunAgentLoopOptions` | interface | Options for `runAgentLoop` |
+| `RunAgentLoopResult` | interface | Return type of `runAgentLoop` (`text`, `responseMessages`) |
+| `ResponseMessage` | type | `AssistantModelMessage \| ToolModelMessage` |
 | `CreateUIEmitterToolOptions` | interface | Options for `createUIEmitterTool` |
 
 ## License
