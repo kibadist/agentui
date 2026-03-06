@@ -1,14 +1,26 @@
-import { generateText, stepCountIs, type LanguageModel, type ToolSet } from "ai";
+import {
+  generateText,
+  stepCountIs,
+  type AssistantModelMessage,
+  type LanguageModel,
+  type ModelMessage,
+  type ToolModelMessage,
+  type ToolSet,
+} from "ai";
 import type { UIEvent } from "@kibadist/agentui-protocol";
 import { createUIEmitterTool, UI_EMITTER_TOOL_NAME } from "./tool.js";
+
+export type ResponseMessage = AssistantModelMessage | ToolModelMessage;
 
 export interface RunAgentLoopOptions {
   /** Any AI SDK LanguageModel (OpenAI, Anthropic, Google, etc.) */
   model: LanguageModel;
   /** System message (instructions for the agent) */
   system: string;
-  /** Current user message / action description */
-  prompt: string;
+  /** Single user prompt (first turn). Ignored when `messages` is provided. */
+  prompt?: string;
+  /** Full conversation history (multi-turn). Takes precedence over `prompt`. */
+  messages?: ModelMessage[];
   /** Allowed component types from your registry */
   allowedTypes: string[];
   /** Session id injected into emitted events */
@@ -21,20 +33,26 @@ export interface RunAgentLoopOptions {
   maxSteps?: number;
 }
 
+export interface RunAgentLoopResult {
+  /** Final assistant text (if any) */
+  text: string | null;
+  /** Response messages generated during this turn (assistant + tool messages) */
+  responseMessages: ResponseMessage[];
+}
+
 /**
  * Runs an agent loop using the AI SDK's `generateText` with multi-step
  * tool calling. No manual loop, no JSON.parse, no message management.
  *
  * Works with any AI SDK-compatible model (OpenAI, Anthropic, Google, etc.).
- *
- * Returns the final assistant text (if any).
  */
 export async function runAgentLoop(
   opts: RunAgentLoopOptions,
-): Promise<string | null> {
+): Promise<RunAgentLoopResult> {
   const {
     model,
     system,
+    messages,
     prompt,
     allowedTypes,
     sessionId,
@@ -44,17 +62,19 @@ export async function runAgentLoop(
   } = opts;
 
   const uiTool = createUIEmitterTool({ allowedTypes, sessionId, onUIEvent });
+  const tools = {
+    [UI_EMITTER_TOOL_NAME]: uiTool,
+    ...extraTools,
+  };
 
-  const { text } = await generateText({
-    model,
-    system,
-    prompt,
-    tools: {
-      [UI_EMITTER_TOOL_NAME]: uiTool,
-      ...extraTools,
-    },
-    stopWhen: stepCountIs(maxSteps),
-  });
+  const genOpts = messages
+    ? { model, system, messages, tools, stopWhen: stepCountIs(maxSteps) }
+    : { model, system, prompt: prompt!, tools, stopWhen: stepCountIs(maxSteps) };
 
-  return text || null;
+  const result = await generateText(genOpts);
+
+  return {
+    text: result.text || null,
+    responseMessages: result.response.messages,
+  };
 }
