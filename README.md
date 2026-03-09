@@ -65,7 +65,6 @@ pnpm dev:app   # just the Next.js frontend on :3000
 | [`@kibadist/agentui-validate`](https://www.npmjs.com/package/@kibadist/agentui-validate) | Zod schemas + parsers (`parseUIEvent`, `safeParseUIEvent`, etc.) |
 | [`@kibadist/agentui-react`](https://www.npmjs.com/package/@kibadist/agentui-react) | Registry, renderer, SSE hook, action context for React apps |
 | [`@kibadist/agentui-nest`](https://www.npmjs.com/package/@kibadist/agentui-nest) | Session event bus + controller factory for NestJS |
-| [`@kibadist/agentui-openai`](https://www.npmjs.com/package/@kibadist/agentui-openai) | Tool-call adapter for OpenAI-compatible APIs (GPT, DeepSeek, etc.) |
 | [`@kibadist/agentui-ai`](https://www.npmjs.com/package/@kibadist/agentui-ai) | Provider-agnostic adapter via Vercel AI SDK (OpenAI, Anthropic, Google, etc.) |
 | [`@kibadist/agentui-next`](https://www.npmjs.com/package/@kibadist/agentui-next) | SSE proxy + action proxy helpers for Next.js App Router |
 
@@ -76,7 +75,6 @@ pnpm dev:app   # just the Next.js frontend on :3000
      ├── @kibadist/agentui-validate (+zod)
      ├── @kibadist/agentui-react    (+react)
      ├── @kibadist/agentui-nest     (+@nestjs/common, rxjs)
-     ├── @kibadist/agentui-openai   (+openai)
      ├── @kibadist/agentui-ai      (+ai)
      └── @kibadist/agentui-next     (no runtime deps)
 ```
@@ -88,7 +86,7 @@ pnpm dev:app   # just the Next.js frontend on :3000
 Install the packages:
 
 ```bash
-pnpm add @kibadist/agentui-protocol @kibadist/agentui-validate @kibadist/agentui-nest @kibadist/agentui-openai openai
+pnpm add @kibadist/agentui-protocol @kibadist/agentui-validate @kibadist/agentui-nest @kibadist/agentui-ai ai @ai-sdk/openai
 ```
 
 Create a service that wires the agent loop to the session bus:
@@ -96,21 +94,22 @@ Create a service that wires the agent loop to the session bus:
 ```ts
 // agent.service.ts
 import { Injectable } from "@nestjs/common";
-import OpenAI from "openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { AgentSessionService } from "@kibadist/agentui-nest";
-import { runAgentLoop } from "@kibadist/agentui-openai";
+import { runAgentLoop } from "@kibadist/agentui-ai";
 import type { ActionEvent } from "@kibadist/agentui-protocol";
 
 @Injectable()
 export class AgentService {
   readonly sessionService = new AgentSessionService();
-  private openai: OpenAI;
+  private model;
 
   constructor() {
-    this.openai = new OpenAI({
+    const deepseek = createOpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY,
       baseURL: "https://api.deepseek.com",
     });
+    this.model = deepseek("deepseek-chat");
     this.sessionService.startCleanup();
   }
 
@@ -118,10 +117,9 @@ export class AgentService {
     const message = (action.payload?.message as string) ?? action.name;
 
     await runAgentLoop({
-      openai: this.openai,
-      model: "deepseek-chat",
-      systemPrompt: "You are a helpful assistant. Use emit_ui_event to render UI.",
-      userMessage: message,
+      model: this.model,
+      system: "You are a helpful assistant. Use emit_ui_event to render UI.",
+      prompt: message,
       allowedTypes: ["text-block", "info-card", "data-table"],
       sessionId,
       onUIEvent: (event) => this.sessionService.emitUI(sessionId, event),
@@ -291,20 +289,28 @@ Then point your frontend at `/api/agent` instead of the NestJS URL directly.
 
 ### 4. Using a different LLM provider
 
-`@kibadist/agentui-openai` works with any OpenAI-compatible API. Just change `baseURL`:
+`@kibadist/agentui-ai` works with any [Vercel AI SDK](https://sdk.vercel.ai) provider:
 
 ```ts
-// DeepSeek
-new OpenAI({ apiKey: "sk-...", baseURL: "https://api.deepseek.com" });
+// DeepSeek (via OpenAI-compatible provider)
+import { createOpenAI } from "@ai-sdk/openai";
+const deepseek = createOpenAI({ apiKey: "sk-...", baseURL: "https://api.deepseek.com" });
+const model = deepseek("deepseek-chat");
 
 // OpenAI
-new OpenAI({ apiKey: "sk-..." });
+import { createOpenAI } from "@ai-sdk/openai";
+const model = createOpenAI({ apiKey: "sk-..." })("gpt-4o");
 
-// Local (Ollama, vLLM, etc.)
-new OpenAI({ apiKey: "none", baseURL: "http://localhost:11434/v1" });
+// Anthropic
+import { createAnthropic } from "@ai-sdk/anthropic";
+const model = createAnthropic({ apiKey: "sk-..." })("claude-sonnet-4-20250514");
+
+// Google
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+const model = createGoogleGenerativeAI({ apiKey: "..." })("gemini-2.0-flash");
 ```
 
-Then pass the client to `runAgentLoop` with the appropriate `model` name.
+Then pass the `model` to `runAgentLoop`.
 
 ## Protocol
 
@@ -372,7 +378,7 @@ agentui/
     validate/       # Zod schemas + parse/safeParse
     react/          # Registry, renderer, hooks, context
     nest/           # Session bus + controller factory
-    openai/         # Tool-call adapter for OpenAI-compatible APIs
+    ai/             # Provider-agnostic adapter via Vercel AI SDK
     next/           # SSE + action proxy for Next.js App Router
   examples/
     nest-api/       # Working NestJS backend (DeepSeek)

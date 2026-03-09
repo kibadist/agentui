@@ -32,7 +32,6 @@ AgentUI is a monorepo (pnpm workspaces) for an AI-native React component system.
   ├── validate              (+zod: schemas & parsers)
   ├── react                 (+react: registry, renderer, hooks, context)
   ├── nest                  (+@nestjs/common, rxjs: session bus + controller factory)
-  ├── openai                (+openai: tool adapter for OpenAI-compatible APIs)
   ├── ai                    (+ai SDK: Vercel AI SDK adapter, provider-agnostic)
   └── next                  (SSE + action proxy for Next.js App Router)
 ```

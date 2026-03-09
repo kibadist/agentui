@@ -10,15 +10,17 @@
   },
   "dependencies": {
     "@kibadist/agentui-nest": "workspace:*",
-    "@kibadist/agentui-openai": "workspace:*",
+    "@kibadist/agentui-ai": "workspace:*",
     "@kibadist/agentui-protocol": "workspace:*",
     "@kibadist/agentui-validate": "workspace:*",
+    "@ai-sdk/openai": "^1.0.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
-    "openai": "^4.85.4",
+    "ai": "^6.0.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",

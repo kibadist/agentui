@@ -7,3 +7,4 @@ export {
   isUIEvent,
   isActionEvent,
 } from "./parse.js";
+export { describeComponents, type ComponentDef } from "./describe.js";

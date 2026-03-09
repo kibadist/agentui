@@ -1,7 +1,8 @@
 {
   "name": "@kibadist/agentui-openai",
   "version": "0.2.2",
-  "description": "AgentUI OpenAI integration",
+  "description": "DEPRECATED: Use @kibadist/agentui-ai instead",
+  "deprecated": "Use @kibadist/agentui-ai instead. This package is no longer maintained.",
   "license": "MIT",
   "repository": {
     "type": "git",

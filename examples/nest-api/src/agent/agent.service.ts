@@ -1,17 +1,54 @@
 import { Injectable, Logger } from "@nestjs/common";
-import OpenAI from "openai";
+import { createOpenAI } from "@ai-sdk/openai";
+import type { LanguageModel } from "ai";
+import { z } from "zod";
 import { AgentSessionService } from "@kibadist/agentui-nest";
-import { runAgentLoop } from "@kibadist/agentui-openai";
+import { runAgentLoop } from "@kibadist/agentui-ai";
+import { describeComponents, type ComponentDef } from "@kibadist/agentui-validate";
 import type { ActionEvent } from "@kibadist/agentui-protocol";
 
-/** Component types the agent is allowed to emit */
-const ALLOWED_TYPES = [
-  "text-block",
-  "info-card",
-  "action-card",
-  "data-table",
-  "status-badge",
-] as const;
+/** Component schemas — single source of truth for allowed types + props */
+const COMPONENT_DEFS: Record<string, ComponentDef> = {
+  "text-block": {
+    propsSchema: z.object({
+      title: z.string().optional().describe("heading text"),
+      body: z.string().describe("markdown or plain text content"),
+    }),
+  },
+  "info-card": {
+    propsSchema: z.object({
+      title: z.string().describe("card heading"),
+      description: z.string().describe("card body text"),
+      icon: z.string().optional().describe("emoji icon"),
+    }),
+  },
+  "action-card": {
+    propsSchema: z.object({
+      title: z.string().describe("card heading"),
+      description: z.string().describe("body text"),
+      actions: z
+        .array(z.object({ name: z.string(), label: z.string() }))
+        .describe("buttons the user can click"),
+    }),
+  },
+  "data-table": {
+    propsSchema: z.object({
+      title: z.string().optional().describe("table heading"),
+      columns: z.array(z.string()).describe("column headers"),
+      rows: z.array(z.array(z.string())).describe("row data"),
+    }),
+  },
+  "status-badge": {
+    propsSchema: z.object({
+      label: z.string().describe("badge text"),
+      variant: z
+        .enum(["info", "success", "warning", "error"])
+        .describe("color/style"),
+    }),
+  },
+};
+
+const ALLOWED_TYPES = Object.keys(COMPONENT_DEFS);
 
 const SYSTEM_PROMPT = `You are a helpful assistant that renders UI components for the user.
 
@@ -20,28 +57,7 @@ Each component you emit needs a unique "key" string.
 
 Available component types and their props:
 
-1. "text-block"
-   - title (string, optional): heading text
-   - body (string): markdown or plain text content
-
-2. "info-card"
-   - title (string): card heading
-   - description (string): card body text
-   - icon (string, optional): emoji icon
-
-3. "action-card"
-   - title (string): card heading
-   - description (string): body text
-   - actions (array of { name: string, label: string }): buttons the user can click
-
-4. "data-table"
-   - title (string, optional): table heading
-   - columns (array of string): column headers
-   - rows (array of array of string): row data
-
-5. "status-badge"
-   - label (string): badge text
-   - variant ("info" | "success" | "warning" | "error"): color/style
+${describeComponents(COMPONENT_DEFS)}
 
 You can also use:
 - op "ui.toast" to show ephemeral notifications
@@ -54,16 +70,17 @@ Always respond with UI components. Be concise.`;
 export class AgentService {
   private readonly logger = new Logger(AgentService.name);
   readonly sessionService = new AgentSessionService();
-  private openai: OpenAI | null = null;
+  private model: LanguageModel | null = null;
 
   constructor() {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (apiKey) {
-      this.openai = new OpenAI({
+      const deepseek = createOpenAI({
         apiKey,
         baseURL: "https://api.deepseek.com",
       });
-      this.logger.log("DeepSeek client initialized");
+      this.model = deepseek("deepseek-chat");
+      this.logger.log("DeepSeek model initialized");
     } else {
       this.logger.warn(
         "DEEPSEEK_API_KEY not set – agent will return mock UI events",
@@ -92,17 +109,16 @@ export class AgentService {
       action.payload?.["message"] as string | undefined ??
       `User performed action: ${action.name}`;
 
-    if (!this.openai) {
+    if (!this.model) {
       this.emitMockResponse(sessionId, userMessage);
       return;
     }
 
     try {
       await runAgentLoop({
-        openai: this.openai,
-        model: "deepseek-chat",
-        systemPrompt: SYSTEM_PROMPT,
-        userMessage,
+        model: this.model,
+        system: SYSTEM_PROMPT,
+        prompt: userMessage,
         allowedTypes: [...ALLOWED_TYPES],
         sessionId,
         onUIEvent: (event) => {

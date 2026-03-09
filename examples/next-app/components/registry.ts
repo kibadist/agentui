@@ -4,11 +4,18 @@ import { InfoCard } from "./info-card";
 import { ActionCard } from "./action-card";
 import { DataTable } from "./data-table";
 import { StatusBadge } from "./status-badge";
+import {
+  textBlockSchema,
+  infoCardSchema,
+  actionCardSchema,
+  dataTableSchema,
+  statusBadgeSchema,
+} from "./schemas";
 
 export const registry = createRegistry({
-  "text-block": { component: TextBlock },
-  "info-card": { component: InfoCard },
-  "action-card": { component: ActionCard },
-  "data-table": { component: DataTable },
-  "status-badge": { component: StatusBadge },
+  "text-block": { component: TextBlock, propsSchema: textBlockSchema },
+  "info-card": { component: InfoCard, propsSchema: infoCardSchema },
+  "action-card": { component: ActionCard, propsSchema: actionCardSchema },
+  "data-table": { component: DataTable, propsSchema: dataTableSchema },
+  "status-badge": { component: StatusBadge, propsSchema: statusBadgeSchema },
 });
