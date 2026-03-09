@@ -66,9 +66,14 @@ function applyRemove(state: AgentState, e: UIRemoveEvent): AgentState {
   return { ...state, nodes, byKey: rebuildIndex(nodes) };
 }
 
+/** Max number of toasts kept in state to prevent unbounded growth */
+const MAX_TOASTS = 50;
+
 function applyToast(state: AgentState, e: UIToastEvent): AgentState {
   const toast: Toast = { id: e.id, level: e.level, message: e.message, ts: e.ts };
-  return { ...state, toasts: [...state.toasts, toast] };
+  const toasts = [...state.toasts, toast];
+  // Drop oldest toasts when limit exceeded
+  return { ...state, toasts: toasts.length > MAX_TOASTS ? toasts.slice(-MAX_TOASTS) : toasts };
 }
 
 export function agentReducer(state: AgentState, event: UIEvent): AgentState {

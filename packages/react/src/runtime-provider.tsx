@@ -31,11 +31,14 @@ export function AgentRuntimeProvider({
 
   const sender = useCallback(
     async (action: ActionEvent) => {
-      await fetch(resolvedActionUrl, {
+      const res = await fetch(resolvedActionUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(action),
       });
+      if (!res.ok) {
+        throw new Error(`Action failed: ${res.status} ${res.statusText}`);
+      }
     },
     [resolvedActionUrl],
   );

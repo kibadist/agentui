@@ -1,5 +1,6 @@
 export { uiNodeSchema, uiEventSchema, actionEventSchema } from "./schemas.js";
 export {
+  ValidationError,
   parseUIEvent,
   safeParseUIEvent,
   parseActionEvent,

@@ -20,8 +20,9 @@ export class AgentSessionService {
     this.ttlMs = opts?.ttlMs ?? 30 * 60 * 1000; // 30 min default
   }
 
-  /** Start periodic cleanup of expired sessions */
+  /** Start periodic cleanup of expired sessions (safe to call multiple times) */
   startCleanup(intervalMs = 60_000) {
+    if (this.cleanupTimer) return;
     this.cleanupTimer = setInterval(() => this.cleanup(), intervalMs);
   }
 

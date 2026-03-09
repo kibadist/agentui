@@ -3,6 +3,8 @@ export interface SSEProxyOptions {
   targetUrl: string;
   /** Optional: add headers (e.g. auth tokens) to the proxied request */
   getHeaders?: (req: Request) => Record<string, string> | Promise<Record<string, string>>;
+  /** Timeout in ms for the initial upstream connection (default: 10000) */
+  connectTimeoutMs?: number;
 }
 
 /**
@@ -21,6 +23,7 @@ export function createSSEProxyHandler(opts: SSEProxyOptions) {
         Accept: "text/event-stream",
         ...extraHeaders,
       },
+      signal: AbortSignal.timeout(opts.connectTimeoutMs ?? 10_000),
     });
 
     if (!upstream.ok || !upstream.body) {

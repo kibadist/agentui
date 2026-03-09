@@ -4,10 +4,10 @@ import { z } from "zod";
 
 const baseEventSchema = z.object({
   v: z.literal(1),
-  id: z.string().min(1),
-  ts: z.string().min(1),
-  traceId: z.string().optional(),
-  sessionId: z.string().min(1),
+  id: z.string().min(1).max(256),
+  ts: z.string().min(1).max(64),
+  traceId: z.string().max(256).optional(),
+  sessionId: z.string().min(1).max(256),
 });
 
 // ─── UINode ──────────────────────────────────────────────────────────────────
@@ -24,14 +24,14 @@ export const uiNodeSchema: z.ZodType<{
   type: string;
   props: Record<string, unknown>;
   slot?: string;
-  children?: unknown[];
+  children?: { key: string; type: string; props: Record<string, unknown> }[];
   meta?: { ttlMs?: number; requires?: string[] };
 }> = z.lazy(() =>
   z.object({
-    key: z.string().min(1),
-    type: z.string().min(1),
+    key: z.string().min(1).max(256),
+    type: z.string().min(1).max(128),
     props: z.record(z.string(), z.any()),
-    slot: z.string().optional(),
+    slot: z.string().max(128).optional(),
     children: z.array(uiNodeSchema).optional(),
     meta: uiNodeMetaSchema.optional(),
   }),
@@ -47,25 +47,25 @@ const uiAppendSchema = baseEventSchema.extend({
 
 const uiReplaceSchema = baseEventSchema.extend({
   op: z.literal("ui.replace"),
-  key: z.string().min(1),
+  key: z.string().min(1).max(256),
   props: z.record(z.string(), z.any()),
   replace: z.boolean().optional(),
 });
 
 const uiRemoveSchema = baseEventSchema.extend({
   op: z.literal("ui.remove"),
-  key: z.string().min(1),
+  key: z.string().min(1).max(256),
 });
 
 const uiToastSchema = baseEventSchema.extend({
   op: z.literal("ui.toast"),
   level: z.enum(["info", "success", "warning", "error"]),
-  message: z.string().min(1),
+  message: z.string().min(1).max(1024),
 });
 
 const uiNavigateSchema = baseEventSchema.extend({
   op: z.literal("ui.navigate"),
-  href: z.string().min(1),
+  href: z.string().min(1).max(2048),
   replace: z.boolean().optional(),
 });
 

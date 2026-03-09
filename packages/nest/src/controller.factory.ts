@@ -56,6 +56,10 @@ export function createAgentController(opts: AgentControllerOptions) {
     },
 
     stream(sessionId: string): Observable<SseMessageEvent> {
+      const session = sessionService.get(sessionId);
+      if (!session) {
+        throw new Error(`Session not found: ${sessionId}`);
+      }
       return sessionService.uiStream(sessionId).pipe(
         map((event: UIEvent) => ({
           data: JSON.stringify(event),
@@ -65,6 +69,10 @@ export function createAgentController(opts: AgentControllerOptions) {
     },
 
     async action(sessionId: string, body: unknown): Promise<{ ok: true }> {
+      const session = sessionService.get(sessionId);
+      if (!session) {
+        throw new Error(`Session not found: ${sessionId}`);
+      }
       const action = parseActionEvent(body);
       sessionService.emitAction(sessionId, action);
       await onAction?.(sessionId, action);

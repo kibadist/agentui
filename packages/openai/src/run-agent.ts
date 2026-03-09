@@ -77,30 +77,35 @@ export async function runAgentLoop(opts: RunAgentLoopOptions): Promise<string | 
     for (const tc of assistantMsg.tool_calls) {
       let result: string;
 
-      if (tc.function.name === UI_EMITTER_TOOL_NAME) {
+      try {
         const args = JSON.parse(tc.function.arguments);
 
-        // Hydrate into a full UIEvent
-        const event = {
-          ...args,
-          v: 1,
-          id: crypto.randomUUID(),
-          ts: new Date().toISOString(),
-          sessionId,
-        };
+        if (tc.function.name === UI_EMITTER_TOOL_NAME) {
+          // Hydrate into a full UIEvent
+          const event = {
+            ...args,
+            v: 1,
+            id: crypto.randomUUID(),
+            ts: new Date().toISOString(),
+            sessionId,
+          };
 
-        const parsed = safeParseUIEvent(event);
-        if (parsed.ok) {
-          onUIEvent(parsed.value);
-          result = JSON.stringify({ ok: true, eventId: event.id });
+          const parsed = safeParseUIEvent(event);
+          if (parsed.ok) {
+            onUIEvent(parsed.value);
+            result = JSON.stringify({ ok: true, eventId: event.id });
+          } else {
+            result = JSON.stringify({ ok: false, error: parsed.error.message });
+          }
+        } else if (onToolCall) {
+          result = await onToolCall(tc.function.name, args);
         } else {
-          result = JSON.stringify({ ok: false, error: parsed.error.message });
+          result = JSON.stringify({ error: `Unknown tool: ${tc.function.name}` });
         }
-      } else if (onToolCall) {
-        const args = JSON.parse(tc.function.arguments);
-        result = await onToolCall(tc.function.name, args);
-      } else {
-        result = JSON.stringify({ error: `Unknown tool: ${tc.function.name}` });
+      } catch (err) {
+        result = JSON.stringify({
+          error: `Failed to process tool call: ${err instanceof Error ? err.message : "unknown error"}`,
+        });
       }
 
       messages.push({

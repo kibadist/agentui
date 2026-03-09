@@ -3,6 +3,8 @@ export interface ActionProxyOptions {
   targetUrl: string;
   /** Optional: add headers (e.g. auth tokens) to the proxied request */
   getHeaders?: (req: Request) => Record<string, string> | Promise<Record<string, string>>;
+  /** Timeout in ms for the upstream request (default: 30000) */
+  timeoutMs?: number;
 }
 
 /**
@@ -24,6 +26,7 @@ export function createActionProxyHandler(opts: ActionProxyOptions) {
         ...extraHeaders,
       },
       body,
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 30_000),
     });
 
     const data = await upstream.text();

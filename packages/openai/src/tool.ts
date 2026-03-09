@@ -10,6 +10,9 @@ export const UI_EMITTER_TOOL_NAME = "emit_ui_event";
  * known component types.
  */
 export function createUIEmitterTool(allowedTypes: string[]) {
+  if (allowedTypes.length === 0) {
+    throw new Error("allowedTypes must contain at least one component type");
+  }
   return {
     type: "function" as const,
     function: {

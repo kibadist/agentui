@@ -24,6 +24,10 @@ export interface CreateUIEmitterToolOptions {
 export function createUIEmitterTool(opts: CreateUIEmitterToolOptions) {
   const { allowedTypes, sessionId, onUIEvent } = opts;
 
+  if (allowedTypes.length === 0) {
+    throw new Error("allowedTypes must contain at least one component type");
+  }
+
   const typesEnum = z.enum(allowedTypes as [string, ...string[]]);
 
   const inputSchema = z.object({
