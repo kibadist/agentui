@@ -2,10 +2,17 @@
 
 An AI-native, agent-friendly React component system. Instead of letting a model generate raw HTML/JSX, the agent emits **typed UI events** that are schema-validated and rendered through a whitelisted component registry.
 
-```
-Agent (LLM) ──emit_ui_event──> NestJS ──SSE──> React ──registry──> Components
-     ^                                                                   │
-     └──────────────────── ActionEvent <── user click ───────────────────┘
+```mermaid
+flowchart LR
+  Agent["🤖 Agent (LLM)"]
+  NestJS["⚙️ NestJS"]
+  React["⚛️ React"]
+  Components["🧩 Components"]
+
+  Agent -- "emit_ui_event\n(tool call)" --> NestJS
+  NestJS -- "SSE stream\n(UIEvent)" --> React
+  React -- "registry\nlookup" --> Components
+  Components -- "user click\n(ActionEvent)" --> Agent
 ```
 
 ## Prerequisites
@@ -70,13 +77,20 @@ pnpm dev:app   # just the Next.js frontend on :3000
 
 ### Dependency graph
 
-```
-@kibadist/agentui-protocol          (zero deps — pure types)
-     ├── @kibadist/agentui-validate (+zod)
-     ├── @kibadist/agentui-react    (+react)
-     ├── @kibadist/agentui-nest     (+@nestjs/common, rxjs)
-     ├── @kibadist/agentui-ai      (+ai)
-     └── @kibadist/agentui-next     (no runtime deps)
+```mermaid
+flowchart BT
+  protocol["📦 protocol\n(zero deps — pure types)"]
+  validate["📦 validate\n(+zod)"]
+  react["📦 react\n(+react)"]
+  nest["📦 nest\n(+@nestjs/common, rxjs)"]
+  ai["📦 ai\n(+Vercel AI SDK)"]
+  next["📦 next\n(no runtime deps)"]
+
+  validate --> protocol
+  react --> protocol
+  nest --> protocol
+  ai --> protocol
+  next --> protocol
 ```
 
 ## Using in your own project
