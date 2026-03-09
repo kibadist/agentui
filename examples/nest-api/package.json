@@ -9,11 +9,11 @@
     "dev": "node --env-file=.env --import tsx src/main.ts"
   },
   "dependencies": {
-    "@kibadist/agentui-nest": "workspace:*",
+    "@ai-sdk/openai": "^3.0.41",
     "@kibadist/agentui-ai": "workspace:*",
+    "@kibadist/agentui-nest": "workspace:*",
     "@kibadist/agentui-protocol": "workspace:*",
     "@kibadist/agentui-validate": "workspace:*",
-    "@ai-sdk/openai": "^1.0.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",

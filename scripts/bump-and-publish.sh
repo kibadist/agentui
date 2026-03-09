@@ -17,6 +17,7 @@ PACKAGES=(
   packages/validate
   packages/react
   packages/nest
+  packages/openai
   packages/ai
   packages/next
 )
@@ -46,10 +47,10 @@ pnpm build
 for pkg in "${PACKAGES[@]}"; do
   node -e "
     const fs = require('fs');
-    const path = './${pkg}/package.json';
-    const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
-    pkg.version = '${NEW_VERSION}';
-    fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+    const p = './${pkg}/package.json';
+    const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+    data.version = '${NEW_VERSION}';
+    fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\n');
   "
   echo "  Bumped ${pkg}/package.json -> ${NEW_VERSION}"
 done
