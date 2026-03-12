@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import type { LanguageModel } from "ai";
 import { z } from "zod";
 import { AgentSessionService } from "@kibadist/agentui-nest";
@@ -73,17 +73,14 @@ export class AgentService {
   private model: LanguageModel | null = null;
 
   constructor() {
-    const apiKey = process.env.DEEPSEEK_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (apiKey) {
-      const deepseek = createOpenAI({
-        apiKey,
-        baseURL: "https://api.deepseek.com",
-      });
-      this.model = deepseek("deepseek-chat");
-      this.logger.log("DeepSeek model initialized");
+      const anthropic = createAnthropic({ apiKey });
+      this.model = anthropic("claude-sonnet-4-20250514");
+      this.logger.log("Anthropic model initialized");
     } else {
       this.logger.warn(
-        "DEEPSEEK_API_KEY not set – agent will return mock UI events",
+        "ANTHROPIC_API_KEY not set – agent will return mock UI events",
       );
     }
     this.sessionService.startCleanup();
@@ -152,7 +149,7 @@ export class AgentService {
         type: "text-block",
         props: {
           title: "Echo Response",
-          body: `You said: "${userMessage}"\n\n_(No DEEPSEEK_API_KEY set – this is a mock response.)_`,
+          body: `You said: "${userMessage}"\n\n_(No ANTHROPIC_API_KEY set – this is a mock response.)_`,
         },
       },
     });

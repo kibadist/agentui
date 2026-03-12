@@ -1,6 +1,36 @@
-# agentui
+# AgentUI
 
-An AI-native, agent-friendly React component system. Instead of letting a model generate raw HTML/JSX, the agent emits **typed UI events** that are schema-validated and rendered through a whitelisted component registry.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![pnpm](https://img.shields.io/badge/pnpm-workspace-orange?logo=pnpm)](https://pnpm.io/)
+[![packages](https://img.shields.io/badge/packages-6-blueviolet)](#packages)
+
+**An AI-native component system for agent-driven UIs.**
+
+Instead of letting a model generate raw HTML or JSX (unsafe, unpredictable, impossible to style consistently), AgentUI gives LLM agents a typed event protocol to **compose, update, and remove UI components** — all validated against a schema and rendered through a developer-controlled registry.
+
+<p align="center">
+  <img src="examples/agentui demo (1).gif" alt="AgentUI demo" width="800" />
+</p>
+
+---
+
+## The Problem
+
+Most AI chat interfaces look the same: a text bubble stream. But real agentic apps need richer output — tables, cards, task boards, status dashboards — rendered safely and consistently.
+
+The naive approach is to have the LLM write JSX or HTML directly. This breaks in practice:
+
+- Output is inconsistent and hard to style
+- No validation — the model can emit anything
+- No interactivity feedback loop back to the agent
+- Impossible to maintain design system coherence
+
+---
+
+## The Solution
+
+AgentUI introduces a **UI event protocol** between your agent and your frontend:
 
 ```mermaid
 flowchart LR
@@ -15,67 +45,170 @@ flowchart LR
   Components -- "user click\n(ActionEvent)" --> Agent
 ```
 
-## Prerequisites
+The agent never touches your DOM. It emits **structured events**. Your frontend renders them through a **whitelisted component registry** you control.
+
+---
+
+## How It Works
+
+### 1. The agent emits a typed UI event
+
+Instead of writing `<table>...</table>`, the agent calls a tool:
+
+```json
+{
+  "op": "append",
+  "id": "sales-table",
+  "component": "data-table",
+  "props": {
+    "columns": ["Product", "Revenue", "Growth"],
+    "rows": [
+      ["Pro Plan", "$48,200", "+12%"],
+      ["Starter", "$18,700", "+4%"]
+    ]
+  }
+}
+```
+
+### 2. AgentUI validates and streams it
+
+The backend validates the event with Zod, then streams it to the client over SSE.
+
+```typescript
+// NestJS controller — one line of setup
+const controller = createAgentController({ agent, tools });
+```
+
+### 3. React renders it through your registry
+
+```typescript
+import { createRegistry, AgentUIProvider, AgentRenderer } from '@kibadist/agentui-react';
+
+const registry = createRegistry({
+  'data-table': DataTable,
+  'info-card':  InfoCard,
+  'text-block': TextBlock,
+  'task-board': TaskBoard,
+  'stat-card':  StatCard,
+});
+
+export function App() {
+  return (
+    <AgentUIProvider registry={registry} sessionId="demo">
+      <Chat />
+      <AgentRenderer />
+    </AgentUIProvider>
+  );
+}
+```
+
+Only components in your registry can be rendered. The model cannot escape the sandbox.
+
+### 4. User actions route back to the agent
+
+```typescript
+import { useAgentAction } from '@kibadist/agentui-react';
+
+function TaskCard({ id, title, status }) {
+  const dispatch = useAgentAction();
+
+  return (
+    <button onClick={() => dispatch({ type: 'task.complete', payload: { id } })}>
+      Complete
+    </button>
+  );
+}
+```
+
+User interactions are sent back as `ActionEvent`s — the agent can react to them and emit new UI events in response.
+
+---
+
+## Supported UI Operations
+
+| Operation | Description |
+|-----------|-------------|
+| `append` | Add a new component to the canvas |
+| `replace` | Swap props on an existing component |
+| `remove` | Delete a component by ID |
+| `toast` | Show a transient notification |
+
+---
+
+## Example Prompts
+
+Try these once you have the dev server running:
+
+```
+Show me a summary of recent sales
+```
+→ Renders a `stat-card` grid + `data-table`
+
+```
+Compare pricing plans for a SaaS product
+```
+→ Renders a structured comparison `data-table`
+
+```
+Create a project task board with backlog, in progress, and done columns
+```
+→ Renders a `task-board` with draggable cards
+
+```
+Show system health status for production servers
+```
+→ Renders `stat-card` components with live-style indicators
+
+---
+
+## Quick Start
+
+### Prerequisites
 
 - **Node.js** >= 18
 - **pnpm** >= 9 (`corepack enable` to auto-install)
 
-## Quick start
+### Install & Run
 
 ```bash
 # Clone and install
-git clone <repo-url> agentui
+git clone https://github.com/kibadist/agentui
 cd agentui
 pnpm install
 
 # Build all packages
 pnpm build
 
-# Add your DeepSeek key (or leave blank for mock mode)
-echo "DEEPSEEK_API_KEY=sk-your-key-here" > examples/nest-api/.env
+# Add your API key (Anthropic, OpenAI, DeepSeek, or Google — all supported)
+echo "ANTHROPIC_API_KEY=sk-ant-your-key-here" > examples/nest-api/.env
 echo "PORT=3001" >> examples/nest-api/.env
 
-# Run both examples (backend :3001 + frontend :3000)
+# Run backend (:3001) + frontend (:3000) together
 pnpm dev
 ```
 
-Open http://localhost:3000 and try these prompts:
-
-```
-Show me a summary of recent sales
-```
-```
-Compare pricing plans for a SaaS product in a table
-```
-```
-List the top 5 programming languages with their pros and cons
-```
-```
-Show system health status for production servers
-```
-```
-Create a project task board with backlog, in progress, and done columns
-```
-
-### Run individually
+Open [http://localhost:3000](http://localhost:3000).
 
 ```bash
-pnpm dev:api   # just the NestJS backend on :3001
-pnpm dev:app   # just the Next.js frontend on :3000
+# Or run individually
+pnpm dev:api   # NestJS backend on :3001
+pnpm dev:app   # Next.js frontend on :3000
 ```
+
+---
 
 ## Packages
 
-| Package | Purpose |
-|---|---|
-| [`@kibadist/agentui-protocol`](https://www.npmjs.com/package/@kibadist/agentui-protocol) | TypeScript types for the wire protocol (UIEvent, ActionEvent, UINode) |
-| [`@kibadist/agentui-validate`](https://www.npmjs.com/package/@kibadist/agentui-validate) | Zod schemas + parsers (`parseUIEvent`, `safeParseUIEvent`, etc.) |
-| [`@kibadist/agentui-react`](https://www.npmjs.com/package/@kibadist/agentui-react) | Registry, renderer, SSE hook, action context for React apps |
-| [`@kibadist/agentui-nest`](https://www.npmjs.com/package/@kibadist/agentui-nest) | Session event bus + controller factory for NestJS |
-| [`@kibadist/agentui-ai`](https://www.npmjs.com/package/@kibadist/agentui-ai) | Provider-agnostic adapter via Vercel AI SDK (OpenAI, Anthropic, Google, etc.) |
-| [`@kibadist/agentui-next`](https://www.npmjs.com/package/@kibadist/agentui-next) | SSE proxy + action proxy helpers for Next.js App Router |
+| Package | npm | Purpose |
+|---------|-----|---------|
+| [`@kibadist/agentui-protocol`](https://www.npmjs.com/package/@kibadist/agentui-protocol) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-protocol)](https://www.npmjs.com/package/@kibadist/agentui-protocol) | TypeScript types for the wire protocol (`UIEvent`, `ActionEvent`, `UINode`) |
+| [`@kibadist/agentui-validate`](https://www.npmjs.com/package/@kibadist/agentui-validate) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-validate)](https://www.npmjs.com/package/@kibadist/agentui-validate) | Zod schemas + parsers (`parseUIEvent`, `safeParseUIEvent`) |
+| [`@kibadist/agentui-react`](https://www.npmjs.com/package/@kibadist/agentui-react) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-react)](https://www.npmjs.com/package/@kibadist/agentui-react) | Registry, renderer, SSE hook, action context |
+| [`@kibadist/agentui-nest`](https://www.npmjs.com/package/@kibadist/agentui-nest) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-nest)](https://www.npmjs.com/package/@kibadist/agentui-nest) | Session event bus + controller factory for NestJS |
+| [`@kibadist/agentui-ai`](https://www.npmjs.com/package/@kibadist/agentui-ai) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-ai)](https://www.npmjs.com/package/@kibadist/agentui-ai) | Provider-agnostic adapter via Vercel AI SDK (OpenAI, Anthropic, Google, DeepSeek) |
+| [`@kibadist/agentui-next`](https://www.npmjs.com/package/@kibadist/agentui-next) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-next)](https://www.npmjs.com/package/@kibadist/agentui-next) | SSE proxy + action proxy helpers for Next.js App Router |
 
-### Dependency graph
+---
 
 ```mermaid
 flowchart BT
@@ -93,335 +226,42 @@ flowchart BT
   next --> protocol
 ```
 
-## Using in your own project
+---
 
-### 1. Backend (NestJS)
+## Use Cases
 
-Install the packages:
+AgentUI is a good fit when you need an LLM to **compose structured UI** rather than just stream text:
 
-```bash
-pnpm add @kibadist/agentui-protocol @kibadist/agentui-validate @kibadist/agentui-nest @kibadist/agentui-ai ai @ai-sdk/openai
-```
+- **Internal dashboards** — agent queries your DB and renders tables, charts, stat cards
+- **AI copilots** — agent renders contextual UI panels alongside a chat interface
+- **Agentic workflows** — agent builds task boards, checklists, or forms that users interact with
+- **CRM / ops tools** — agent surfaces customer data or job status as rich UI components
+- **Dev tools** — agent renders structured output (test results, diffs, API responses) in a readable format
 
-Create a service that wires the agent loop to the session bus:
+---
 
-```ts
-// agent.service.ts
-import { Injectable } from "@nestjs/common";
-import { createOpenAI } from "@ai-sdk/openai";
-import { AgentSessionService } from "@kibadist/agentui-nest";
-import { runAgentLoop } from "@kibadist/agentui-ai";
-import type { ActionEvent } from "@kibadist/agentui-protocol";
+## Roadmap
 
-@Injectable()
-export class AgentService {
-  readonly sessionService = new AgentSessionService();
-  private model;
+- [ ] Streaming partial renders (render component as props stream in)
+- [ ] Built-in component library (zero-config starter components)
+- [ ] Vue adapter (`@kibadist/agentui-vue`)
+- [ ] `ui.update` patch operation (partial prop update without full replace)
+- [ ] Persistence layer (replay UI state across sessions)
 
-  constructor() {
-    const deepseek = createOpenAI({
-      apiKey: process.env.DEEPSEEK_API_KEY,
-      baseURL: "https://api.deepseek.com",
-    });
-    this.model = deepseek("deepseek-chat");
-    this.sessionService.startCleanup();
-  }
+---
 
-  async handleAction(sessionId: string, action: ActionEvent) {
-    const message = (action.payload?.message as string) ?? action.name;
+## Contributing
 
-    await runAgentLoop({
-      model: this.model,
-      system: "You are a helpful assistant. Use emit_ui_event to render UI.",
-      prompt: message,
-      allowedTypes: ["text-block", "info-card", "data-table"],
-      sessionId,
-      onUIEvent: (event) => this.sessionService.emitUI(sessionId, event),
-    });
-  }
-}
-```
-
-Create a controller using the factory:
-
-```ts
-// agent.controller.ts
-import { Controller, Post, Param, Body, Sse, Inject } from "@nestjs/common";
-import { createAgentController } from "@kibadist/agentui-nest";
-import { AgentService } from "./agent.service";
-
-@Controller("agent")
-export class AgentController {
-  private handlers;
-
-  constructor(@Inject(AgentService) private agentService: AgentService) {
-    this.handlers = createAgentController({
-      sessionService: agentService.sessionService,
-      onAction: (id, action) => agentService.handleAction(id, action),
-    });
-  }
-
-  @Post("session")
-  createSession() {
-    return this.handlers.createSession();
-  }
-
-  @Sse(":sessionId/stream")
-  stream(@Param("sessionId") id: string) {
-    return this.handlers.stream(id);
-  }
-
-  @Post(":sessionId/action")
-  action(@Param("sessionId") id: string, @Body() body: unknown) {
-    return this.handlers.action(id, body);
-  }
-}
-```
-
-This gives you three endpoints:
-- `POST /agent/session` — creates a session, returns `{ sessionId }`
-- `GET /agent/:sessionId/stream` — SSE stream of `UIEvent`s
-- `POST /agent/:sessionId/action` — accepts `ActionEvent`s from the frontend
-
-### 2. Frontend (React / Next.js)
-
-Install the packages:
+Issues and PRs welcome. The repo is a pnpm monorepo — see each package's `README` for package-specific docs.
 
 ```bash
-pnpm add @kibadist/agentui-protocol @kibadist/agentui-react @kibadist/agentui-validate
+pnpm build        # build all packages
+pnpm test         # run tests across workspace
+pnpm lint         # lint all packages
 ```
 
-Define a component registry — this is the allowlist of components the agent can render:
+---
 
-```tsx
-// components/registry.ts
-import { createRegistry } from "@kibadist/agentui-react";
-import { TextBlock } from "./text-block";
-import { InfoCard } from "./info-card";
-import { DataTable } from "./data-table";
+## License
 
-export const registry = createRegistry({
-  "text-block": { component: TextBlock },
-  "info-card":  { component: InfoCard },
-  "data-table": { component: DataTable },
-});
-```
-
-Each component receives props from the agent. For example:
-
-```tsx
-// components/text-block.tsx
-export function TextBlock({ title, body }: { title?: string; body: string }) {
-  return (
-    <div>
-      {title && <h3>{title}</h3>}
-      <p>{body}</p>
-    </div>
-  );
-}
-```
-
-Wire it up with the SSE hook and renderer:
-
-```tsx
-"use client";
-
-import { useEffect, useState, useCallback } from "react";
-import type { ActionEvent } from "@kibadist/agentui-protocol";
-import { useAgentStream, AgentRenderer, AgentActionProvider } from "@kibadist/agentui-react";
-import { registry } from "./components/registry";
-
-const API = "http://localhost:3001";
-
-export default function App() {
-  const [sessionId, setSessionId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(`${API}/agent/session`, { method: "POST" })
-      .then((r) => r.json())
-      .then((data) => setSessionId(data.sessionId));
-  }, []);
-
-  if (!sessionId) return <p>Connecting...</p>;
-
-  return <AgentView sessionId={sessionId} />;
-}
-
-function AgentView({ sessionId }: { sessionId: string }) {
-  const { state, status } = useAgentStream({
-    url: `${API}/agent/${sessionId}/stream`,
-    sessionId,
-  });
-
-  const sender = useCallback(async (action: ActionEvent) => {
-    await fetch(`${API}/agent/${sessionId}/action`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(action),
-    });
-  }, [sessionId]);
-
-  return (
-    <AgentActionProvider sender={sender}>
-      <p>Status: {status}</p>
-      <AgentRenderer state={state} registry={registry} />
-    </AgentActionProvider>
-  );
-}
-```
-
-### 3. Optional: Next.js BFF proxy
-
-If you want the Next.js app to proxy requests to the NestJS backend (for auth, cookies, etc.), use `@kibadist/agentui-next`:
-
-```bash
-pnpm add @kibadist/agentui-next
-```
-
-```ts
-// app/api/agent/[sessionId]/stream/route.ts
-import { createSSEProxyHandler } from "@kibadist/agentui-next";
-
-export const GET = createSSEProxyHandler({
-  targetUrl: "http://localhost:3001",
-  getHeaders: (req) => ({
-    Authorization: req.headers.get("cookie") ?? "",
-  }),
-});
-```
-
-```ts
-// app/api/agent/[sessionId]/action/route.ts
-import { createActionProxyHandler } from "@kibadist/agentui-next";
-
-export const POST = createActionProxyHandler({
-  targetUrl: "http://localhost:3001",
-});
-```
-
-Then point your frontend at `/api/agent` instead of the NestJS URL directly.
-
-### 4. Using a different LLM provider
-
-`@kibadist/agentui-ai` works with any [Vercel AI SDK](https://sdk.vercel.ai) provider:
-
-```ts
-// DeepSeek (via OpenAI-compatible provider)
-import { createOpenAI } from "@ai-sdk/openai";
-const deepseek = createOpenAI({ apiKey: "sk-...", baseURL: "https://api.deepseek.com" });
-const model = deepseek("deepseek-chat");
-
-// OpenAI
-import { createOpenAI } from "@ai-sdk/openai";
-const model = createOpenAI({ apiKey: "sk-..." })("gpt-4o");
-
-// Anthropic
-import { createAnthropic } from "@ai-sdk/anthropic";
-const model = createAnthropic({ apiKey: "sk-..." })("claude-sonnet-4-20250514");
-
-// Google
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-const model = createGoogleGenerativeAI({ apiKey: "..." })("gemini-2.0-flash");
-```
-
-Then pass the `model` to `runAgentLoop`.
-
-## Protocol
-
-The agent communicates via **UI patch events** over SSE. The UI is a list of `UINode`s, keyed by `key`.
-
-### Patch operations
-
-| Op | Description |
-|---|---|
-| `ui.append` | Add a node to the render list |
-| `ui.replace` | Update an existing node's props (shallow merge by default, full replace with `replace: true`) |
-| `ui.remove` | Remove a node by key |
-| `ui.toast` | Show an ephemeral notification (not stored in the render list) |
-| `ui.navigate` | Trigger client-side navigation |
-
-### UINode shape
-
-```ts
-{
-  key: string;         // stable identity for patching
-  type: string;        // registry key, e.g. "data-table"
-  props: Record<string, unknown>;
-  slot?: string;       // optional layout slot filtering
-}
-```
-
-### Action events (user to agent)
-
-Components dispatch actions back to the agent via `useAgentAction()`:
-
-```ts
-{
-  v: 1,
-  id: "uuid",
-  ts: "2025-01-01T00:00:00Z",
-  sessionId: "...",
-  kind: "action",
-  type: "action.submit",     // or "action.select", "action.approve"
-  name: "purchase.confirm",  // stable action identifier
-  payload: { ... },          // arbitrary data
-}
-```
-
-### Validation
-
-All events are validated with Zod before rendering. Invalid events are dropped — never "best-effort" fixed:
-
-```ts
-import { safeParseUIEvent } from "@kibadist/agentui-validate";
-
-const result = safeParseUIEvent(raw);
-if (result.ok) {
-  // result.value is a typed UIEvent
-} else {
-  // result.error describes what's wrong
-}
-```
-
-## Project structure
-
-```
-agentui/
-  packages/
-    protocol/       # TypeScript types (zero runtime)
-    validate/       # Zod schemas + parse/safeParse
-    react/          # Registry, renderer, hooks, context
-    nest/           # Session bus + controller factory
-    ai/             # Provider-agnostic adapter via Vercel AI SDK
-    next/           # SSE + action proxy for Next.js App Router
-  examples/
-    nest-api/       # Working NestJS backend (DeepSeek)
-    next-app/       # Working Next.js frontend
-```
-
-## Scripts
-
-| Command | Description |
-|---|---|
-| `pnpm install` | Install all dependencies |
-| `pnpm build` | Build all packages |
-| `pnpm dev` | Build + run both examples |
-| `pnpm dev:api` | Run nest-api only (port 3001) |
-| `pnpm dev:app` | Run next-app only (port 3000) |
-| `pnpm typecheck` | Typecheck all packages |
-| `pnpm clean` | Remove all dist/ folders |
-
-## Environment variables
-
-### `examples/nest-api/.env`
-
-| Variable | Required | Description |
-|---|---|---|
-| `DEEPSEEK_API_KEY` | No | DeepSeek API key. Without it, the server runs in mock mode. |
-| `PORT` | No | Server port (default: 3001) |
-
-### `examples/next-app`
-
-| Variable | Required | Description |
-|---|---|---|
-| `NEXT_PUBLIC_API_URL` | No | Backend URL (default: `http://localhost:3001`) |
+MIT © [Maksym Ivashchenko](https://github.com/kibadist)
