@@ -1,60 +1,66 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working in this repo. Keep this file lean — only non-obvious info that can't be derived by reading the codebase.
 
-## Build & Development Commands
+## Project Snapshot
+
+AgentUI is a pnpm-workspace monorepo for an AI-native React component system. LLM agents emit **typed UIEvents** through a tool call (`emit_ui_event`) instead of raw HTML; events are Zod-validated server-side and rendered through a whitelisted React component registry. User interactions return as `ActionEvent`s on the same SSE-backed session.
+
+Flow: agent tool call → NestJS validates & streams via SSE → React parser → registry lookup → component render → action events back over POST.
+
+## Commands
 
 ```bash
-pnpm install              # Install all dependencies
-pnpm build                # Build all packages (tsc)
-pnpm clean                # Remove all dist/ folders
-pnpm typecheck            # Type-check without emitting
+pnpm install
+pnpm build         # tsc across all packages
+pnpm typecheck     # no emit
+pnpm clean         # remove dist/
+pnpm test          # vitest run (jsdom; packages/*/test/**)
+pnpm test:watch
 
-pnpm dev                  # Run both NestJS (:3001) and Next.js (:3000)
-pnpm dev:api              # Run NestJS backend only
-pnpm dev:app              # Run Next.js frontend only
+pnpm dev           # builds, then runs nest-api (:3001) + next-app (:3000)
+pnpm dev:api
+pnpm dev:app
 ```
 
-Per-package: `pnpm --filter @kibadist/agentui-{name} build|clean|typecheck`
+Per-package: `pnpm --filter @kibadist/agentui-<name> <script>`.
 
-No test framework is configured yet.
+Release: `pnpm release` (patch) / `pnpm release:dry` / `./scripts/bump-and-publish.sh [patch|minor|major]`. The script typechecks, builds, bumps all package versions in sync, publishes in dependency order, commits, and tags. Push tags manually after.
 
-## Architecture
+## Packages
 
-AgentUI is a monorepo (pnpm workspaces) for an AI-native React component system. LLM agents emit **typed UIEvents** via tool calls (not raw HTML), which are schema-validated and rendered through a whitelisted component registry.
-
-**Flow**: Agent (LLM) calls `emit_ui_event` tool -> NestJS validates & streams via SSE -> React parses events -> Registry maps type to component -> User actions flow back as ActionEvents
-
-### Package Dependency Graph
+Published as `@kibadist/agentui-<name>`, all kept at the same version (currently 0.3.1, see `packages/protocol/package.json`).
 
 ```
-@kibadist/agentui-protocol  (pure TS types, zero deps)
-  ├── validate              (+zod: schemas & parsers)
-  ├── react                 (+react: registry, renderer, hooks, context)
-  ├── nest                  (+@nestjs/common, rxjs: session bus + controller factory)
-  ├── ai                    (+ai SDK: Vercel AI SDK adapter, provider-agnostic)
-  └── next                  (SSE + action proxy for Next.js App Router)
+protocol   pure TS types, zero deps
+  ├── validate   +zod   schemas & parsers (safeParseUIEvent)
+  ├── react      +react registry, renderer, hooks, context
+  ├── nest       +@nestjs/common, rxjs   session bus + controller factory
+  ├── ai         +ai SDK   Vercel AI SDK adapter, provider-agnostic
+  └── next                 SSE + action proxy for Next.js App Router
 ```
 
-All packages are published as `@kibadist/agentui-{name}` v0.2.2.
+`packages/openai` is **deprecated** — excluded from the release script, marked deprecated on npm. Don't add features there; use `@kibadist/agentui-ai`.
 
-### Key Patterns
+## Conventions
 
-- **Registry pattern**: Components are whitelisted via `createRegistry(map)`. Agents can only emit registered types.
-- **Fail-closed validation**: Invalid UIEvents are dropped (Zod via `safeParseUIEvent`), never best-effort fixed.
-- **Session-scoped streams**: Each session gets a UUID and RxJS Subject streams for UI + Actions, with TTL cleanup (30 min default).
-- **Tool-based agent interface**: LLMs call `emit_ui_event` tool instead of generating HTML. Supports multi-step tool calling.
-- **SSE over WebSocket**: One-way server-to-client streaming with auto-reconnect.
+- **ESM-only.** Every package has `"type": "module"`. Relative imports **must** include the `.js` extension (e.g. `import { x } from "./foo.js"`) even though the source is `.ts`. Omitting the extension breaks Node ESM resolution at runtime.
+- **TypeScript strict**, target ES2022, `moduleResolution: bundler`. Each package emits JS + `.d.ts` + source maps to `dist/`.
+- **Workspace deps** use `"@kibadist/agentui-<x>": "workspace:*"`.
+- **Naming**: factory functions (`createRegistry`, `createUIEmitterTool`, `runAgentLoop`), PascalCase types (`UIEvent`, `ActionEvent`), `use*` for React hooks.
+- **Fail-closed validation**: invalid UIEvents are dropped via `safeParseUIEvent`. Never best-effort patch malformed events.
+- **Registry is the security boundary**: only types registered via `createRegistry(map)` can be emitted/rendered. Don't add escape hatches.
+- **Sessions** are UUID-keyed RxJS `Subject`s for UI + Actions with a 30-min default TTL.
 
-### Examples
+## Examples
 
-- `examples/nest-api/` - NestJS backend with DeepSeek agent (needs `DEEPSEEK_API_KEY` env var, falls back to mock mode)
-- `examples/next-app/` - Next.js frontend with custom component registry
+- `examples/nest-api/` — NestJS backend, Anthropic agent. Reads `ANTHROPIC_API_KEY` from `.env`; falls back to mock UI events if unset.
+- `examples/next-app/` — Next.js App Router frontend with a custom component registry.
 
-## Code Conventions
+Examples are workspace members but not published.
 
-- **ESM-only**: All packages use `"type": "module"`. Relative imports use `.js` extensions.
-- **TypeScript strict mode**: Target ES2022, module ESNext, bundler moduleResolution.
-- **Build output**: Each package builds with `tsc` to `dist/` (JS + declarations + source maps).
-- **Naming**: Factory functions (`createRegistry`, `createUIEmitterTool`, `runAgentLoop`), PascalCase types (`UIEvent`, `ActionEvent`), React hooks (`useAgentStream`, `useAgentAction`).
-- **Workspace deps**: `"@kibadist/agentui-xxx": "workspace:*"` for inter-package references.
+## Gotchas
+
+- If a test or build fails after touching a relative import, check the `.js` extension first.
+- `pnpm dev` runs `pnpm build` upfront — packages must compile before the examples can resolve them. Run `pnpm build` after editing package source if `dev` is already running.
+- No CI for tests yet; run `pnpm test` locally before releasing.
