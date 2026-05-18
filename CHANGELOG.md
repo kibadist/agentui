@@ -9,6 +9,9 @@ All notable changes to `@kibadist/agentui-*` packages.
 - `AgentRenderer` gains five additive props: `range`, `filter`, `hiddenTypes`, `errorFallback`, `nodeWrapper`. Composition order is `slot → range → filter → hiddenTypes`. All five default to no-op — callers that don't pass them see identical behavior to `0.3.x`.
   - Replaces hand-rolled `SlicedAgentRenderer` wrappers, per-node `<ErrorBoundary>` wrapping, and ad-hoc `hiddenTypes` filtering in consumer code.
 - `AgentRendererProps` type is now exported from `@kibadist/agentui-react` for consumers composing on top of the renderer.
+- **Granular state selectors.** New hooks: `useAgentNodes()`, `useAgentToasts()`, `useAgentNavigate()`, `useAgentSelector(selector, eq?)`. Consumers using these stop re-rendering on unrelated state changes (e.g., `useAgentNodes()` consumers don't re-render on `ui.toast` / `ui.navigate`).
+- **`AgentStateProvider`** context + the `useAgentStream().store` field. Wire as `<AgentStateProvider store={stream.store}>` to enable selector hooks below it.
+- **`createAgentStore()`** factory exported for tests and non-stream-driven hosts. Implements `{ getState, subscribe, send, reset }` — a minimal `Subscribable<AgentState>`.
 
 ### Behavior
 
@@ -16,6 +19,7 @@ All notable changes to `@kibadist/agentui-*` packages.
 - `nodeWrapper` is the outermost layer per node; it stays mounted even when the inner component throws and is caught by `errorFallback` (lets `<AnimatePresence>`-style wrappers track keys cleanly).
 - Per-node React keys are now placed on an invisible `React.Fragment` for consistency across all wrapper combinations. No DOM impact.
 - **Minor:** when a node's type is missing from the registry and a `fallback` is provided, the renderer now returns the fallback content directly. Previously it wrapped the result in a `<span>`. The React key now lives on the outer Fragment, so reconciliation is unchanged — but any CSS or DOM-query that relied on the `<span>` wrapper around fallback output will need to be updated.
+- `useAgentStream` is now backed internally by an `AgentStore` and `useSyncExternalStore`. The returned `state` field has identical shape and semantics to before; consumers reading `state` directly see no behavior change. Selector hooks are the recommended path for any component that doesn't need the full state object.
 
 ## 0.3.1
 
