@@ -77,3 +77,47 @@ describe("AgentRenderer — range", () => {
     expect(queryAllByTestId(/^box-/)).toHaveLength(0);
   });
 });
+
+describe("AgentRenderer — filter", () => {
+  it("calls filter with (node, index) where index is post-slot pre-range", () => {
+    const state = makeState(
+      Array.from({ length: 5 }, (_, i) => makeNode(`k${i}`, "test.box", { label: `${i}` })),
+    );
+    const calls: Array<{ key: string; index: number }> = [];
+    const filter = (node: UINode, index: number) => {
+      calls.push({ key: node.key, index });
+      return true;
+    };
+    render(
+      <AgentRenderer
+        state={state}
+        registry={registry}
+        range={{ start: 1, end: 4 }}
+        filter={filter}
+      />,
+    );
+    // Indices passed must be the original positions in state.nodes, not 0..n-1
+    expect(calls).toEqual([
+      { key: "k1", index: 1 },
+      { key: "k2", index: 2 },
+      { key: "k3", index: 3 },
+    ]);
+  });
+
+  it("skips nodes where filter returns false", () => {
+    const state = makeState([
+      makeNode("a", "test.box", { label: "a" }),
+      makeNode("b", "test.box", { label: "b" }),
+      makeNode("c", "test.box", { label: "c" }),
+    ]);
+    const { queryAllByTestId } = render(
+      <AgentRenderer
+        state={state}
+        registry={registry}
+        filter={(n) => n.key !== "b"}
+      />,
+    );
+    const ids = queryAllByTestId(/^box-/).map((el) => el.getAttribute("data-testid"));
+    expect(ids).toEqual(["box-a", "box-c"]);
+  });
+});

@@ -12,6 +12,11 @@ export interface AgentRendererProps {
   fallback?: (node: UINode) => ReactNode;
   /** Half-open slice over the post-slot list. Missing bounds default to 0 / length. */
   range?: { start?: number; end?: number };
+  /**
+   * Predicate run after range. Receives the node and its index in the
+   * post-slot (pre-range) array — stable as `range` changes.
+   */
+  filter?: (node: UINode, index: number) => boolean;
 }
 
 export function AgentRenderer({
@@ -20,6 +25,7 @@ export function AgentRenderer({
   slot,
   fallback,
   range,
+  filter,
 }: AgentRendererProps) {
   const slotted = slot ? state.nodes.filter((n) => n.slot === slot) : state.nodes;
   const start = Math.max(0, range?.start ?? 0);
@@ -28,6 +34,7 @@ export function AgentRenderer({
   const rendered: ReactNode[] = [];
   for (let i = start; i < end; i++) {
     const node = slotted[i];
+    if (filter && !filter(node, i)) continue;
     const el = renderOne(node, registry, fallback);
     if (el === null) continue;
     rendered.push(createElement(Fragment, { key: node.key }, el));
