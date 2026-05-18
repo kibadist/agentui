@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useSyncExternalStore } from "react";
 import { useAgentStore } from "./agent-state-context.js";
-import type { AgentState } from "./reducer.js";
+import type { AgentState, ToolCall } from "./reducer.js";
 
 const UNSET: unique symbol = Symbol("agentui:unset");
 
@@ -40,3 +40,26 @@ export const useAgentNodes = () => useAgentSelector((s) => s.nodes);
 export const useAgentToasts = () => useAgentSelector((s) => s.toasts);
 /** Subscribe to the latest pending navigation intent (or null). Re-renders only when that slice changes. */
 export const useAgentNavigate = () => useAgentSelector((s) => s.navigate);
+
+/** Subscribe to all tool calls in insertion order. Re-renders only when the tool-call slice changes. */
+export function useToolCalls(): ToolCall[] {
+  return useAgentSelector(
+    (s) => {
+      const arr: ToolCall[] = [];
+      for (const id of s.toolCallsOrder) {
+        const c = s.toolCalls.get(id);
+        if (c) arr.push(c);
+      }
+      return arr;
+    },
+    // Shallow array equality: same length + same references in same order.
+    // Keeps consumers stable when unrelated state changes (e.g. ui.toast)
+    // create a new outer state object but leave the toolCalls Map intact.
+    (a, b) => a.length === b.length && a.every((c, i) => c === b[i]),
+  );
+}
+
+/** Subscribe to a single tool call by id. Re-renders only when that specific call's fields change. */
+export function useToolCall(id: string): ToolCall | undefined {
+  return useAgentSelector((s) => s.toolCalls.get(id));
+}
