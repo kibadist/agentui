@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState, useSyncExternalStore } from "react";
-import type { UIEvent } from "@kibadist/agentui-protocol";
-import { safeParseUIEvent } from "@kibadist/agentui-validate";
+import type { UIEvent, AgentWireEvent } from "@kibadist/agentui-protocol";
+import { safeParseAgentEvent } from "@kibadist/agentui-validate";
 import { createAgentStore, type AgentStore } from "./store.js";
 import type { AgentState } from "./reducer.js";
 
@@ -19,8 +19,8 @@ export interface UseAgentStreamOptions {
   url: string;
   /** Session id (appended as query param) */
   sessionId: string;
-  /** Called for every valid UIEvent (after reducer) */
-  onEvent?: (event: UIEvent) => void;
+  /** Called for every valid wire event (UIEvent or ToolEvent) after the reducer applies it. */
+  onEvent?: (event: AgentWireEvent) => void;
   /** Called when an invalid event is received */
   onInvalidEvent?: (raw: unknown, error: Error) => void;
   /** Whether the stream is enabled (default true) */
@@ -95,7 +95,7 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
         return; // ignore non-JSON heartbeats etc.
       }
 
-      const parsed = safeParseUIEvent(raw);
+      const parsed = safeParseAgentEvent(raw);
       if (parsed.ok) {
         store.send(parsed.value);
         onEventRef.current?.(parsed.value);
