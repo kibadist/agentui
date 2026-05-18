@@ -5,6 +5,7 @@ export { agentReducer, initialAgentState, createInitialAgentState } from "./redu
 export type { AgentState, AgentAction, AgentResetAction } from "./reducer.js";
 
 export { AgentRenderer } from "./renderer.js";
+export type { AgentRendererProps } from "./renderer.js";
 
 export {
   AgentActionContext,
