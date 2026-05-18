@@ -3,6 +3,7 @@ export {
   uiEventSchema,
   actionEventSchema,
   toolEventSchema,
+  reasoningEventSchema,
   agentWireEventSchema,
 } from "./schemas.js";
 export {

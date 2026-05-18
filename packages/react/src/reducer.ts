@@ -10,6 +10,7 @@ import type {
   ToolArgsDeltaEvent,
   ToolCallResultEvent,
   ToolCallCancelEvent,
+  ReasoningEvent,
 } from "@kibadist/agentui-protocol";
 
 /** A transient notification queued by `ui.toast` events. */
@@ -90,9 +91,10 @@ export interface AgentResetAction {
 
 /**
  * Discriminated union over actions accepted by {@link agentReducer}: any
- * `UIEvent`, any `ToolEvent`, plus the synthetic `__reset__` action.
+ * `UIEvent`, any `ToolEvent`, any `ReasoningEvent` (pass-through, no state
+ * change), plus the synthetic `__reset__` action.
  */
-export type AgentAction = UIEvent | ToolEvent | AgentResetAction;
+export type AgentAction = UIEvent | ToolEvent | ReasoningEvent | AgentResetAction;
 
 function rebuildIndex(nodes: UINode[]): Map<string, number> {
   const m = new Map<string, number>();

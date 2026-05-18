@@ -43,6 +43,7 @@ const uiAppendSchema = baseEventSchema.extend({
   op: z.literal("ui.append"),
   node: uiNodeSchema,
   index: z.number().int().nonnegative().optional(),
+  turnId: z.string().max(256).optional(),
 });
 
 const uiReplaceSchema = baseEventSchema.extend({
@@ -89,6 +90,7 @@ const toolStartSchema = baseEventSchema.extend({
   id: z.string().min(1).max(256),
   name: z.string().min(1).max(256),
   args: z.unknown().optional(),
+  turnId: z.string().max(256).optional(),
 });
 
 const toolArgsDeltaSchema = baseEventSchema.extend({
@@ -123,6 +125,32 @@ export const toolEventSchema = z.discriminatedUnion("op", [
   toolCancelSchema,
 ]);
 
+// ─── Reasoning / Thinking Events ────────────────────────────────────────────
+
+const reasoningStartSchema = baseEventSchema.extend({
+  op: z.literal("reasoning.start"),
+  id: z.string().min(1).max(256),
+  turnId: z.string().max(256).optional(),
+});
+
+const reasoningDeltaSchema = baseEventSchema.extend({
+  op: z.literal("reasoning.delta"),
+  id: z.string().min(1).max(256),
+  delta: z.string().max(64_000),
+});
+
+const reasoningEndSchema = baseEventSchema.extend({
+  op: z.literal("reasoning.end"),
+  id: z.string().min(1).max(256),
+  tokens: z.number().int().nonnegative().optional(),
+});
+
+export const reasoningEventSchema = z.discriminatedUnion("op", [
+  reasoningStartSchema,
+  reasoningDeltaSchema,
+  reasoningEndSchema,
+]);
+
 export const agentWireEventSchema = z.discriminatedUnion("op", [
   uiAppendSchema,
   uiReplaceSchema,
@@ -134,6 +162,9 @@ export const agentWireEventSchema = z.discriminatedUnion("op", [
   toolArgsDeltaSchema,
   toolResultSchema,
   toolCancelSchema,
+  reasoningStartSchema,
+  reasoningDeltaSchema,
+  reasoningEndSchema,
 ]);
 
 // ─── Action Events ───────────────────────────────────────────────────────────

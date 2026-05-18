@@ -50,6 +50,8 @@ export interface UIAppendEvent extends BaseEvent {
   node: UINode;
   /** Optional insertion index (default: end) */
   index?: number;
+  /** Optional turn correlation id; consumer can read it via `onEvent`. */
+  turnId?: string;
 }
 
 export interface UIReplaceEvent extends BaseEvent {
@@ -107,6 +109,8 @@ export interface ToolCallStartEvent extends BaseEvent {
   name: string;
   /** Optional initial args; may also stream via tool.args-delta. */
   args?: unknown;
+  /** Optional turn correlation id (see ReasoningStartEvent for the cross-cut). */
+  turnId?: string;
 }
 
 export interface ToolArgsDeltaEvent extends BaseEvent {
@@ -141,8 +145,41 @@ export type ToolEvent =
 
 export type ToolEventOp = ToolEvent["op"];
 
-/** All wire events flowing server → client (UI patches + tool calls). */
-export type AgentWireEvent = UIEvent | ToolEvent;
+// ─── Reasoning / Thinking Events (server → client) ──────────────────────────
+
+export interface ReasoningStartEvent extends BaseEvent {
+  op: "reasoning.start";
+  /** Reasoning-segment id, shared across reasoning.* events for the same segment. */
+  id: string;
+  /** Optional turn correlation id. */
+  turnId?: string;
+}
+
+export interface ReasoningDeltaEvent extends BaseEvent {
+  op: "reasoning.delta";
+  /** Reasoning-segment id this delta belongs to. */
+  id: string;
+  /** Partial text to append to the segment. */
+  delta: string;
+}
+
+export interface ReasoningEndEvent extends BaseEvent {
+  op: "reasoning.end";
+  /** Reasoning-segment id being finalized. */
+  id: string;
+  /** Optional final token count. */
+  tokens?: number;
+}
+
+export type ReasoningEvent =
+  | ReasoningStartEvent
+  | ReasoningDeltaEvent
+  | ReasoningEndEvent;
+
+export type ReasoningEventOp = ReasoningEvent["op"];
+
+/** All wire events flowing server → client (UI patches + tool calls + reasoning). */
+export type AgentWireEvent = UIEvent | ToolEvent | ReasoningEvent;
 
 // ─── Action Events (user → agent) ───────────────────────────────────────────
 
