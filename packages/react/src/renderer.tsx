@@ -1,3 +1,5 @@
+"use client";
+
 import { Component, createElement, Fragment, type ReactNode } from "react";
 import type { UINode } from "@kibadist/agentui-protocol";
 import type { Registry } from "./registry.js";

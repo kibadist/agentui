@@ -1,3 +1,5 @@
+"use client";
+
 import { useSyncExternalStore } from "react";
 import { createAgentStore, type AgentStore } from "../store.js";
 import { createInitialAgentState, type AgentAction, type AgentState } from "../reducer.js";

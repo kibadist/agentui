@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useCallback, useState, useSyncExternalStore } from "react";
 import type { UIEvent } from "@kibadist/agentui-protocol";
 import { safeParseUIEvent } from "@kibadist/agentui-validate";

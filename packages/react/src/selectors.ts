@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useRef, useSyncExternalStore } from "react";
 import { useAgentStore } from "./agent-state-context.js";
 import type { AgentState } from "./reducer.js";

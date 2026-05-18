@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext, useCallback, type ReactNode } from "react";
 import type { ActionEvent } from "@kibadist/agentui-protocol";
 
