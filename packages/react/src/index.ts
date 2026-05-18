@@ -1,6 +1,35 @@
 export { createRegistry } from "./registry.js";
 export type { ComponentSpec, Registry } from "./registry.js";
 
+/**
+ * Wire protocol event types — re-exported from `@kibadist/agentui-protocol`
+ * so consumers can type `onEvent` callbacks and dispatch values without
+ * depending on the protocol package directly.
+ *
+ * @example
+ * useAgentStream({
+ *   url,
+ *   sessionId,
+ *   onEvent: (event: UIEvent) => {
+ *     switch (event.op) {
+ *       case "ui.append":   // event is UIAppendEvent
+ *       case "ui.replace":  // event is UIReplaceEvent
+ *       // ...
+ *     }
+ *   },
+ * });
+ */
+export type {
+  UIEvent,
+  UINode,
+  UIAppendEvent,
+  UIReplaceEvent,
+  UIRemoveEvent,
+  UIToastEvent,
+  UINavigateEvent,
+  UIResetEvent,
+} from "@kibadist/agentui-protocol";
+
 export { agentReducer, initialAgentState, createInitialAgentState } from "./reducer.js";
 export type { AgentState, AgentAction, AgentResetAction } from "./reducer.js";
 
