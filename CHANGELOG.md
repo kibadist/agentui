@@ -2,6 +2,28 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## 0.5.0
+
+### Added — `@kibadist/agentui-protocol`
+
+- **Tool-call wire events.** Four new server→client events: `tool.start`, `tool.args-delta`, `tool.result`, `tool.cancel`. New types: `ToolCallStartEvent`, `ToolArgsDeltaEvent`, `ToolCallResultEvent`, `ToolCallCancelEvent`, `ToolEvent` union, `ToolEventOp`, `AgentWireEvent` (= `UIEvent | ToolEvent`).
+
+### Added — `@kibadist/agentui-validate`
+
+- `toolEventSchema` and `agentWireEventSchema` (combined UI + tool discriminated union).
+- `safeParseAgentEvent`, `parseAgentEvent`, `isAgentEvent` — parsers for the combined wire union. `safeParseUIEvent` stays UI-only for back-compat.
+
+### Added — `@kibadist/agentui-react`
+
+- **Tool-call state slice on `AgentState`:** `toolCalls: Map<string, ToolCall>` and `toolCallsOrder: string[]`. Reducer handles the four new event types; `__reset__` and `ui.reset` clear them. Late `tool.result` (after `tool.cancel` or for an unknown id) is a silent no-op.
+- **Selector hooks:** `useToolCalls()` and `useToolCall(id)`. Re-render only when their slice changes — `useToolCall("t1")` stays stable when a `ui.toast` arrives.
+- **`<ToolCallStream render={(call) => ...} />`** — headless renderer that maps over `state.toolCallsOrder`. Host supplies the visual.
+- `useAgentStream` now parses tool events via `safeParseAgentEvent`. The hook's `onEvent` callback widens to `AgentWireEvent`; existing UI-only consumers are unaffected.
+
+### Behavior
+
+- Servers that don't emit tool events are unaffected. `AgentState` gains two new fields with empty defaults; existing reads of `nodes`/`toasts`/`navigate` behave identically.
+
 ## 0.4.0
 
 ### Added — `@kibadist/agentui-react`
