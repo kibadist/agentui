@@ -1,10 +1,12 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, cleanup } from "@testing-library/react";
-
-afterEach(cleanup);
 import type { UINode } from "@kibadist/agentui-protocol";
 import { AgentRenderer, createRegistry } from "../src/index.js";
 import type { AgentState } from "../src/index.js";
+
+// vitest is configured with `globals: false`, so RTL's auto-cleanup
+// doesn't wire itself up automatically. Do it explicitly.
+afterEach(cleanup);
 
 function makeNode(
   key: string,
@@ -120,6 +122,28 @@ describe("AgentRenderer — filter", () => {
     const ids = queryAllByTestId(/^box-/).map((el) => el.getAttribute("data-testid"));
     expect(ids).toEqual(["box-a", "box-c"]);
   });
+
+  it("rendered set is stable across rerenders when filter is referentially equal", () => {
+    const state = makeState([
+      makeNode("a", "test.box", { label: "a" }),
+      makeNode("b", "test.box", { label: "b" }),
+      makeNode("c", "test.box", { label: "c" }),
+    ]);
+    const stableFilter = (n: UINode) => n.key !== "b";
+
+    const { rerender, queryAllByTestId } = render(
+      <AgentRenderer state={state} registry={registry} filter={stableFilter} />,
+    );
+    const first = queryAllByTestId(/^box-/).map((el) => el.getAttribute("data-testid"));
+
+    rerender(
+      <AgentRenderer state={state} registry={registry} filter={stableFilter} />,
+    );
+    const second = queryAllByTestId(/^box-/).map((el) => el.getAttribute("data-testid"));
+
+    expect(second).toEqual(first);
+    expect(second).toEqual(["box-a", "box-c"]);
+  });
 });
 
 describe("AgentRenderer — hiddenTypes", () => {
@@ -199,6 +223,26 @@ describe("AgentRenderer — errorFallback", () => {
     const boxes = queryAllByTestId(/^box-/).map((el) => el.getAttribute("data-testid"));
     expect(boxes).toEqual(["box-a", "box-c"]);
     expect(queryByTestId("err-bad")?.textContent).toBe("boom-x");
+
+    errSpy.mockRestore();
+  });
+
+  it("without errorFallback, errors propagate (no boundary attached)", () => {
+    // Control case for the opt-in contract: when errorFallback is undefined,
+    // there must be NO internal boundary — the throw must reach the caller.
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    function Throwing() {
+      throw new Error("uncaught");
+    }
+    const localRegistry = createRegistry({
+      "test.throwing": { component: Throwing },
+    });
+    const state = makeState([makeNode("bad", "test.throwing")]);
+
+    expect(() =>
+      render(<AgentRenderer state={state} registry={localRegistry} />),
+    ).toThrow("uncaught");
 
     errSpy.mockRestore();
   });
