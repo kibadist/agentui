@@ -34,6 +34,9 @@ export function useAgentSelector<T>(
   return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 }
 
+/** Subscribe to `state.nodes`. Re-renders only when the nodes array reference changes. */
 export const useAgentNodes = () => useAgentSelector((s) => s.nodes);
+/** Subscribe to `state.toasts`. Re-renders only when the toasts array reference changes. */
 export const useAgentToasts = () => useAgentSelector((s) => s.toasts);
+/** Subscribe to the latest pending navigation intent (or null). Re-renders only when that slice changes. */
 export const useAgentNavigate = () => useAgentSelector((s) => s.navigate);

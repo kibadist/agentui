@@ -6,8 +6,14 @@ import { safeParseUIEvent } from "@kibadist/agentui-validate";
 import { createAgentStore, type AgentStore } from "./store.js";
 import type { AgentState } from "./reducer.js";
 
+/**
+ * The lifecycle state of the underlying `EventSource`: `idle` before the
+ * effect runs, `connecting` during the handshake, `open` after, `closed`
+ * when stopped, `error` on transport failure.
+ */
 export type StreamStatus = "idle" | "connecting" | "open" | "closed" | "error";
 
+/** Options for {@link useAgentStream}. */
 export interface UseAgentStreamOptions {
   /** SSE endpoint URL */
   url: string;
@@ -21,6 +27,7 @@ export interface UseAgentStreamOptions {
   enabled?: boolean;
 }
 
+/** What {@link useAgentStream} returns: state, status, and control methods. */
 export interface UseAgentStreamResult {
   state: AgentState;
   status: StreamStatus;
@@ -40,6 +47,11 @@ export interface UseAgentStreamResult {
   store: AgentStore;
 }
 
+/**
+ * Subscribe to an SSE-backed agent stream. Returns the reducer state, the
+ * connection status, and methods to close, reset, or dispatch — plus the
+ * underlying `store` for wiring `<AgentStateProvider>`.
+ */
 export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamResult {
   const { url, sessionId, onEvent, onInvalidEvent, enabled = true } = options;
 

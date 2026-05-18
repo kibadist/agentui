@@ -5,11 +5,17 @@ import type { AgentStore } from "./store.js";
 
 const AgentStoreContext = createContext<AgentStore | null>(null);
 
+/** Props for {@link AgentStateProvider}. */
 export interface AgentStateProviderProps {
   store: AgentStore;
   children: ReactNode;
 }
 
+/**
+ * Puts an `AgentStore` on context so selector hooks (`useAgentNodes`,
+ * `useAgentSelector`, etc.) can subscribe to it. Typically wired from
+ * `useAgentStream(...).store`.
+ */
 export function AgentStateProvider({ store, children }: AgentStateProviderProps) {
   return (
     <AgentStoreContext.Provider value={store}>{children}</AgentStoreContext.Provider>

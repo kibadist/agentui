@@ -1,5 +1,10 @@
 import { agentReducer, createInitialAgentState, type AgentAction, type AgentState } from "./reducer.js";
 
+/**
+ * A subscribable wrapper around `AgentState` driven by `agentReducer`.
+ * Wire into `<AgentStateProvider>` to power selector hooks
+ * (`useAgentNodes`, `useAgentSelector`, etc.).
+ */
 export interface AgentStore {
   getState(): AgentState;
   /** Subscribe to state changes. Returns an unsubscribe function. */
@@ -10,6 +15,7 @@ export interface AgentStore {
   reset(): void;
 }
 
+/** Build an `AgentStore`. Optionally seed with initial state. */
 export function createAgentStore(initial: AgentState = createInitialAgentState()): AgentStore {
   let state = initial;
   const listeners = new Set<() => void>();

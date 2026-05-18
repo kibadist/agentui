@@ -27,6 +27,10 @@ class NodeErrorBoundary extends Component<
   }
 }
 
+/**
+ * Props for {@link AgentRenderer}. Composition order is
+ * `slot → range → filter → hiddenTypes`. All optional props default to no-op.
+ */
 export interface AgentRendererProps {
   state: AgentState;
   registry: Registry;
@@ -57,6 +61,11 @@ export interface AgentRendererProps {
   nodeWrapper?: (node: UINode, children: ReactNode) => ReactNode;
 }
 
+/**
+ * Render the current `AgentState.nodes` through a whitelisted `Registry`.
+ * See {@link AgentRendererProps} for slicing, filtering, error containment,
+ * and per-node wrapping hooks.
+ */
 export function AgentRenderer({
   state,
   registry,

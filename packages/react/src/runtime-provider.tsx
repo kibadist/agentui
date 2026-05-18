@@ -6,6 +6,7 @@ import { AgentActionProvider } from "./action-context.js";
 import { useAgentStream, type StreamStatus } from "./use-agent-stream.js";
 import type { AgentState } from "./reducer.js";
 
+/** Props for {@link AgentRuntimeProvider}. */
 export interface AgentRuntimeProviderProps {
   /** SSE stream URL */
   url: string;
@@ -21,6 +22,12 @@ export interface AgentRuntimeProviderProps {
   }) => ReactNode;
 }
 
+/**
+ * Render-prop convenience wrapper: starts an SSE stream via
+ * {@link useAgentStream}, sets up an action POST endpoint, and exposes
+ * `{ state, status, close }` to children. For quick wiring; the v0.5
+ * `<AgentRoot>` lifecycle provider will subsume this surface.
+ */
 export function AgentRuntimeProvider({
   url,
   sessionId,

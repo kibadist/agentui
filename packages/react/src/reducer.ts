@@ -7,6 +7,7 @@ import type {
   UIToastEvent,
 } from "@kibadist/agentui-protocol";
 
+/** A transient notification queued by `ui.toast` events. */
 export interface Toast {
   id: string;
   level: "info" | "success" | "warning" | "error";
@@ -14,6 +15,12 @@ export interface Toast {
   ts: string;
 }
 
+/**
+ * The reducer's state shape. `nodes` is the ordered list of rendered UI nodes;
+ * `byKey` maps each node's key to its index for O(1) lookup; `toasts` is the
+ * queue of un-dismissed notifications; `navigate` is the latest pending
+ * navigation intent (or null).
+ */
 export interface AgentState {
   nodes: UINode[];
   byKey: Map<string, number>; // key → index in nodes[]
@@ -21,6 +28,10 @@ export interface AgentState {
   navigate: { href: string; replace?: boolean } | null;
 }
 
+/**
+ * Create a fresh empty `AgentState`. Returns a new `byKey` Map per call —
+ * safe to call multiple times without aliasing.
+ */
 export function createInitialAgentState(): AgentState {
   return {
     nodes: [],
@@ -45,6 +56,10 @@ export interface AgentResetAction {
   op: "__reset__";
 }
 
+/**
+ * Discriminated union over actions accepted by {@link agentReducer}: any
+ * `UIEvent` plus the synthetic `__reset__` action.
+ */
 export type AgentAction = UIEvent | AgentResetAction;
 
 function rebuildIndex(nodes: UINode[]): Map<string, number> {
@@ -95,6 +110,11 @@ function applyToast(state: AgentState, e: UIToastEvent): AgentState {
   return { ...state, toasts: toasts.length > MAX_TOASTS ? toasts.slice(-MAX_TOASTS) : toasts };
 }
 
+/**
+ * Pure reducer over `AgentState`. Returns the same state reference for no-op
+ * actions (e.g., `ui.replace` for an unknown key), which lets stores
+ * short-circuit listener notifications.
+ */
 export function agentReducer(state: AgentState, action: AgentAction): AgentState {
   switch (action.op) {
     case "ui.append":
