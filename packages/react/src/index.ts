@@ -4,6 +4,9 @@ export type { ComponentSpec, Registry } from "./registry.js";
 export { agentReducer, initialAgentState, createInitialAgentState } from "./reducer.js";
 export type { AgentState, AgentAction, AgentResetAction } from "./reducer.js";
 
+export { createAgentStore } from "./store.js";
+export type { AgentStore } from "./store.js";
+
 export { AgentRenderer } from "./renderer.js";
 export type { AgentRendererProps } from "./renderer.js";
 
