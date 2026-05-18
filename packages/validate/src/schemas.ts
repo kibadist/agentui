@@ -69,12 +69,17 @@ const uiNavigateSchema = baseEventSchema.extend({
   replace: z.boolean().optional(),
 });
 
+const uiResetSchema = baseEventSchema.extend({
+  op: z.literal("ui.reset"),
+});
+
 export const uiEventSchema = z.discriminatedUnion("op", [
   uiAppendSchema,
   uiReplaceSchema,
   uiRemoveSchema,
   uiToastSchema,
   uiNavigateSchema,
+  uiResetSchema,
 ]);
 
 // ─── Action Events ───────────────────────────────────────────────────────────

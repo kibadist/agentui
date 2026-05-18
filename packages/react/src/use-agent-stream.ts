@@ -18,7 +18,21 @@ export interface UseAgentStreamOptions {
   enabled?: boolean;
 }
 
-export function useAgentStream(options: UseAgentStreamOptions) {
+export interface UseAgentStreamResult {
+  state: AgentState;
+  status: StreamStatus;
+  /** Close the underlying EventSource (state is preserved). */
+  close: () => void;
+  /** Clear all UI state (nodes, toasts, navigate). Connection is unaffected. */
+  reset: () => void;
+  /**
+   * Inject a UIEvent into the reducer without going through the wire.
+   * Useful for optimistic updates, host-driven UI, and tests.
+   */
+  dispatch: (event: UIEvent) => void;
+}
+
+export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamResult {
   const { url, sessionId, onEvent, onInvalidEvent, enabled = true } = options;
   const [state, dispatch] = useReducer(agentReducer, initialAgentState);
   const [status, setStatus] = useState<StreamStatus>("idle");
@@ -84,5 +98,13 @@ export function useAgentStream(options: UseAgentStreamOptions) {
     setStatus("closed");
   }, []);
 
-  return { state, status, close };
+  const reset = useCallback(() => {
+    dispatch({ op: "__reset__" });
+  }, []);
+
+  const publicDispatch = useCallback((event: UIEvent) => {
+    dispatch(event);
+  }, []);
+
+  return { state, status, close, reset, dispatch: publicDispatch };
 }

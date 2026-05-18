@@ -42,7 +42,8 @@ export type UIPatchOp =
   | "ui.replace"
   | "ui.remove"
   | "ui.toast"
-  | "ui.navigate";
+  | "ui.navigate"
+  | "ui.reset";
 
 export interface UIAppendEvent extends BaseEvent {
   op: "ui.append";
@@ -80,12 +81,21 @@ export interface UINavigateEvent extends BaseEvent {
   replace?: boolean;
 }
 
+/**
+ * Clears all client-side UI state (nodes, toasts, pending navigate).
+ * Use to signal end-of-conversation, summarizer flush, or rollback.
+ */
+export interface UIResetEvent extends BaseEvent {
+  op: "ui.reset";
+}
+
 export type UIEvent =
   | UIAppendEvent
   | UIReplaceEvent
   | UIRemoveEvent
   | UIToastEvent
-  | UINavigateEvent;
+  | UINavigateEvent
+  | UIResetEvent;
 
 // ─── Action Events (user → agent) ───────────────────────────────────────────
 

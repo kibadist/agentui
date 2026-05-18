@@ -21,12 +21,26 @@ export interface AgentState {
   navigate: { href: string; replace?: boolean } | null;
 }
 
-export const initialAgentState: AgentState = {
-  nodes: [],
-  byKey: new Map(),
-  toasts: [],
-  navigate: null,
-};
+export function createInitialAgentState(): AgentState {
+  return {
+    nodes: [],
+    byKey: new Map(),
+    toasts: [],
+    navigate: null,
+  };
+}
+
+export const initialAgentState: AgentState = createInitialAgentState();
+
+/**
+ * Synthetic, client-only action used by `useAgentStream().reset()`.
+ * Not a wire protocol event — server-driven resets use `ui.reset`.
+ */
+export interface AgentResetAction {
+  op: "__reset__";
+}
+
+export type AgentAction = UIEvent | AgentResetAction;
 
 function rebuildIndex(nodes: UINode[]): Map<string, number> {
   const m = new Map<string, number>();
@@ -76,18 +90,21 @@ function applyToast(state: AgentState, e: UIToastEvent): AgentState {
   return { ...state, toasts: toasts.length > MAX_TOASTS ? toasts.slice(-MAX_TOASTS) : toasts };
 }
 
-export function agentReducer(state: AgentState, event: UIEvent): AgentState {
-  switch (event.op) {
+export function agentReducer(state: AgentState, action: AgentAction): AgentState {
+  switch (action.op) {
     case "ui.append":
-      return applyAppend(state, event);
+      return applyAppend(state, action);
     case "ui.replace":
-      return applyReplace(state, event);
+      return applyReplace(state, action);
     case "ui.remove":
-      return applyRemove(state, event);
+      return applyRemove(state, action);
     case "ui.toast":
-      return applyToast(state, event);
+      return applyToast(state, action);
     case "ui.navigate":
-      return { ...state, navigate: { href: event.href, replace: event.replace } };
+      return { ...state, navigate: { href: action.href, replace: action.replace } };
+    case "ui.reset":
+    case "__reset__":
+      return createInitialAgentState();
     default:
       return state;
   }
