@@ -17,6 +17,8 @@ export interface AgentRendererProps {
    * post-slot (pre-range) array — stable as `range` changes.
    */
   filter?: (node: UINode, index: number) => boolean;
+  /** Convenience exclusion set. Applied last; cannot be bypassed by `filter`. */
+  hiddenTypes?: ReadonlyArray<string>;
 }
 
 export function AgentRenderer({
@@ -26,15 +28,20 @@ export function AgentRenderer({
   fallback,
   range,
   filter,
+  hiddenTypes,
 }: AgentRendererProps) {
   const slotted = slot ? state.nodes.filter((n) => n.slot === slot) : state.nodes;
   const start = Math.max(0, range?.start ?? 0);
   const end = Math.min(slotted.length, range?.end ?? slotted.length);
 
+  const hiddenSet =
+    hiddenTypes && hiddenTypes.length > 0 ? new Set(hiddenTypes) : null;
+
   const rendered: ReactNode[] = [];
   for (let i = start; i < end; i++) {
     const node = slotted[i];
     if (filter && !filter(node, i)) continue;
+    if (hiddenSet && hiddenSet.has(node.type)) continue;
     const el = renderOne(node, registry, fallback);
     if (el === null) continue;
     rendered.push(createElement(Fragment, { key: node.key }, el));

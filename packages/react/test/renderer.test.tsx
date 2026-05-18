@@ -121,3 +121,48 @@ describe("AgentRenderer — filter", () => {
     expect(ids).toEqual(["box-a", "box-c"]);
   });
 });
+
+describe("AgentRenderer — hiddenTypes", () => {
+  it("excludes nodes whose type is in the set", () => {
+    const localRegistry = createRegistry({
+      "test.box": { component: Box },
+      "panel-patch": { component: () => <span data-testid="patch">patch</span> },
+    });
+    const state = makeState([
+      makeNode("a", "test.box", { label: "a" }),
+      makeNode("p", "panel-patch"),
+      makeNode("c", "test.box", { label: "c" }),
+    ]);
+    const { queryAllByTestId } = render(
+      <AgentRenderer
+        state={state}
+        registry={localRegistry}
+        hiddenTypes={["panel-patch"]}
+      />,
+    );
+    const boxes = queryAllByTestId(/^box-/).map((el) => el.getAttribute("data-testid"));
+    expect(boxes).toEqual(["box-a", "box-c"]);
+    expect(queryAllByTestId("patch")).toHaveLength(0);
+  });
+
+  it("hiddenTypes is applied AFTER filter (hard exclusion)", () => {
+    const localRegistry = createRegistry({
+      "test.box": { component: Box },
+      "panel-patch": { component: () => <span data-testid="patch">patch</span> },
+    });
+    const state = makeState([
+      makeNode("a", "test.box", { label: "a" }),
+      makeNode("p", "panel-patch"),
+    ]);
+    // Filter tries to re-admit panel-patch; hiddenTypes still excludes it.
+    const { queryAllByTestId } = render(
+      <AgentRenderer
+        state={state}
+        registry={localRegistry}
+        filter={() => true}
+        hiddenTypes={["panel-patch"]}
+      />,
+    );
+    expect(queryAllByTestId("patch")).toHaveLength(0);
+  });
+});
