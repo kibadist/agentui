@@ -30,6 +30,11 @@ export function createInitialAgentState(): AgentState {
   };
 }
 
+/**
+ * @deprecated Use {@link createInitialAgentState} instead. This constant is a
+ * single shared object whose `byKey` Map is reused across resets, which can
+ * cause state aliasing between sessions. Kept for back-compat with v0.2.x.
+ */
 export const initialAgentState: AgentState = createInitialAgentState();
 
 /**
@@ -104,6 +109,12 @@ export function agentReducer(state: AgentState, action: AgentAction): AgentState
       return { ...state, navigate: { href: action.href, replace: action.replace } };
     case "ui.reset":
     case "__reset__":
+      // Stance: reset is always a full clear — nodes, toasts, AND navigate.
+      // Pending navigates are stale intent ("go to /foo" issued by a prior
+      // turn); after a reset we're starting over and shouldn't fire them.
+      // Stance: always return a fresh reference, even when state is already
+      // empty. Simpler invariant for consumers (no equality check needed),
+      // and the cost is one allocation per reset call.
       return createInitialAgentState();
     default:
       return state;

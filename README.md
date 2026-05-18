@@ -132,6 +132,17 @@ User interactions are sent back as `ActionEvent`s — the agent can react to the
 | `replace` | Swap props on an existing component |
 | `remove` | Delete a component by ID |
 | `toast` | Show a transient notification |
+| `navigate` | Trigger client-side navigation |
+| `reset` | Clear all UI state (end-of-conversation, summarizer flush) |
+
+### Resetting a conversation
+
+```tsx
+const { state, reset } = useAgentStream({ url, sessionId });
+useEffect(() => { reset(); }, [sessionId, reset]); // fresh state on session change
+```
+
+Migrating from a hand-rolled `agentNodeOffset` workaround: delete the offset bookkeeping and call `reset()` instead — the reducer now hands back fresh `nodes` / `byKey` references on every reset, so there's nothing to subtract from.
 
 ---
 

@@ -5,6 +5,8 @@
     "build": "pnpm -r --filter './packages/*' run build",
     "clean": "pnpm -r run clean",
     "typecheck": "pnpm -r run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "pnpm build && pnpm --filter @kibadist/agentui-example-nest-api dev & pnpm --filter @kibadist/agentui-example-next-app dev",
     "dev:api": "pnpm --filter @kibadist/agentui-example-nest-api dev",
     "dev:app": "pnpm --filter @kibadist/agentui-example-next-app dev",
@@ -12,7 +14,14 @@
     "release:dry": "./scripts/bump-and-publish.sh patch --dry-run"
   },
   "devDependencies": {
-    "typescript": "^5.7.3"
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "jsdom": "^25.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
   },
   "packageManager": "pnpm@9.15.4",
   "engines": {
