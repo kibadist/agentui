@@ -12,6 +12,7 @@ All notable changes to `@kibadist/agentui-*` packages.
 - **Granular state selectors.** New hooks: `useAgentNodes()`, `useAgentToasts()`, `useAgentNavigate()`, `useAgentSelector(selector, eq?)`. Consumers using these stop re-rendering on unrelated state changes (e.g., `useAgentNodes()` consumers don't re-render on `ui.toast` / `ui.navigate`).
 - **`AgentStateProvider`** context + the `useAgentStream().store` field. Wire as `<AgentStateProvider store={stream.store}>` to enable selector hooks below it.
 - **`createAgentStore()`** factory exported for tests and non-stream-driven hosts. Implements `{ getState, subscribe, send, reset }` — a minimal `Subscribable<AgentState>`.
+- **Testing subpath** (`@kibadist/agentui-react/testing`). Ships `createMockAgentStream(initial?)` (hook + control surface: `push`, `dispatchInternal`, `setStatus`, `reset`, `state` getter, `history`), pure `pushEvent` / `replayConversation` reducer helpers, and `createTestRegistry` (a Registry that stubs missing types with marker components for assertions). No runtime cost — vitest stays a devDep.
 
 ### Behavior
 
