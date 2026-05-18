@@ -5,6 +5,11 @@ import type {
   UIReplaceEvent,
   UIRemoveEvent,
   UIToastEvent,
+  ToolEvent,
+  ToolCallStartEvent,
+  ToolArgsDeltaEvent,
+  ToolCallResultEvent,
+  ToolCallCancelEvent,
 } from "@kibadist/agentui-protocol";
 
 /** A transient notification queued by `ui.toast` events. */
@@ -15,21 +20,46 @@ export interface Toast {
   ts: string;
 }
 
+/** A streaming or completed tool call captured from the wire. */
+export interface ToolCall {
+  id: string;
+  name: string;
+  /**
+   * Accumulated JSON text from `tool.args-delta` events. If `tool.start`
+   * supplied initial `args`, this starts as `JSON.stringify(args)`.
+   */
+  argsRaw: string;
+  /**
+   * Best-effort parsed args. `undefined` while the buffered text is not
+   * yet valid JSON; populated once it parses.
+   */
+  args: unknown | undefined;
+  status: "pending" | "ok" | "error" | "cancelled";
+  result?: unknown;
+  error?: { message: string; code?: string };
+  startedAt: string;
+  endedAt?: string;
+  durationMs?: number;
+}
+
 /**
  * The reducer's state shape. `nodes` is the ordered list of rendered UI nodes;
  * `byKey` maps each node's key to its index for O(1) lookup; `toasts` is the
  * queue of un-dismissed notifications; `navigate` is the latest pending
- * navigation intent (or null).
+ * navigation intent (or null); `toolCalls` is the streaming/completed tool
+ * calls keyed by their wire id; `toolCallsOrder` is the stable insertion order.
  */
 export interface AgentState {
   nodes: UINode[];
   byKey: Map<string, number>; // key → index in nodes[]
   toasts: Toast[];
   navigate: { href: string; replace?: boolean } | null;
+  toolCalls: Map<string, ToolCall>;
+  toolCallsOrder: string[];
 }
 
 /**
- * Create a fresh empty `AgentState`. Returns a new `byKey` Map per call —
+ * Create a fresh empty `AgentState`. Returns new Maps/arrays per call —
  * safe to call multiple times without aliasing.
  */
 export function createInitialAgentState(): AgentState {
@@ -38,6 +68,8 @@ export function createInitialAgentState(): AgentState {
     byKey: new Map(),
     toasts: [],
     navigate: null,
+    toolCalls: new Map(),
+    toolCallsOrder: [],
   };
 }
 
@@ -58,9 +90,9 @@ export interface AgentResetAction {
 
 /**
  * Discriminated union over actions accepted by {@link agentReducer}: any
- * `UIEvent` plus the synthetic `__reset__` action.
+ * `UIEvent`, any `ToolEvent`, plus the synthetic `__reset__` action.
  */
-export type AgentAction = UIEvent | AgentResetAction;
+export type AgentAction = UIEvent | ToolEvent | AgentResetAction;
 
 function rebuildIndex(nodes: UINode[]): Map<string, number> {
   const m = new Map<string, number>();
@@ -106,14 +138,72 @@ const MAX_TOASTS = 50;
 function applyToast(state: AgentState, e: UIToastEvent): AgentState {
   const toast: Toast = { id: e.id, level: e.level, message: e.message, ts: e.ts };
   const toasts = [...state.toasts, toast];
-  // Drop oldest toasts when limit exceeded
   return { ...state, toasts: toasts.length > MAX_TOASTS ? toasts.slice(-MAX_TOASTS) : toasts };
 }
 
+function applyToolStart(state: AgentState, e: ToolCallStartEvent): AgentState {
+  if (state.toolCalls.has(e.id)) return state; // duplicate id — silent no-op
+  const argsRaw = e.args !== undefined ? JSON.stringify(e.args) : "";
+  const newCall: ToolCall = {
+    id: e.id,
+    name: e.name,
+    argsRaw,
+    args: e.args,
+    status: "pending",
+    startedAt: e.ts,
+  };
+  const toolCalls = new Map(state.toolCalls);
+  toolCalls.set(e.id, newCall);
+  return {
+    ...state,
+    toolCalls,
+    toolCallsOrder: [...state.toolCallsOrder, e.id],
+  };
+}
+
+function applyToolArgsDelta(state: AgentState, e: ToolArgsDeltaEvent): AgentState {
+  const existing = state.toolCalls.get(e.id);
+  if (!existing || existing.status !== "pending") return state;
+  const argsRaw = existing.argsRaw + e.delta;
+  let args: unknown | undefined;
+  try {
+    args = JSON.parse(argsRaw);
+  } catch {
+    args = undefined;
+  }
+  const toolCalls = new Map(state.toolCalls);
+  toolCalls.set(e.id, { ...existing, argsRaw, args });
+  return { ...state, toolCalls };
+}
+
+function applyToolResult(state: AgentState, e: ToolCallResultEvent): AgentState {
+  const existing = state.toolCalls.get(e.id);
+  if (!existing || existing.status !== "pending") return state;
+  const toolCalls = new Map(state.toolCalls);
+  toolCalls.set(e.id, {
+    ...existing,
+    status: e.status,
+    result: e.result,
+    error: e.error,
+    endedAt: e.ts,
+    durationMs: e.durationMs,
+  });
+  return { ...state, toolCalls };
+}
+
+function applyToolCancel(state: AgentState, e: ToolCallCancelEvent): AgentState {
+  const existing = state.toolCalls.get(e.id);
+  if (!existing || existing.status !== "pending") return state;
+  const toolCalls = new Map(state.toolCalls);
+  toolCalls.set(e.id, { ...existing, status: "cancelled", endedAt: e.ts });
+  return { ...state, toolCalls };
+}
+
 /**
- * Pure reducer over `AgentState`. Returns the same state reference for no-op
- * actions (e.g., `ui.replace` for an unknown key), which lets stores
- * short-circuit listener notifications.
+ * Pure reducer over `AgentState`. Returns the same state reference for
+ * no-op actions (e.g., `ui.replace` for an unknown key, `tool.result` for
+ * a cancelled or unknown tool call), which lets stores short-circuit
+ * listener notifications.
  */
 export function agentReducer(state: AgentState, action: AgentAction): AgentState {
   switch (action.op) {
@@ -129,13 +219,20 @@ export function agentReducer(state: AgentState, action: AgentAction): AgentState
       return { ...state, navigate: { href: action.href, replace: action.replace } };
     case "ui.reset":
     case "__reset__":
-      // Stance: reset is always a full clear — nodes, toasts, AND navigate.
-      // Pending navigates are stale intent ("go to /foo" issued by a prior
-      // turn); after a reset we're starting over and shouldn't fire them.
-      // Stance: always return a fresh reference, even when state is already
-      // empty. Simpler invariant for consumers (no equality check needed),
-      // and the cost is one allocation per reset call.
+      // Stance: reset is always a full clear — nodes, toasts, navigate, AND
+      // tool calls. Pending navigates are stale intent ("go to /foo" issued
+      // by a prior turn); after a reset we're starting over and shouldn't
+      // fire them. Always return a fresh reference, even when state is
+      // already empty.
       return createInitialAgentState();
+    case "tool.start":
+      return applyToolStart(state, action);
+    case "tool.args-delta":
+      return applyToolArgsDelta(state, action);
+    case "tool.result":
+      return applyToolResult(state, action);
+    case "tool.cancel":
+      return applyToolCancel(state, action);
     default:
       return state;
   }
