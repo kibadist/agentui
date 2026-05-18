@@ -1,7 +1,29 @@
-import { createElement, Fragment, type ReactNode } from "react";
+import { Component, createElement, Fragment, type ReactNode } from "react";
 import type { UINode } from "@kibadist/agentui-protocol";
 import type { Registry } from "./registry.js";
 import type { AgentState } from "./reducer.js";
+
+interface NodeErrorBoundaryProps {
+  fallback: (err: Error) => ReactNode;
+  children?: ReactNode;
+}
+interface NodeErrorBoundaryState {
+  error: Error | null;
+}
+class NodeErrorBoundary extends Component<
+  NodeErrorBoundaryProps,
+  NodeErrorBoundaryState
+> {
+  state: NodeErrorBoundaryState = { error: null };
+  static getDerivedStateFromError(error: Error): NodeErrorBoundaryState {
+    return { error };
+  }
+  render(): ReactNode {
+    return this.state.error
+      ? this.props.fallback(this.state.error)
+      : this.props.children;
+  }
+}
 
 export interface AgentRendererProps {
   state: AgentState;
@@ -19,6 +41,12 @@ export interface AgentRendererProps {
   filter?: (node: UINode, index: number) => boolean;
   /** Convenience exclusion set. Applied last; cannot be bypassed by `filter`. */
   hiddenTypes?: ReadonlyArray<string>;
+  /**
+   * If set, each rendered node is wrapped in an internal error boundary
+   * that invokes this on a render error. If omitted, errors propagate
+   * (current behavior — no boundary, no reconciliation overhead).
+   */
+  errorFallback?: (err: Error, node: UINode) => ReactNode;
 }
 
 export function AgentRenderer({
@@ -29,6 +57,7 @@ export function AgentRenderer({
   range,
   filter,
   hiddenTypes,
+  errorFallback,
 }: AgentRendererProps) {
   const slotted = slot ? state.nodes.filter((n) => n.slot === slot) : state.nodes;
   const start = Math.max(0, range?.start ?? 0);
@@ -44,7 +73,15 @@ export function AgentRenderer({
     if (hiddenSet && hiddenSet.has(node.type)) continue;
     const el = renderOne(node, registry, fallback);
     if (el === null) continue;
-    rendered.push(createElement(Fragment, { key: node.key }, el));
+    const guarded = errorFallback
+      ? createElement(
+          NodeErrorBoundary,
+          { fallback: (err: Error) => errorFallback(err, node) },
+          el,
+        )
+      : el;
+
+    rendered.push(createElement(Fragment, { key: node.key }, guarded));
   }
 
   return <>{rendered}</>;

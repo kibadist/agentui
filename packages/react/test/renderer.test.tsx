@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 
 afterEach(cleanup);
@@ -164,5 +164,42 @@ describe("AgentRenderer — hiddenTypes", () => {
       />,
     );
     expect(queryAllByTestId("patch")).toHaveLength(0);
+  });
+});
+
+describe("AgentRenderer — errorFallback", () => {
+  it("renders the fallback when a component throws; siblings unaffected", () => {
+    // Silence the React error log that fires when an EB catches.
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    function Throwing({ label }: { label: string }) {
+      throw new Error(`boom-${label}`);
+    }
+    const localRegistry = createRegistry({
+      "test.box": { component: Box },
+      "test.throwing": { component: Throwing },
+    });
+
+    const state = makeState([
+      makeNode("a", "test.box", { label: "a" }),
+      makeNode("bad", "test.throwing", { label: "x" }),
+      makeNode("c", "test.box", { label: "c" }),
+    ]);
+
+    const { queryAllByTestId, queryByTestId } = render(
+      <AgentRenderer
+        state={state}
+        registry={localRegistry}
+        errorFallback={(err, node) => (
+          <span data-testid={`err-${node.key}`}>{err.message}</span>
+        )}
+      />,
+    );
+
+    const boxes = queryAllByTestId(/^box-/).map((el) => el.getAttribute("data-testid"));
+    expect(boxes).toEqual(["box-a", "box-c"]);
+    expect(queryByTestId("err-bad")?.textContent).toBe("boom-x");
+
+    errSpy.mockRestore();
   });
 });
