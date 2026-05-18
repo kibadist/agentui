@@ -7,6 +7,9 @@ export type { AgentState, AgentAction, AgentResetAction } from "./reducer.js";
 export { createAgentStore } from "./store.js";
 export type { AgentStore } from "./store.js";
 
+export { AgentStateProvider } from "./agent-state-context.js";
+export type { AgentStateProviderProps } from "./agent-state-context.js";
+
 export { AgentRenderer } from "./renderer.js";
 export type { AgentRendererProps } from "./renderer.js";
 
