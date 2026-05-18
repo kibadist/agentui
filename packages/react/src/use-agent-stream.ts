@@ -1,7 +1,8 @@
-import { useEffect, useRef, useReducer, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, useSyncExternalStore } from "react";
 import type { UIEvent } from "@kibadist/agentui-protocol";
 import { safeParseUIEvent } from "@kibadist/agentui-validate";
-import { agentReducer, initialAgentState, type AgentState } from "./reducer.js";
+import { createAgentStore, type AgentStore } from "./store.js";
+import type { AgentState } from "./reducer.js";
 
 export type StreamStatus = "idle" | "connecting" | "open" | "closed" | "error";
 
@@ -30,11 +31,24 @@ export interface UseAgentStreamResult {
    * Useful for optimistic updates, host-driven UI, and tests.
    */
   dispatch: (event: UIEvent) => void;
+  /**
+   * The subscribable store backing this stream. Wire into
+   * `<AgentStateProvider store={...}>` to enable selector hooks below it.
+   */
+  store: AgentStore;
 }
 
 export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamResult {
   const { url, sessionId, onEvent, onInvalidEvent, enabled = true } = options;
-  const [state, dispatch] = useReducer(agentReducer, initialAgentState);
+
+  // Store is created once per hook instance and stays stable across renders.
+  const storeRef = useRef<AgentStore | null>(null);
+  if (storeRef.current === null) {
+    storeRef.current = createAgentStore();
+  }
+  const store = storeRef.current;
+
+  const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
   const [status, setStatus] = useState<StreamStatus>("idle");
   const esRef = useRef<EventSource | null>(null);
 
@@ -69,7 +83,7 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
 
       const parsed = safeParseUIEvent(raw);
       if (parsed.ok) {
-        dispatch(parsed.value);
+        store.send(parsed.value);
         onEventRef.current?.(parsed.value);
       } else {
         onInvalidRef.current?.(raw, parsed.error);
@@ -77,7 +91,6 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
     };
 
     es.onerror = () => {
-      // EventSource auto-reconnects; surface status
       if (es.readyState === EventSource.CLOSED) {
         setStatus("closed");
       } else {
@@ -90,7 +103,7 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
       esRef.current = null;
       setStatus("closed");
     };
-  }, [url, sessionId, enabled]);
+  }, [url, sessionId, enabled, store]);
 
   const close = useCallback(() => {
     esRef.current?.close();
@@ -99,12 +112,15 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
   }, []);
 
   const reset = useCallback(() => {
-    dispatch({ op: "__reset__" });
-  }, []);
+    store.reset();
+  }, [store]);
 
-  const publicDispatch = useCallback((event: UIEvent) => {
-    dispatch(event);
-  }, []);
+  const publicDispatch = useCallback(
+    (event: UIEvent) => {
+      store.send(event);
+    },
+    [store],
+  );
 
-  return { state, status, close, reset, dispatch: publicDispatch };
+  return { state, status, close, reset, dispatch: publicDispatch, store };
 }
