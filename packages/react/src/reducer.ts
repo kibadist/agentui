@@ -11,6 +11,9 @@ import type {
   ToolCallResultEvent,
   ToolCallCancelEvent,
   ReasoningEvent,
+  ReasoningStartEvent,
+  ReasoningDeltaEvent,
+  ReasoningEndEvent,
 } from "@kibadist/agentui-protocol";
 
 /** A transient notification queued by `ui.toast` events. */
@@ -21,10 +24,26 @@ export interface Toast {
   ts: string;
 }
 
+/** A streaming or completed reasoning segment captured from the wire. */
+export interface ReasoningSegment {
+  id: string;
+  /** Accumulated text from `reasoning.delta` events. */
+  text: string;
+  status: "streaming" | "done";
+  startedAt: string;
+  endedAt?: string;
+  /** Optional final token count from `reasoning.end`. */
+  tokens?: number;
+  /** Optional turn correlation, set by `reasoning.start`. */
+  turnId?: string;
+}
+
 /** A streaming or completed tool call captured from the wire. */
 export interface ToolCall {
   id: string;
   name: string;
+  /** Optional turn correlation, captured from `tool.start`. */
+  turnId?: string;
   /**
    * Accumulated JSON text from `tool.args-delta` events. If `tool.start`
    * supplied initial `args`, this starts as `JSON.stringify(args)`.
@@ -57,6 +76,8 @@ export interface AgentState {
   navigate: { href: string; replace?: boolean } | null;
   toolCalls: Map<string, ToolCall>;
   toolCallsOrder: string[];
+  reasoning: Map<string, ReasoningSegment>;
+  reasoningOrder: string[];
 }
 
 /**
@@ -71,6 +92,8 @@ export function createInitialAgentState(): AgentState {
     navigate: null,
     toolCalls: new Map(),
     toolCallsOrder: [],
+    reasoning: new Map(),
+    reasoningOrder: [],
   };
 }
 
@@ -153,6 +176,7 @@ function applyToolStart(state: AgentState, e: ToolCallStartEvent): AgentState {
     args: e.args,
     status: "pending",
     startedAt: e.ts,
+    turnId: e.turnId,
   };
   const toolCalls = new Map(state.toolCalls);
   toolCalls.set(e.id, newCall);
@@ -201,6 +225,45 @@ function applyToolCancel(state: AgentState, e: ToolCallCancelEvent): AgentState 
   return { ...state, toolCalls };
 }
 
+function applyReasoningStart(state: AgentState, e: ReasoningStartEvent): AgentState {
+  if (state.reasoning.has(e.id)) return state; // duplicate id — silent no-op
+  const seg: ReasoningSegment = {
+    id: e.id,
+    text: "",
+    status: "streaming",
+    startedAt: e.ts,
+    turnId: e.turnId,
+  };
+  const reasoning = new Map(state.reasoning);
+  reasoning.set(e.id, seg);
+  return {
+    ...state,
+    reasoning,
+    reasoningOrder: [...state.reasoningOrder, e.id],
+  };
+}
+
+function applyReasoningDelta(state: AgentState, e: ReasoningDeltaEvent): AgentState {
+  const existing = state.reasoning.get(e.id);
+  if (!existing || existing.status !== "streaming") return state;
+  const reasoning = new Map(state.reasoning);
+  reasoning.set(e.id, { ...existing, text: existing.text + e.delta });
+  return { ...state, reasoning };
+}
+
+function applyReasoningEnd(state: AgentState, e: ReasoningEndEvent): AgentState {
+  const existing = state.reasoning.get(e.id);
+  if (!existing || existing.status !== "streaming") return state;
+  const reasoning = new Map(state.reasoning);
+  reasoning.set(e.id, {
+    ...existing,
+    status: "done",
+    endedAt: e.ts,
+    tokens: e.tokens,
+  });
+  return { ...state, reasoning };
+}
+
 /**
  * Pure reducer over `AgentState`. Returns the same state reference for
  * no-op actions (e.g., `ui.replace` for an unknown key, `tool.result` for
@@ -235,6 +298,12 @@ export function agentReducer(state: AgentState, action: AgentAction): AgentState
       return applyToolResult(state, action);
     case "tool.cancel":
       return applyToolCancel(state, action);
+    case "reasoning.start":
+      return applyReasoningStart(state, action);
+    case "reasoning.delta":
+      return applyReasoningDelta(state, action);
+    case "reasoning.end":
+      return applyReasoningEnd(state, action);
     default:
       return state;
   }
