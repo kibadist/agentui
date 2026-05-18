@@ -2,6 +2,20 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## 0.4.0
+
+### Added — `@kibadist/agentui-react`
+
+- `AgentRenderer` gains five additive props: `range`, `filter`, `hiddenTypes`, `errorFallback`, `nodeWrapper`. Composition order is `slot → range → filter → hiddenTypes`. All five default to no-op — callers that don't pass them see identical behavior to `0.3.x`.
+  - Replaces hand-rolled `SlicedAgentRenderer` wrappers, per-node `<ErrorBoundary>` wrapping, and ad-hoc `hiddenTypes` filtering in consumer code.
+- `AgentRendererProps` type is now exported from `@kibadist/agentui-react` for consumers composing on top of the renderer.
+
+### Behavior
+
+- The internal error boundary only attaches when `errorFallback` is set — no reconciliation overhead for consumers who don't use it.
+- `nodeWrapper` is the outermost layer per node; it stays mounted even when the inner component throws and is caught by `errorFallback` (lets `<AnimatePresence>`-style wrappers track keys cleanly).
+- Per-node React keys are now placed on an invisible `React.Fragment` for consistency across all wrapper combinations. No DOM impact.
+
 ## 0.3.1
 
 ### Fixed
