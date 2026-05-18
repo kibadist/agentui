@@ -1,5 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { render } from "@testing-library/react";
+import { describe, it, expect, afterEach } from "vitest";
+import { render, cleanup } from "@testing-library/react";
+
+afterEach(cleanup);
 import type { UINode } from "@kibadist/agentui-protocol";
 import { AgentRenderer, createRegistry } from "../src/index.js";
 import type { AgentState } from "../src/index.js";
@@ -38,5 +40,40 @@ describe("AgentRenderer — baseline (no new props)", () => {
     );
     const ids = getAllByTestId(/^box-/).map((el) => el.getAttribute("data-testid"));
     expect(ids).toEqual(["box-a", "box-b", "box-c"]);
+  });
+});
+
+describe("AgentRenderer — range", () => {
+  it("renders only indices in the half-open [start, end) window", () => {
+    const state = makeState(
+      Array.from({ length: 7 }, (_, i) => makeNode(`k${i}`, "test.box", { label: `${i}` })),
+    );
+    const { queryAllByTestId } = render(
+      <AgentRenderer state={state} registry={registry} range={{ start: 2, end: 5 }} />,
+    );
+    const ids = queryAllByTestId(/^box-/).map((el) => el.getAttribute("data-testid"));
+    expect(ids).toEqual(["box-2", "box-3", "box-4"]);
+  });
+
+  it("clamps out-of-bounds range to the array length", () => {
+    const state = makeState([
+      makeNode("a", "test.box", { label: "a" }),
+      makeNode("b", "test.box", { label: "b" }),
+    ]);
+    const { queryAllByTestId } = render(
+      <AgentRenderer state={state} registry={registry} range={{ start: -3, end: 999 }} />,
+    );
+    expect(queryAllByTestId(/^box-/)).toHaveLength(2);
+  });
+
+  it("treats start >= end as empty", () => {
+    const state = makeState([
+      makeNode("a", "test.box", { label: "a" }),
+      makeNode("b", "test.box", { label: "b" }),
+    ]);
+    const { queryAllByTestId } = render(
+      <AgentRenderer state={state} registry={registry} range={{ start: 1, end: 1 }} />,
+    );
+    expect(queryAllByTestId(/^box-/)).toHaveLength(0);
   });
 });
