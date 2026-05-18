@@ -222,6 +222,15 @@ expect(mock.history).toHaveLength(1);
 
 Also exposes `pushEvent(state, event)` and `replayConversation(events)` for pure reducer-level tests, and `createTestRegistry(map)` (a Registry that renders `<span data-testid="test-marker-{type}">` for unregistered types).
 
+### Dropping the protocol direct dep
+
+Wire-event types (`UIEvent`, `UIAppendEvent`, etc.) are re-exported from `@kibadist/agentui-react` as of 0.4.0. Consumers that previously dual-depended on `@kibadist/agentui-protocol` just to type `onEvent` can drop it:
+
+```diff
+- import type { UIEvent } from "@kibadist/agentui-protocol";
++ import type { UIEvent } from "@kibadist/agentui-react";
+```
+
 ---
 
 ## Example Prompts

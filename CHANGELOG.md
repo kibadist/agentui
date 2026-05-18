@@ -13,6 +13,14 @@ All notable changes to `@kibadist/agentui-*` packages.
 - **`AgentStateProvider`** context + the `useAgentStream().store` field. Wire as `<AgentStateProvider store={stream.store}>` to enable selector hooks below it.
 - **`createAgentStore()`** factory exported for tests and non-stream-driven hosts. Implements `{ getState, subscribe, send, reset }` — a minimal `Subscribable<AgentState>`.
 - **Testing subpath** (`@kibadist/agentui-react/testing`). Ships `createMockAgentStream(initial?)` (hook + control surface: `push`, `dispatchInternal`, `setStatus`, `reset`, `state` getter, `history`), pure `pushEvent` / `replayConversation` reducer helpers, and `createTestRegistry` (a Registry that stubs missing types with marker components for assertions). No runtime cost — vitest stays a devDep.
+- **Wire protocol event types** are now re-exported from `@kibadist/agentui-react`: `UIEvent`, `UINode`, `UIAppendEvent`, `UIReplaceEvent`, `UIRemoveEvent`, `UIToastEvent`, `UINavigateEvent`, `UIResetEvent`. Consumers that depended on `@kibadist/agentui-protocol` only to type `onEvent` callbacks can drop that direct dependency:
+
+  ```diff
+  - import type { UIEvent } from "@kibadist/agentui-protocol";
+  + import type { UIEvent } from "@kibadist/agentui-react";
+  ```
+- **`"use client"` directives** added to every module that uses React hooks or contexts (renderer, runtime-provider, action-context, agent-state-context, selectors, use-agent-stream, testing/mock-agent-stream). Removes the need for consumer-side shim files in Next.js App Router projects.
+- **JSDoc on every public export** — interfaces, types, factory functions, hooks, components. Renderer prop semantics, hook return shapes, and event-op narrowing each get inline docs.
 
 ### Behavior
 
