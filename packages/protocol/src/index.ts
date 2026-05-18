@@ -97,6 +97,53 @@ export type UIEvent =
   | UINavigateEvent
   | UIResetEvent;
 
+// ─── Tool-Call Events (server → client) ─────────────────────────────────────
+
+export interface ToolCallStartEvent extends BaseEvent {
+  op: "tool.start";
+  /** Tool-call id, unique per session. Shared across tool.* events for the same call. */
+  id: string;
+  /** Tool name, e.g. "search_clients". */
+  name: string;
+  /** Optional initial args; may also stream via tool.args-delta. */
+  args?: unknown;
+}
+
+export interface ToolArgsDeltaEvent extends BaseEvent {
+  op: "tool.args-delta";
+  /** Tool-call id this delta belongs to. */
+  id: string;
+  /** Partial JSON text to append to argsRaw. */
+  delta: string;
+}
+
+export interface ToolCallResultEvent extends BaseEvent {
+  op: "tool.result";
+  /** Tool-call id this result belongs to. */
+  id: string;
+  status: "ok" | "error";
+  result?: unknown;
+  error?: { message: string; code?: string };
+  durationMs?: number;
+}
+
+export interface ToolCallCancelEvent extends BaseEvent {
+  op: "tool.cancel";
+  /** Tool-call id being cancelled. */
+  id: string;
+}
+
+export type ToolEvent =
+  | ToolCallStartEvent
+  | ToolArgsDeltaEvent
+  | ToolCallResultEvent
+  | ToolCallCancelEvent;
+
+export type ToolEventOp = ToolEvent["op"];
+
+/** All wire events flowing server → client (UI patches + tool calls). */
+export type AgentWireEvent = UIEvent | ToolEvent;
+
 // ─── Action Events (user → agent) ───────────────────────────────────────────
 
 export interface ActionBase extends BaseEvent {

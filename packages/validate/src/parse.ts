@@ -1,6 +1,6 @@
 import type { ZodError } from "zod";
-import type { UIEvent, ActionEvent } from "@kibadist/agentui-protocol";
-import { uiEventSchema, actionEventSchema } from "./schemas.js";
+import type { UIEvent, ActionEvent, AgentWireEvent } from "@kibadist/agentui-protocol";
+import { uiEventSchema, actionEventSchema, agentWireEventSchema } from "./schemas.js";
 
 /** Validation error that preserves Zod issue details */
 export class ValidationError extends Error {
@@ -51,4 +51,24 @@ export function safeParseActionEvent(
 
 export function isActionEvent(x: unknown): x is ActionEvent {
   return actionEventSchema.safeParse(x).success;
+}
+
+// ─── AgentWireEvent parsers (UI + Tool events combined) ─────────────────────
+
+export function parseAgentEvent(raw: unknown): AgentWireEvent {
+  return agentWireEventSchema.parse(raw) as AgentWireEvent;
+}
+
+export function safeParseAgentEvent(
+  raw: unknown,
+): { ok: true; value: AgentWireEvent } | { ok: false; error: ValidationError } {
+  const result = agentWireEventSchema.safeParse(raw);
+  if (result.success) {
+    return { ok: true, value: result.data as AgentWireEvent };
+  }
+  return { ok: false, error: new ValidationError(result.error) };
+}
+
+export function isAgentEvent(x: unknown): x is AgentWireEvent {
+  return agentWireEventSchema.safeParse(x).success;
 }
