@@ -10,6 +10,13 @@ export type { AgentStore } from "./store.js";
 export { AgentStateProvider } from "./agent-state-context.js";
 export type { AgentStateProviderProps } from "./agent-state-context.js";
 
+export {
+  useAgentSelector,
+  useAgentNodes,
+  useAgentToasts,
+  useAgentNavigate,
+} from "./selectors.js";
+
 export { AgentRenderer } from "./renderer.js";
 export type { AgentRendererProps } from "./renderer.js";
 
