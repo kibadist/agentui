@@ -47,6 +47,12 @@ export interface AgentRendererProps {
    * (current behavior — no boundary, no reconciliation overhead).
    */
   errorFallback?: (err: Error, node: UINode) => ReactNode;
+  /**
+   * Wraps each rendered node. Useful for `<AnimatePresence>`-style mount/unmount
+   * tracking. The wrapper is the outermost layer per node (sits outside the
+   * error boundary), so it remains mounted even if the inner component throws.
+   */
+  nodeWrapper?: (node: UINode, children: ReactNode) => ReactNode;
 }
 
 export function AgentRenderer({
@@ -58,6 +64,7 @@ export function AgentRenderer({
   filter,
   hiddenTypes,
   errorFallback,
+  nodeWrapper,
 }: AgentRendererProps) {
   const slotted = slot ? state.nodes.filter((n) => n.slot === slot) : state.nodes;
   const start = Math.max(0, range?.start ?? 0);
@@ -81,7 +88,9 @@ export function AgentRenderer({
         )
       : el;
 
-    rendered.push(createElement(Fragment, { key: node.key }, guarded));
+    const wrapped = nodeWrapper ? nodeWrapper(node, guarded) : guarded;
+
+    rendered.push(createElement(Fragment, { key: node.key }, wrapped));
   }
 
   return <>{rendered}</>;

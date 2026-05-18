@@ -203,3 +203,58 @@ describe("AgentRenderer — errorFallback", () => {
     errSpy.mockRestore();
   });
 });
+
+describe("AgentRenderer — nodeWrapper", () => {
+  it("wraps every rendered node with the supplied wrapper", () => {
+    const state = makeState([
+      makeNode("a", "test.box", { label: "a" }),
+      makeNode("b", "test.box", { label: "b" }),
+    ]);
+    const calls: Array<string> = [];
+    const { container, queryAllByTestId } = render(
+      <AgentRenderer
+        state={state}
+        registry={registry}
+        nodeWrapper={(node, children) => {
+          calls.push(node.key);
+          return <div data-wrap={node.key}>{children}</div>;
+        }}
+      />,
+    );
+    expect(calls).toEqual(["a", "b"]);
+    expect(container.querySelector('[data-wrap="a"] [data-testid="box-a"]')).not.toBeNull();
+    expect(container.querySelector('[data-wrap="b"] [data-testid="box-b"]')).not.toBeNull();
+    expect(queryAllByTestId(/^box-/)).toHaveLength(2);
+  });
+
+  it("composition: nodeWrapper sits OUTSIDE the error boundary", () => {
+    // When the inner component throws, the wrapper element should still be
+    // in the DOM (so framer-motion / AnimatePresence keys stay tracked) and
+    // the fallback content should sit inside that wrapper.
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    function Throwing() {
+      throw new Error("inner-boom");
+    }
+    const localRegistry = createRegistry({
+      "test.throwing": { component: Throwing },
+    });
+
+    const state = makeState([makeNode("bad", "test.throwing")]);
+
+    const { container } = render(
+      <AgentRenderer
+        state={state}
+        registry={localRegistry}
+        errorFallback={(err) => <span data-testid="fallback">{err.message}</span>}
+        nodeWrapper={(node, children) => <div data-wrap={node.key}>{children}</div>}
+      />,
+    );
+
+    const wrap = container.querySelector('[data-wrap="bad"]');
+    expect(wrap).not.toBeNull();
+    expect(wrap?.querySelector('[data-testid="fallback"]')?.textContent).toBe("inner-boom");
+
+    errSpy.mockRestore();
+  });
+});
