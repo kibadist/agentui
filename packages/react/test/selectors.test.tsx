@@ -161,7 +161,18 @@ describe("useAgentSelector — change detection", () => {
       store.send(removeEvent("a"));   // shifts foo from 2 → 1
     });
     expect(probe.lastValue()).toBe(1);
-    expect(probe.renders()).toBe(rendersAfterAppends + 1);
+    const rendersAfterShift = probe.renders();
+    expect(rendersAfterShift).toBe(rendersAfterAppends + 1);
+
+    // Sharpest boundary: append + remove of an UNRELATED key.
+    // foo's index stays 1 throughout, so the cached selector value matches
+    // and the consumer does not re-render even though the store notifies twice.
+    act(() => {
+      store.send(appendEvent("zzz"));
+      store.send(removeEvent("zzz"));
+    });
+    expect(probe.lastValue()).toBe(1);
+    expect(probe.renders()).toBe(rendersAfterShift);
   });
 
   it("custom eq is honored (fresh object literal stays stable)", () => {

@@ -103,6 +103,9 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
       esRef.current = null;
       setStatus("closed");
     };
+    // `store` is stable for the life of this hook instance (created once in
+    // storeRef above); it's in the dep array only to satisfy the exhaustive-deps
+    // rule and will never actually cause this effect to re-run.
   }, [url, sessionId, enabled, store]);
 
   const close = useCallback(() => {
