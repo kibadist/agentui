@@ -2,6 +2,14 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## 0.8.0 — 2026-05-19
+
+### Added
+- `ui.replace` events now accept an alternate `patch` payload (RFC 6902 JSON Patch). Lets agents emit minimal deltas for deeply nested nodes. Both `props` and `patch` forms remain valid and can interleave for the same key. ([DET-151](https://linear.app/detailing-app/issue/DET-151))
+- New `applyPatch` helper exported from `@kibadist/agentui-react` for in-process patch application.
+- New `onPatchFailure` option on `createAgentStore`; `useAgentStream` wires it into `onInvalidEvent` with a `patch apply failed: …` message.
+- New protocol exports: `JsonPatch`, `JsonPatchOp`, `JsonPointer`, `UIReplacePropsEvent`, `UIReplacePatchEvent`.
+
 ## 0.7.1
 
 ### Added

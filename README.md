@@ -135,6 +135,27 @@ User interactions are sent back as `ActionEvent`s — the agent can react to the
 | `navigate` | Trigger client-side navigation |
 | `reset` | Clear all UI state (end-of-conversation, summarizer flush) |
 
+### JSON Patch payloads for `ui.replace`
+
+For deeply nested or large nodes, agents can emit minimal [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902) JSON Patch deltas instead of full props snapshots:
+
+````ts
+{
+  op: "ui.replace",
+  key: "todo-list",
+  patch: [
+    { op: "replace", path: "/items/3/status", value: "done" }
+  ]
+}
+````
+
+- Paths target the node's `props` object (root `""` means props itself).
+- All ops are supported: `add`, `remove`, `replace`, `move`, `copy`, `test`.
+- All-or-nothing: any failing op aborts the patch and surfaces via `onInvalidEvent`.
+- Use full `props` for simple updates; use `patch` when the diff is small relative to the node.
+
+Both forms can interleave for the same key.
+
 ### Resetting a conversation
 
 ```tsx
