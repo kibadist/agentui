@@ -242,6 +242,15 @@ export interface SessionMetaEvent extends BaseEvent {
   conversationId: string;
 }
 
+export interface SessionInitEvent extends BaseEvent {
+  op: "session.init";
+  capabilities: {
+    nodeTypes: string[];
+    actions: string[];
+    permissions: string[];
+  };
+}
+
 /**
  * All wire events the reducer accepts. Most flow server → client (UI patches,
  * tool calls, reasoning, session metadata), but optimistic events are
@@ -253,7 +262,8 @@ export type AgentWireEvent =
   | ToolEvent
   | ReasoningEvent
   | OptimisticEvent
-  | SessionMetaEvent;
+  | SessionMetaEvent
+  | SessionInitEvent;
 
 // ─── Action Events (user → agent) ───────────────────────────────────────────
 
