@@ -253,8 +253,10 @@ export async function emitToolCall<R>(
 Lifecycle:
 1. emit `tool.start` with `{ id: toolId, name, args }`
 2. `await runner()`
-3. emit `tool.result` with `{ id: toolId, result }` and return the result
-4. If runner throws: emit `tool.cancel` with `{ id: toolId, reason: err.message }` and re-throw.
+3. emit `tool.result` with `{ id: toolId, status: "ok", result }` and return the result
+4. If runner throws: emit `tool.result` with `{ id: toolId, status: "error", error: { message: err.message } }` and re-throw.
+
+(`tool.cancel` is reserved for user-initiated cancellation, not runner failure.)
 
 ## 9. Tests
 
@@ -284,8 +286,8 @@ Lifecycle:
 
 ### 9.5 Helpers (`helpers.test.ts`)
 - `emitTextStream`: pass async generator yielding `["hello", " ", "world"]`; assert 3 `reasoning.delta` events between `reasoning.start` and `reasoning.end`.
-- `emitToolCall` happy: runner resolves `42`, assert `tool.start` then `tool.result` with `result: 42`; function returns `42`.
-- `emitToolCall` error: runner throws `Error("boom")`, assert `tool.start` then `tool.cancel` with `reason: "boom"`; function re-throws.
+- `emitToolCall` happy: runner resolves `42`, assert `tool.start` then `tool.result` with `status: "ok"`, `result: 42`; function returns `42`.
+- `emitToolCall` error: runner throws `Error("boom")`, assert `tool.start` then `tool.result` with `status: "error"`, `error.message: "boom"`; function re-throws.
 
 ### 9.6 Type tests (`types.test-d.ts`)
 - `stream.emit({ op: "unknown" })` → `expectTypeOf<typeof emit>().parameter(0).not.toMatchTypeOf<{op: "unknown"}>()`.
