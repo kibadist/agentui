@@ -14,6 +14,7 @@ import type {
   ReasoningStartEvent,
   ReasoningDeltaEvent,
   ReasoningEndEvent,
+  OptimisticEvent,
 } from "@kibadist/agentui-protocol";
 
 /** A transient notification queued by `ui.toast` events. */
@@ -117,7 +118,7 @@ export interface AgentResetAction {
  * `UIEvent`, any `ToolEvent`, any `ReasoningEvent` (pass-through, no state
  * change), plus the synthetic `__reset__` action.
  */
-export type AgentAction = UIEvent | ToolEvent | ReasoningEvent | AgentResetAction;
+export type AgentAction = UIEvent | ToolEvent | ReasoningEvent | OptimisticEvent | AgentResetAction;
 
 function rebuildIndex(nodes: UINode[]): Map<string, number> {
   const m = new Map<string, number>();

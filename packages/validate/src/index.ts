@@ -4,6 +4,7 @@ export {
   actionEventSchema,
   toolEventSchema,
   reasoningEventSchema,
+  optimisticEventSchema,
   agentWireEventSchema,
 } from "./schemas.js";
 export {

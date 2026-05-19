@@ -151,6 +151,32 @@ export const reasoningEventSchema = z.discriminatedUnion("op", [
   reasoningEndSchema,
 ]);
 
+// ─── Optimistic Events ──────────────────────────────────────────────────────
+
+const optimisticApplySchema = baseEventSchema.extend({
+  op: z.literal("optimistic.apply"),
+  entityKey: z.string().min(1).max(256),
+  patch: z.record(z.string(), z.any()),
+  originId: z.string().min(1).max(256),
+  ttlMs: z.number().int().positive().max(24 * 60 * 60 * 1000).optional(),
+});
+
+const optimisticConfirmSchema = baseEventSchema.extend({
+  op: z.literal("optimistic.confirm"),
+  originId: z.string().min(1).max(256),
+});
+
+const optimisticRollbackSchema = baseEventSchema.extend({
+  op: z.literal("optimistic.rollback"),
+  originId: z.string().min(1).max(256),
+});
+
+export const optimisticEventSchema = z.discriminatedUnion("op", [
+  optimisticApplySchema,
+  optimisticConfirmSchema,
+  optimisticRollbackSchema,
+]);
+
 export const agentWireEventSchema = z.discriminatedUnion("op", [
   uiAppendSchema,
   uiReplaceSchema,
@@ -165,6 +191,9 @@ export const agentWireEventSchema = z.discriminatedUnion("op", [
   reasoningStartSchema,
   reasoningDeltaSchema,
   reasoningEndSchema,
+  optimisticApplySchema,
+  optimisticConfirmSchema,
+  optimisticRollbackSchema,
 ]);
 
 // ─── Action Events ───────────────────────────────────────────────────────────

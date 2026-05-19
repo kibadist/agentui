@@ -178,8 +178,41 @@ export type ReasoningEvent =
 
 export type ReasoningEventOp = ReasoningEvent["op"];
 
-/** All wire events flowing server → client (UI patches + tool calls + reasoning). */
-export type AgentWireEvent = UIEvent | ToolEvent | ReasoningEvent;
+// ─── Optimistic Events (server-emittable AND client-dispatchable) ───────────
+
+export interface OptimisticApplyEvent extends BaseEvent {
+  op: "optimistic.apply";
+  /** Host-defined entity identifier, e.g. "quote:q-123". */
+  entityKey: string;
+  /** Partial entity state to overlay. */
+  patch: Record<string, unknown>;
+  /** Unique id for THIS optimistic application — used by confirm/rollback. */
+  originId: string;
+  /** Optional TTL hint; hosts implement rollback timing themselves. */
+  ttlMs?: number;
+}
+
+export interface OptimisticConfirmEvent extends BaseEvent {
+  op: "optimistic.confirm";
+  /** originId of the application to confirm. */
+  originId: string;
+}
+
+export interface OptimisticRollbackEvent extends BaseEvent {
+  op: "optimistic.rollback";
+  /** originId of the application to roll back. */
+  originId: string;
+}
+
+export type OptimisticEvent =
+  | OptimisticApplyEvent
+  | OptimisticConfirmEvent
+  | OptimisticRollbackEvent;
+
+export type OptimisticEventOp = OptimisticEvent["op"];
+
+/** All wire events flowing server → client (UI patches + tool calls + reasoning + optimistic). */
+export type AgentWireEvent = UIEvent | ToolEvent | ReasoningEvent | OptimisticEvent;
 
 // ─── Action Events (user → agent) ───────────────────────────────────────────
 
