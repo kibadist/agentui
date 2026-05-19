@@ -23,7 +23,9 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prepublishOnly": "pnpm run build",
     "build": "tsc",
@@ -34,6 +36,7 @@
     "@kibadist/agentui-protocol": "workspace:^"
   },
   "devDependencies": {
+    "@types/node": "^25.9.1",
     "typescript": "^5.7.3"
   }
 }
