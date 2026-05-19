@@ -269,11 +269,67 @@ function matchPartialNumber(s: string): number {
 }
 
 // ─── streamingJsonParse (Task 2) ─────────────────────────────────────────────
-// Placeholder: filled in Task 2.
+
 export async function* streamingJsonParse<T = unknown>(
   source: AsyncIterable<string> | ReadableStream<Uint8Array>,
 ): AsyncIterable<Partial<T>> {
-  // To be implemented in Task 2.
-  yield* [] as unknown as AsyncIterable<Partial<T>>;
-  void source;
+  let buffer = "";
+  let lastJson: string | undefined;
+
+  const asAsyncIterable = isReadableStream(source)
+    ? readableStreamToAsyncIterable(source)
+    : (source as AsyncIterable<string>);
+
+  for await (const chunk of asAsyncIterable) {
+    if (!chunk) continue;
+    buffer += chunk;
+    const parsed = parsePartialJson<T>(buffer);
+    if (parsed === undefined) continue;
+    const json = JSON.stringify(parsed);
+    if (json === lastJson) continue;
+    // Only yield when the result is at least as informative as the last yield.
+    // Require strictly increasing JSON length so that repair artifacts (e.g. `{}`
+    // produced when a key is started but has no value yet) are suppressed until
+    // a truly richer parse arrives.
+    if (lastJson === undefined) {
+      // First emission: skip trivially-empty containers that carry no real info.
+      if (!hasContent(parsed)) continue;
+    } else if (json.length <= lastJson.length) {
+      continue;
+    }
+    lastJson = json;
+    yield parsed;
+  }
+}
+
+/** Returns true if the parsed value carries meaningful content (not an empty container). */
+function hasContent(v: unknown): boolean {
+  if (v === null || v === undefined) return false;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === "object") return Object.keys(v as object).length > 0;
+  return true; // primitive (string, number, boolean)
+}
+
+function isReadableStream(x: unknown): x is ReadableStream<Uint8Array> {
+  return typeof x === "object" && x !== null && typeof (x as ReadableStream).getReader === "function";
+}
+
+async function* readableStreamToAsyncIterable(
+  stream: ReadableStream<Uint8Array>,
+): AsyncIterable<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        const tail = decoder.decode();
+        if (tail) yield tail;
+        return;
+      }
+      yield decoder.decode(value, { stream: true });
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }

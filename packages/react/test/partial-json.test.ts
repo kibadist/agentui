@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parsePartialJson } from "../src/partial-json.js";
+import { parsePartialJson, streamingJsonParse } from "../src/partial-json.js";
 
 describe("parsePartialJson — fast path", () => {
   it("parses complete JSON unchanged", () => {
@@ -83,5 +83,53 @@ describe("parsePartialJson — type narrowing", () => {
       const n: number = result.count;
       void n;
     }
+  });
+});
+
+async function collect<T>(iter: AsyncIterable<T>): Promise<T[]> {
+  const out: T[] = [];
+  for await (const v of iter) out.push(v);
+  return out;
+}
+
+async function* fromChunks(chunks: string[]): AsyncIterable<string> {
+  for (const c of chunks) yield c;
+}
+
+describe("streamingJsonParse", () => {
+  it("yields progressively richer partials from string chunks", async () => {
+    const chunks = ['{"a":', '1,', '"b":2}'];
+    const out = await collect(streamingJsonParse(fromChunks(chunks)));
+    expect(out).toEqual([{ a: 1 }, { a: 1, b: 2 }]);
+  });
+
+  it("does not yield duplicate identical partials", async () => {
+    const chunks = ['{"a":1', "", "  ", "}"];
+    const out = await collect(streamingJsonParse(fromChunks(chunks)));
+    expect(out).toEqual([{ a: 1 }]);
+  });
+
+  it("decodes a ReadableStream<Uint8Array> source", async () => {
+    const enc = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(enc.encode('{"x":'));
+        controller.enqueue(enc.encode('"hello"'));
+        controller.enqueue(enc.encode("}"));
+        controller.close();
+      },
+    });
+    const out = await collect(streamingJsonParse<{ x: string }>(stream));
+    expect(out.at(-1)).toEqual({ x: "hello" });
+  });
+
+  it("yields nothing for input that never becomes parseable", async () => {
+    const out = await collect(streamingJsonParse(fromChunks(["nope", "still", "bad"])));
+    expect(out).toEqual([]);
+  });
+
+  it("survives mid-stream truncation without throwing", async () => {
+    const out = await collect(streamingJsonParse(fromChunks(['{"a":1,', '"b":'])));
+    expect(out).toEqual([{ a: 1 }]);
   });
 });
