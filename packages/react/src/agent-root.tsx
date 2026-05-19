@@ -48,7 +48,13 @@ export function AgentRoot({
   children,
 }: AgentRootProps) {
   const endpoint = normalizeEndpoint(endpointProp);
-  const doFetch = fetchProp ?? globalThis.fetch.bind(globalThis);
+  // Memoize doFetch so the configValue identity is stable across renders
+  // when no custom fetchProp is passed. Without this, globalThis.fetch.bind(...)
+  // creates a fresh function each render and thrashes context consumers.
+  const doFetch = useMemo(
+    () => fetchProp ?? globalThis.fetch.bind(globalThis),
+    [fetchProp],
+  );
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
