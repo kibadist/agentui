@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useSyncExternalStore } from "react";
 import { useAgentStore } from "./agent-state-context.js";
-import type { AgentState, ToolCall } from "./reducer.js";
+import type { AgentState, ToolCall, ReasoningSegment } from "./reducer.js";
 
 const UNSET: unique symbol = Symbol("agentui:unset");
 
@@ -62,4 +62,32 @@ export function useToolCalls(): ToolCall[] {
 /** Subscribe to a single tool call by id. Re-renders only when that specific call's fields change. */
 export function useToolCall(id: string): ToolCall | undefined {
   return useAgentSelector((s) => s.toolCalls.get(id));
+}
+
+/** Subscribe to all reasoning segments in insertion order. Re-renders only when the reasoning slice changes. */
+export function useReasoning(): ReasoningSegment[] {
+  return useAgentSelector(
+    (s) => {
+      const arr: ReasoningSegment[] = [];
+      for (const id of s.reasoningOrder) {
+        const seg = s.reasoning.get(id);
+        if (seg) arr.push(seg);
+      }
+      return arr;
+    },
+    (a, b) => a.length === b.length && a.every((seg, i) => seg === b[i]),
+  );
+}
+
+/**
+ * Subscribe to the most recently started reasoning segment (streaming or done).
+ * During a streaming segment, returns the in-progress one; after `reasoning.end`
+ * it still returns that segment until a new `reasoning.start` flips the latest.
+ */
+export function useLatestReasoning(): ReasoningSegment | undefined {
+  return useAgentSelector((s) => {
+    const order = s.reasoningOrder;
+    if (order.length === 0) return undefined;
+    return s.reasoning.get(order[order.length - 1]);
+  });
 }

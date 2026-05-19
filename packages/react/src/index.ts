@@ -33,10 +33,14 @@ export type {
   ToolArgsDeltaEvent,
   ToolCallResultEvent,
   ToolCallCancelEvent,
+  ReasoningEvent,
+  ReasoningStartEvent,
+  ReasoningDeltaEvent,
+  ReasoningEndEvent,
 } from "@kibadist/agentui-protocol";
 
 export { agentReducer, initialAgentState, createInitialAgentState } from "./reducer.js";
-export type { AgentState, AgentAction, AgentResetAction, ToolCall, Toast } from "./reducer.js";
+export type { AgentState, AgentAction, AgentResetAction, ToolCall, ReasoningSegment, Toast } from "./reducer.js";
 
 export { createAgentStore } from "./store.js";
 export type { AgentStore } from "./store.js";
@@ -51,6 +55,8 @@ export {
   useAgentNavigate,
   useToolCalls,
   useToolCall,
+  useReasoning,
+  useLatestReasoning,
 } from "./selectors.js";
 
 export { AgentRenderer } from "./renderer.js";
