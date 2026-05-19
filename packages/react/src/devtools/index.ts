@@ -4,3 +4,6 @@ export type {
   UseAgentDevToolsRecorderOptions,
   UseAgentDevToolsRecorderResult,
 } from "./recorder.js";
+
+export { AgentDevTools } from "./agent-devtools.js";
+export type { AgentDevToolsProps } from "./agent-devtools.js";
