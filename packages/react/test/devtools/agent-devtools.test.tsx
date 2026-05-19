@@ -89,4 +89,44 @@ describe("<AgentDevTools />", () => {
     expect(() => render(<AgentDevTools enabled />)).toThrow(/agentui/i);
     consoleErrorSpy.mockRestore();
   });
+
+  it("scrubbing to a past event shows the state tree at that event", async () => {
+    const store = createAgentStore();
+    render(
+      <Wrap store={store}>
+        <AgentDevTools enabled />
+      </Wrap>,
+    );
+
+    act(() => {
+      store.send(append("a"));
+      store.send(append("b"));
+      store.send(append("c"));
+    });
+    await act(async () => {
+      await new Promise((r) => requestAnimationFrame(() => r(undefined)));
+    });
+
+    // Live: state tree shows 3 nodes.
+    expect(screen.getByText(/nodes \(3\)/i)).toBeTruthy();
+
+    // Move scrubber back to position 1 (state after event 0 only).
+    const slider = screen.getByRole("slider") as HTMLInputElement;
+    fireEvent.change(slider, { target: { value: "1" } });
+
+    // State tree should now show only 1 node.
+    expect(screen.getByText(/nodes \(1\)/i)).toBeTruthy();
+  });
+
+  it("close button hides the panel", () => {
+    const store = createAgentStore();
+    const { container } = render(
+      <Wrap store={store}>
+        <AgentDevTools enabled />
+      </Wrap>,
+    );
+    const closeBtn = screen.getByRole("button", { name: /close/i });
+    fireEvent.click(closeBtn);
+    expect(container.firstChild).toBeNull();
+  });
 });

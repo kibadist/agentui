@@ -19,8 +19,6 @@ export interface AgentDevToolsProps {
   position?: "br" | "bl" | "tr" | "tl";
   /** Ring buffer cap. Default 500. */
   maxEvents?: number;
-  /** Scope to a specific `<AgentRoot id="…">`. Omit to use the nearest. */
-  id?: string;
 }
 
 function resolveEnabled(explicit: boolean | undefined): boolean {
@@ -70,7 +68,7 @@ const headerStyle: CSSProperties = {
   borderBottom: "1px solid #2a2a30",
   fontSize: 12,
   userSelect: "none",
-  cursor: "move",
+  cursor: "default",
 };
 
 const bodyStyle: CSSProperties = {
@@ -108,6 +106,7 @@ function computeLatencyStats(events: ReturnType<typeof useAgentDevToolsRecorder>
 }
 
 function AgentDevToolsImpl({ position = "br", maxEvents = 500 }: AgentDevToolsProps) {
+  const [hidden, setHidden] = useState(false);
   const { events } = useAgentDevToolsRecorder({ maxEvents });
   const [collapsed, setCollapsed] = useState(false);
   const [scrubPos, setScrubPos] = useState(0);
@@ -142,6 +141,8 @@ function AgentDevToolsImpl({ position = "br", maxEvents = 500 }: AgentDevToolsPr
 
   const { mean, p99 } = computeLatencyStats(events);
 
+  if (hidden) return null;
+
   return (
     <div style={{ ...panelStyle, ...corner(position) }}>
       <div style={headerStyle}>
@@ -157,6 +158,14 @@ function AgentDevToolsImpl({ position = "br", maxEvents = 500 }: AgentDevToolsPr
             style={chromeButton}
           >
             {collapsed ? "▸" : "▾"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setHidden(true)}
+            aria-label="Close"
+            style={chromeButton}
+          >
+            ×
           </button>
         </div>
       </div>

@@ -11,6 +11,11 @@ All notable changes to `@kibadist/agentui-*` packages.
   - The panel doesn't rewind the host app — scrubbing only changes what the panel renders.
 - **`AgentStore.subscribeAction(listener)`** — public API addition. Notifies listeners with `(action, nextState, dispatchMs)` after every non-no-op dispatch. Hosts that implement custom stores (rare) must add the method.
 - `replayConversation` parameter type widened from `UIEvent[]` to `AgentAction[]` (excluding the internal `__reset__`). Existing call sites are unaffected.
+- `replayConversation`, `pushEvent`, and the `ReplayableEvent` type are now re-exported from `@kibadist/agentui-react/devtools` for parity with `/testing`.
+
+### Notes
+
+This release ships the recording engine, scrubber, event log, and state tree. The following polish items from the design spec are deferred to a follow-up ticket: drag-and-drop positioning + `localStorage` persistence of the panel position, list virtualization for the event log, a histogram-tooltip on the latency indicator, and multi-`<AgentRoot>` scoping via an `id` prop on `<AgentDevTools />`. The `id` prop has been removed from the public API for v0.6.2 to avoid shipping a silent no-op.
 
 ## 0.6.0
 

@@ -6,6 +6,7 @@ import {
   useAgentStream,
   AgentRenderer,
   AgentActionProvider,
+  AgentStateProvider,
   type ActionSender,
 } from "@kibadist/agentui-react";
 import { AgentDevTools } from "@kibadist/agentui-react/devtools";
@@ -52,7 +53,7 @@ function AgentSession({ sessionId }: { sessionId: string }) {
   const sseUrl = `${API_BASE}/agent/${sessionId}/stream`;
   const actionUrl = `${API_BASE}/agent/${sessionId}/action`;
 
-  const { state, status } = useAgentStream({ url: sseUrl, sessionId });
+  const { state, status, store } = useAgentStream({ url: sseUrl, sessionId });
 
   const sender: ActionSender = useCallback(
     async (action: ActionEvent) => {
@@ -83,16 +84,17 @@ function AgentSession({ sessionId }: { sessionId: string }) {
   );
 
   return (
-    <AgentActionProvider sender={sender}>
-      <div
-        style={{
-          maxWidth: 800,
-          margin: "0 auto",
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
+    <AgentStateProvider store={store}>
+      <AgentActionProvider sender={sender}>
+        <div
+          style={{
+            maxWidth: 800,
+            margin: "0 auto",
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
         {/* Header */}
         <header
           style={{
@@ -145,7 +147,8 @@ function AgentSession({ sessionId }: { sessionId: string }) {
 
         {/* DevTools */}
         <AgentDevTools />
-      </div>
-    </AgentActionProvider>
+        </div>
+      </AgentActionProvider>
+    </AgentStateProvider>
   );
 }
