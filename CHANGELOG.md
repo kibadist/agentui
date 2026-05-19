@@ -7,11 +7,14 @@ All notable changes to `@kibadist/agentui-*` packages.
 ### Added — `@kibadist/agentui-protocol`
 
 - **Tool-call wire events.** Four new server→client events: `tool.start`, `tool.args-delta`, `tool.result`, `tool.cancel`. New types: `ToolCallStartEvent`, `ToolArgsDeltaEvent`, `ToolCallResultEvent`, `ToolCallCancelEvent`, `ToolEvent` union, `ToolEventOp`, `AgentWireEvent` (= `UIEvent | ToolEvent`).
+- **Reasoning/thinking wire events.** Three new server→client events: `reasoning.start`, `reasoning.delta`, `reasoning.end`. New types: `ReasoningStartEvent`, `ReasoningDeltaEvent`, `ReasoningEndEvent`, `ReasoningEvent` union, `ReasoningEventOp`. `AgentWireEvent` widens to `UIEvent | ToolEvent | ReasoningEvent`.
+- **Optional `turnId: string`** on `tool.start`, `reasoning.start`, and `ui.append` events. Hosts that ignore it see no change; per-turn grouping selectors will ship in v0.6 if there's demand.
 
 ### Added — `@kibadist/agentui-validate`
 
 - `toolEventSchema` and `agentWireEventSchema` (combined UI + tool discriminated union).
 - `safeParseAgentEvent`, `parseAgentEvent`, `isAgentEvent` — parsers for the combined wire union. `safeParseUIEvent` stays UI-only for back-compat.
+- `reasoningEventSchema` is exported. `agentWireEventSchema` widens to include the three reasoning event schemas plus optional `turnId` on `tool.start` and `ui.append` schemas.
 
 ### Added — `@kibadist/agentui-react`
 
@@ -19,6 +22,9 @@ All notable changes to `@kibadist/agentui-*` packages.
 - **Selector hooks:** `useToolCalls()` and `useToolCall(id)`. Re-render only when their slice changes — `useToolCall("t1")` stays stable when a `ui.toast` arrives.
 - **`<ToolCallStream render={(call) => ...} />`** — headless renderer that maps over `state.toolCallsOrder`. Host supplies the visual.
 - `useAgentStream` now parses tool events via `safeParseAgentEvent`. The hook's `onEvent` callback widens to `AgentWireEvent`; existing UI-only consumers are unaffected.
+- **Reasoning state slice on `AgentState`:** `reasoning: Map<string, ReasoningSegment>` and `reasoningOrder: string[]`. Reducer handles the three new event types; `__reset__` and `ui.reset` clear them.
+- **Selector hooks:** `useReasoning()` returns all segments in insertion order; `useLatestReasoning()` returns the most recently started segment (streaming or done).
+- **`turnId` capture:** `ReasoningSegment.turnId` is set from `reasoning.start`. `ToolCall.turnId` is set from `tool.start`. The renderer does not yet thread `turnId` from `ui.append` into `UINode.meta` — consumers needing it read via `onEvent`.
 
 ### Behavior
 
