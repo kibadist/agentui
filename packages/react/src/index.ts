@@ -128,3 +128,14 @@ export type { HistoryMessage, UseAgentHistoryResult } from "./use-agent-history.
 export { useCapabilities } from "./use-capabilities.js";
 export type { UseCapabilitiesResult } from "./use-capabilities.js";
 export type { Capabilities } from "./reducer.js";
+
+export { useWorkflow } from "./use-workflow.js";
+export type { UseWorkflowResult } from "./use-workflow.js";
+export type { Workflow, WorkflowStep, WorkflowStatus, WorkflowStepStatus } from "./reducer.js";
+export type {
+  WorkflowEvent,
+  WorkflowStartEvent,
+  WorkflowAdvanceEvent,
+  WorkflowCompleteEvent,
+  WorkflowCancelEvent,
+} from "@kibadist/agentui-protocol";
