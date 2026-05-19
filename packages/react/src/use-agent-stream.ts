@@ -4,10 +4,13 @@ import { useEffect, useRef, useCallback, useState, useSyncExternalStore } from "
 import type { AgentWireEvent } from "@kibadist/agentui-protocol";
 import { safeParseAgentEvent } from "@kibadist/agentui-validate";
 import { createAgentStore, type AgentStore } from "./store.js";
+import type { CapsConfig } from "./store.js";
 import type { AgentState } from "./reducer.js";
 import { connectSse, SseHttpError } from "./sse-transport.js";
 import { computeBackoff, type BackoffOptions } from "./stream-backoff.js";
 import { createBuffer, type OverflowStrategy } from "./stream-buffer.js";
+import type { MetricEmitter } from "./metrics.js";
+import { hashSessionId } from "./metrics.js";
 
 /**
  * Lifecycle state of the SSE connection.
@@ -63,6 +66,10 @@ export interface UseAgentStreamOptions {
   buffer?: BufferConfig;
   /** Auth token provider and 401 handler */
   auth?: AuthConfig;
+  /** Per-slice memory caps with drop-oldest eviction. */
+  caps?: CapsConfig;
+  /** Metric emitter to receive lifecycle and per-event timings. */
+  metrics?: MetricEmitter;
 }
 
 /** What {@link useAgentStream} returns: state, status, and control methods. */
@@ -106,11 +113,11 @@ function resolveBackoff(retry: RetryConfig | undefined): BackoffOptions {
  * underlying `store` for wiring `<AgentStateProvider>`.
  */
 export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamResult {
-  const { url, sessionId, onEvent, onInvalidEvent, enabled = true, retry, buffer, auth } = options;
+  const { url, sessionId, onEvent, onInvalidEvent, enabled = true, retry, buffer, auth, caps, metrics } = options;
 
   // Store is created once per hook instance and stays stable across renders.
   const storeRef = useRef<AgentStore | null>(null);
-  if (storeRef.current === null) storeRef.current = createAgentStore();
+  if (storeRef.current === null) storeRef.current = createAgentStore({ caps });
   const store = storeRef.current;
 
   const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
@@ -121,6 +128,8 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
   onEventRef.current = onEvent;
   const onInvalidRef = useRef(onInvalidEvent);
   onInvalidRef.current = onInvalidEvent;
+  const metricsRef = useRef(metrics);
+  metricsRef.current = metrics;
   const retryRef = useRef(retry);
   retryRef.current = retry;
   const bufferRef = useRef(buffer);
@@ -180,6 +189,7 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
     /** Returns true when the loop should exit (cancelled or gave up). */
     async function advanceOrGiveUp(err: Error): Promise<boolean> {
       attempt++;
+      metricsRef.current?.counter("agentui.stream.reconnect_attempts");
       if (attempt >= maxAttempts) {
         retryRef.current?.onGiveUp?.(err);
         setStatus("error");
@@ -220,6 +230,9 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
         let connectionError: Error | null = null;
         let unauthorized = false;
 
+        const connectStartMs = performance.now();
+        let firstEventEmitted = false;
+
         await connectSse({
           url: sseUrl,
           headers,
@@ -228,6 +241,11 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
           onOpen: () => {
             attempt = 0;
             setStatus("open");
+            metricsRef.current?.timing(
+              "agentui.stream.connect_ms",
+              performance.now() - connectStartMs,
+              { sessionId: hashSessionId(sessionId) },
+            );
           },
           onEvent: (raw, id) => {
             if (id !== undefined) lastEventId = id;
@@ -237,10 +255,33 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
             } catch {
               return;
             }
+
+            const parseStart = performance.now();
             const result = safeParseAgentEvent(parsedRaw);
+            metricsRef.current?.timing(
+              "agentui.event.parse_ms",
+              performance.now() - parseStart,
+              { eventOp: (parsedRaw as { op?: string }).op ?? "unknown" },
+            );
+
             if (result.ok) {
+              if (!firstEventEmitted) {
+                firstEventEmitted = true;
+                metricsRef.current?.timing(
+                  "agentui.stream.first_event_ms",
+                  performance.now() - connectStartMs,
+                  { sessionId: hashSessionId(sessionId) },
+                );
+              }
+              const dispatchStart = performance.now();
               ingest(result.value);
+              metricsRef.current?.timing(
+                "agentui.event.dispatch_ms",
+                performance.now() - dispatchStart,
+                { eventOp: result.value.op },
+              );
             } else {
+              metricsRef.current?.counter("agentui.event.parse_error_count");
               onInvalidRef.current?.(parsedRaw, result.error);
             }
           },
