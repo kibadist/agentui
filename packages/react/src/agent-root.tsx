@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -11,6 +12,10 @@ import {
 import type { AgentWireEvent } from "@kibadist/agentui-protocol";
 import { AgentActionProvider, type ActionSender } from "./action-context.js";
 import { AgentStateProvider } from "./agent-state-context.js";
+import {
+  AgentRootRegistry,
+  type AgentRootRegistryEntry,
+} from "./agent-root-registry.js";
 import { SessionProvider, type UseAgentSessionResult } from "./session-context.js";
 import { useAgentStream } from "./use-agent-stream.js";
 import { localStorageAdapter, type SessionStorageAdapter } from "./storage-adapter.js";
@@ -245,11 +250,42 @@ export function AgentRoot({
     [endpoint, doFetch],
   );
 
+  // Multi-agent registry: read parent, check for duplicate id, build my entry.
+  const parentEntry = useContext(AgentRootRegistry);
+
+  useEffect(() => {
+    if (id === undefined || parentEntry === null) return;
+    let walk: AgentRootRegistryEntry | null = parentEntry;
+    while (walk !== null) {
+      if (walk.id === id) {
+        throw new Error(
+          `[agentui] Duplicate <AgentRoot id="${id}"> in the same tree. ` +
+            "Ids must be unique within a nested AgentRoot chain.",
+        );
+      }
+      walk = walk.parent;
+    }
+  }, [id, parentEntry]);
+
+  const registryEntry = useMemo<AgentRootRegistryEntry>(
+    () => ({
+      id,
+      session: sessionValue,
+      config: configValue,
+      store: stream.store,
+      actionSender,
+      parent: parentEntry,
+    }),
+    [id, sessionValue, configValue, stream.store, actionSender, parentEntry],
+  );
+
   return (
-    <SessionProvider value={sessionValue} config={configValue}>
-      <AgentStateProvider store={stream.store}>
-        <AgentActionProvider sender={actionSender}>{children}</AgentActionProvider>
-      </AgentStateProvider>
-    </SessionProvider>
+    <AgentRootRegistry.Provider value={registryEntry}>
+      <SessionProvider value={sessionValue} config={configValue}>
+        <AgentStateProvider store={stream.store}>
+          <AgentActionProvider sender={actionSender}>{children}</AgentActionProvider>
+        </AgentStateProvider>
+      </SessionProvider>
+    </AgentRootRegistry.Provider>
   );
 }
