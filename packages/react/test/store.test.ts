@@ -33,7 +33,7 @@ describe("createAgentStore", () => {
 
     const seeded = createInitialAgentState();
     seeded.nodes.push({ key: "a", type: "x", props: {} });
-    const b = createAgentStore(seeded);
+    const b = createAgentStore({ initial: seeded });
     expect(b.getState().nodes).toHaveLength(1);
   });
 

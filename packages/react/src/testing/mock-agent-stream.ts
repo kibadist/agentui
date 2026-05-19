@@ -26,7 +26,7 @@ export interface MockAgentStream {
 }
 
 export function createMockAgentStream(initial?: Partial<AgentState>): MockAgentStream {
-  const store = createAgentStore({ ...createInitialAgentState(), ...initial });
+  const store = createAgentStore({ initial: { ...createInitialAgentState(), ...initial } });
   const history: AgentAction[] = [];
   let currentStatus: StreamStatus = "idle";
   const statusListeners = new Set<() => void>();
