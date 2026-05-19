@@ -1,4 +1,4 @@
-export function parsePartialJson<T = unknown>(text: string): Partial<T> | undefined {
+export function parsePartialJson<T extends Record<string, unknown> = Record<string, unknown>>(text: string): Partial<T> | undefined {
   if (!text || !text.trim()) return undefined;
   // Fast path
   try {
@@ -270,7 +270,7 @@ function matchPartialNumber(s: string): number {
 
 // ─── streamingJsonParse (Task 2) ─────────────────────────────────────────────
 
-export async function* streamingJsonParse<T = unknown>(
+export async function* streamingJsonParse<T extends Record<string, unknown> = Record<string, unknown>>(
   source: AsyncIterable<string> | ReadableStream<Uint8Array>,
 ): AsyncIterable<Partial<T>> {
   let buffer = "";

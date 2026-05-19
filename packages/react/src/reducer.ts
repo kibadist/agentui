@@ -67,8 +67,9 @@ export interface ToolCall {
    */
   argsRaw: string;
   /**
-   * Best-effort parsed args. `undefined` while the buffered text is not
-   * yet valid JSON; populated once it parses.
+   * Parsed args, kept up-to-date after each `tool.args-delta` via tolerant
+   * partial-JSON repair. `undefined` only when the buffer can't be repaired
+   * (e.g. before any structured token has arrived).
    */
   args: unknown | undefined;
   status: "pending" | "ok" | "error" | "cancelled";
