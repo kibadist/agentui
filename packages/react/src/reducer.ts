@@ -20,6 +20,11 @@ import type {
   OptimisticRollbackEvent,
   SessionMetaEvent,
   SessionInitEvent,
+  WorkflowEvent,
+  WorkflowStartEvent,
+  WorkflowAdvanceEvent,
+  WorkflowCompleteEvent,
+  WorkflowCancelEvent,
 } from "@kibadist/agentui-protocol";
 import { parsePartialJson } from "./partial-json.js";
 
@@ -88,6 +93,27 @@ export interface ToolCall {
   durationMs?: number;
 }
 
+export type WorkflowStatus = "active" | "completed" | "cancelled";
+export type WorkflowStepStatus = "pending" | "current" | "completed" | "skipped";
+
+export interface WorkflowStep {
+  id: string;
+  title: string;
+  nodeKey?: string;
+  status: WorkflowStepStatus;
+}
+
+export interface Workflow {
+  id: string;
+  steps: WorkflowStep[];
+  currentStepId: string;
+  status: WorkflowStatus;
+  result?: unknown;
+  reason?: string;
+  startedAt: string;
+  endedAt?: string;
+}
+
 /**
  * The reducer's state shape. `nodes` is the ordered list of rendered UI nodes;
  * `byKey` maps each node's key to its index for O(1) lookup; `toasts` is the
@@ -106,6 +132,7 @@ export interface AgentState {
   reasoningOrder: string[];
   optimistic: Map<string, OptimisticEntry>;
   capabilities: Capabilities;
+  workflows: Map<string, Workflow>;
 }
 
 /**
@@ -129,6 +156,7 @@ export function createInitialAgentState(): AgentState {
       actions: new Set(),
       permissions: new Set(),
     },
+    workflows: new Map(),
   };
 }
 
@@ -159,6 +187,7 @@ export type AgentAction =
   | OptimisticEvent
   | SessionMetaEvent
   | SessionInitEvent
+  | WorkflowEvent
   | AgentResetAction;
 
 function rebuildIndex(nodes: UINode[]): Map<string, number> {
@@ -345,6 +374,66 @@ function applyOptimisticRollback(state: AgentState, e: OptimisticRollbackEvent):
   return state;
 }
 
+function applyWorkflowStart(state: AgentState, e: WorkflowStartEvent): AgentState {
+  if (state.workflows.has(e.id)) return state;
+  const steps: WorkflowStep[] = e.steps.map((s, i) => ({
+    id: s.id,
+    title: s.title,
+    nodeKey: s.nodeKey,
+    status: i === 0 ? "current" : "pending",
+  }));
+  const wf: Workflow = {
+    id: e.id,
+    steps,
+    currentStepId: e.steps[0].id,
+    status: "active",
+    startedAt: e.ts,
+  };
+  const workflows = new Map(state.workflows);
+  workflows.set(e.id, wf);
+  return { ...state, workflows };
+}
+
+function applyWorkflowAdvance(state: AgentState, e: WorkflowAdvanceEvent): AgentState {
+  const existing = state.workflows.get(e.id);
+  if (!existing || existing.status !== "active") return state;
+  const pos = existing.steps.findIndex((s) => s.id === e.stepId);
+  if (pos < 0) return state;
+  const steps: WorkflowStep[] = existing.steps.map((s, i) => ({
+    ...s,
+    status: i < pos ? "completed" : i === pos ? "current" : "pending",
+  }));
+  const workflows = new Map(state.workflows);
+  workflows.set(e.id, { ...existing, steps, currentStepId: e.stepId });
+  return { ...state, workflows };
+}
+
+function applyWorkflowComplete(state: AgentState, e: WorkflowCompleteEvent): AgentState {
+  const existing = state.workflows.get(e.id);
+  if (!existing || existing.status !== "active") return state;
+  const workflows = new Map(state.workflows);
+  workflows.set(e.id, {
+    ...existing,
+    status: "completed",
+    result: e.result,
+    endedAt: e.ts,
+  });
+  return { ...state, workflows };
+}
+
+function applyWorkflowCancel(state: AgentState, e: WorkflowCancelEvent): AgentState {
+  const existing = state.workflows.get(e.id);
+  if (!existing || existing.status !== "active") return state;
+  const workflows = new Map(state.workflows);
+  workflows.set(e.id, {
+    ...existing,
+    status: "cancelled",
+    reason: e.reason,
+    endedAt: e.ts,
+  });
+  return { ...state, workflows };
+}
+
 function applySessionInit(state: AgentState, e: SessionInitEvent): AgentState {
   return {
     ...state,
@@ -406,6 +495,14 @@ export function agentReducer(state: AgentState, action: AgentAction): AgentState
       return applyOptimisticConfirm(state, action);
     case "optimistic.rollback":
       return applyOptimisticRollback(state, action);
+    case "workflow.start":
+      return applyWorkflowStart(state, action);
+    case "workflow.advance":
+      return applyWorkflowAdvance(state, action);
+    case "workflow.complete":
+      return applyWorkflowComplete(state, action);
+    case "workflow.cancel":
+      return applyWorkflowCancel(state, action);
     default:
       return state;
   }
