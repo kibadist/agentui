@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 import type { UINode } from "@kibadist/agentui-protocol";
-import { AgentRenderer, createRegistry } from "../src/index.js";
+import { AgentRenderer, createInitialAgentState, createRegistry } from "../src/index.js";
 import type { AgentState } from "../src/index.js";
 
 // vitest is configured with `globals: false`, so RTL's auto-cleanup
@@ -17,9 +17,10 @@ function makeNode(
 }
 
 function makeState(nodes: UINode[]): AgentState {
-  const byKey = new Map<string, number>();
-  nodes.forEach((n, i) => byKey.set(n.key, i));
-  return { nodes, byKey, toasts: [], navigate: null };
+  const state = createInitialAgentState();
+  nodes.forEach((n, i) => state.byKey.set(n.key, i));
+  state.nodes.push(...nodes);
+  return state;
 }
 
 function Box({ label }: { label: string }) {
