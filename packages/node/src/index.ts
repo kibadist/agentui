@@ -14,3 +14,5 @@ export type {
   StoredEvent,
 } from "./conversation.js";
 export { MemoryConversationStorage } from "./storage/memory.js";
+export { createAgentReadable } from "./sse-readable.js";
+export type { AgentReadable } from "./sse-readable.js";
