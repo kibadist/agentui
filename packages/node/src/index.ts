@@ -16,3 +16,7 @@ export type {
 export { MemoryConversationStorage } from "./storage/memory.js";
 export { createAgentReadable } from "./sse-readable.js";
 export type { AgentReadable } from "./sse-readable.js";
+export { emitTextStream } from "./helpers/text-stream.js";
+export type { EmitTextStreamOptions } from "./helpers/text-stream.js";
+export { emitToolCall } from "./helpers/tool-call.js";
+export type { EmitToolCallOptions } from "./helpers/tool-call.js";
