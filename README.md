@@ -487,6 +487,26 @@ emit({ op: "ui.append", node: QuoteCardNode.build({
 
 The legacy object form `createRegistry({ "type": { component, propsSchema } })` continues to work.
 
+### Stream resilience
+
+Opt-in retry, backpressure, and auth-aware reconnect:
+
+```ts
+const { state, status } = useAgentStream({
+  url, sessionId,
+  retry: { maxAttempts: 5, initialDelayMs: 500, maxDelayMs: 30_000, jitter: "full" },
+  buffer: { max: 1000, onOverflow: "drop-oldest" },
+  auth: {
+    getToken: () => fetchToken(),
+    onUnauthorized: () => refreshSession(),
+  },
+});
+```
+
+`status` widens to `"idle" | "connecting" | "open" | "reauthenticating" | "reconnecting" | "closed" | "error"`. With no configs, defaults preserve previous behavior (infinite retry, unbounded buffer, no auth header).
+
+Server-side: include an `id:` line on each event so `Last-Event-ID` reconnects can resume; return HTTP 401 to trigger `auth.onUnauthorized` + `auth.getToken`.
+
 ### Testing helpers
 
 `@kibadist/agentui-react/testing` ships drop-in mocks for vitest setups:

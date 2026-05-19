@@ -2,6 +2,19 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## 0.7.0
+
+### Added
+- `useAgentStream` now supports three opt-in configs: `retry` (max attempts + exponential backoff with jitter), `buffer` (bounded event queue with drop-oldest/drop-newest/block-stream/callback overflow strategies), and `auth` (token-refresh hook + `Last-Event-ID` resume on reconnect).
+- New `StreamStatus` values: `reauthenticating` (waiting for `auth.getToken()` / `auth.onUnauthorized()`) and `reconnecting` (sleeping the backoff delay between attempts).
+
+### Changed
+- The SSE transport now uses `fetch` + `ReadableStream` instead of the native `EventSource`. Behavior is observably the same for consumers who don't supply any of the new configs (still retries forever, no buffer cap). Browsers and Node ≥18 are supported; the Edge runtime works in Next.js App Router.
+
+### Migration
+- Hosts that exhaustively switch on `StreamStatus` need a default branch for the two new members. TypeScript with `--noFallthroughCasesInSwitch` will flag this.
+- Servers SHOULD include an `id:` line on each SSE event and SHOULD replay buffered events on reconnect when `Last-Event-ID` is sent. Without these, the client still works — there's just no event resumption.
+
 ## 0.6.4
 
 ### Added
