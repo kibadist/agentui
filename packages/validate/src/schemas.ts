@@ -206,6 +206,63 @@ export const optimisticEventSchema = z.discriminatedUnion("op", [
   optimisticRollbackSchema,
 ]);
 
+// ─── Workflow Events ────────────────────────────────────────────────────────
+
+const workflowStepSchema = z
+  .object({
+    id: z.string().min(1).max(256),
+    title: z.string().min(1).max(256),
+    nodeKey: z.string().min(1).max(256).optional(),
+  })
+  .strict();
+
+const workflowStartSchema = baseEventSchema
+  .extend({
+    op: z.literal("workflow.start"),
+    id: z.string().min(1).max(256),
+    steps: z.array(workflowStepSchema).min(1).max(64),
+    turnId: z.string().max(256).optional(),
+  })
+  .superRefine((evt, ctx) => {
+    const seen = new Set<string>();
+    for (const step of evt.steps) {
+      if (seen.has(step.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `duplicate step id: ${step.id}`,
+          path: ["steps"],
+        });
+        return;
+      }
+      seen.add(step.id);
+    }
+  });
+
+const workflowAdvanceSchema = baseEventSchema.extend({
+  op: z.literal("workflow.advance"),
+  id: z.string().min(1).max(256),
+  stepId: z.string().min(1).max(256),
+});
+
+const workflowCompleteSchema = baseEventSchema.extend({
+  op: z.literal("workflow.complete"),
+  id: z.string().min(1).max(256),
+  result: z.unknown().optional(),
+});
+
+const workflowCancelSchema = baseEventSchema.extend({
+  op: z.literal("workflow.cancel"),
+  id: z.string().min(1).max(256),
+  reason: z.string().max(1024).optional(),
+});
+
+export const workflowEventSchema = z.union([
+  workflowStartSchema,
+  workflowAdvanceSchema,
+  workflowCompleteSchema,
+  workflowCancelSchema,
+]);
+
 // ─── Session Lifecycle Events ───────────────────────────────────────────────
 
 export const sessionMetaSchema = baseEventSchema.extend({
@@ -241,6 +298,10 @@ export const agentWireEventSchema = z.union([
   optimisticRollbackSchema,
   sessionMetaSchema,
   sessionInitSchema,
+  workflowStartSchema,
+  workflowAdvanceSchema,
+  workflowCompleteSchema,
+  workflowCancelSchema,
 ]);
 
 // ─── Action Events ───────────────────────────────────────────────────────────
