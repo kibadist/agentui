@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState, useSyncExternalStore } from "react";
-import type { UIEvent, AgentWireEvent } from "@kibadist/agentui-protocol";
+import type { AgentWireEvent } from "@kibadist/agentui-protocol";
 import { safeParseAgentEvent } from "@kibadist/agentui-validate";
 import { createAgentStore, type AgentStore } from "./store.js";
 import type { AgentState } from "./reducer.js";
@@ -36,10 +36,11 @@ export interface UseAgentStreamResult {
   /** Clear all UI state (nodes, toasts, navigate). Connection is unaffected. */
   reset: () => void;
   /**
-   * Inject a UIEvent into the reducer without going through the wire.
-   * Useful for optimistic updates, host-driven UI, and tests.
+   * Inject a wire event into the reducer without going through SSE.
+   * Useful for client-side optimistic updates, host-driven UI, and tests.
+   * Accepts any AgentWireEvent (UIEvent, ToolEvent, ReasoningEvent, OptimisticEvent).
    */
-  dispatch: (event: UIEvent) => void;
+  dispatch: (event: AgentWireEvent) => void;
   /**
    * The subscribable store backing this stream. Wire into
    * `<AgentStateProvider store={...}>` to enable selector hooks below it.
@@ -133,7 +134,7 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
   }, [store]);
 
   const publicDispatch = useCallback(
-    (event: UIEvent) => {
+    (event: AgentWireEvent) => {
       store.send(event);
     },
     [store],

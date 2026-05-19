@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { createAgentStore, type AgentStore } from "../store.js";
 import { createInitialAgentState, type AgentAction, type AgentState } from "../reducer.js";
-import type { UIEvent } from "@kibadist/agentui-protocol";
+import type { UIEvent, AgentWireEvent } from "@kibadist/agentui-protocol";
 import type { StreamStatus, UseAgentStreamResult } from "../use-agent-stream.js";
 
 export interface MockAgentStream {
@@ -61,7 +61,7 @@ export function createMockAgentStream(initial?: Partial<AgentState>): MockAgentS
         statusListeners.forEach((l) => l());
       },
       reset: () => store.reset(),
-      dispatch: (event: UIEvent) => store.send(event),
+      dispatch: (event: AgentWireEvent) => store.send(event),
     };
   };
 

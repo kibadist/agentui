@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useSyncExternalStore } from "react";
 import { useAgentStore } from "./agent-state-context.js";
-import type { AgentState, ToolCall, ReasoningSegment } from "./reducer.js";
+import type { AgentState, ToolCall, ReasoningSegment, OptimisticEntry } from "./reducer.js";
 
 const UNSET: unique symbol = Symbol("agentui:unset");
 
@@ -90,4 +90,14 @@ export function useLatestReasoning(): ReasoningSegment | undefined {
     if (order.length === 0) return undefined;
     return s.reasoning.get(order[order.length - 1]);
   });
+}
+
+/** Subscribe to the optimistic patch for a single entity. Returns undefined when no entry. */
+export function useOptimistic(entityKey: string): Record<string, unknown> | undefined {
+  return useAgentSelector((s) => s.optimistic.get(entityKey)?.patch);
+}
+
+/** Subscribe to the entire optimistic Map. Re-renders on any optimistic change. */
+export function useOptimisticAll(): Map<string, OptimisticEntry> {
+  return useAgentSelector((s) => s.optimistic);
 }
