@@ -1,6 +1,9 @@
 export { createRegistry } from "./registry.js";
 export type { ComponentSpec, Registry } from "./registry.js";
 
+export { defineNode } from "./define-node.js";
+export type { NodeDefinition, DefineNodeOptions, BuildArgs } from "./define-node.js";
+
 /**
  * Wire protocol event types — re-exported from `@kibadist/agentui-protocol`
  * so consumers can type `onEvent` callbacks and dispatch values without
