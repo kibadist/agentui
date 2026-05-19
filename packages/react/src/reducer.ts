@@ -15,6 +15,9 @@ import type {
   ReasoningDeltaEvent,
   ReasoningEndEvent,
   OptimisticEvent,
+  OptimisticApplyEvent,
+  OptimisticConfirmEvent,
+  OptimisticRollbackEvent,
 } from "@kibadist/agentui-protocol";
 
 /** A transient notification queued by `ui.toast` events. */
@@ -23,6 +26,17 @@ export interface Toast {
   level: "info" | "success" | "warning" | "error";
   message: string;
   ts: string;
+}
+
+/** A locally-applied optimistic patch awaiting server confirmation or rollback. */
+export interface OptimisticEntry {
+  entityKey: string;
+  patch: Record<string, unknown>;
+  /** Unique id of this application (different per apply, even for same entityKey). */
+  originId: string;
+  appliedAt: string;
+  /** Computed from `ttlMs` at apply time; host implements actual TTL via useEffect. */
+  expiresAt?: string;
 }
 
 /** A streaming or completed reasoning segment captured from the wire. */
@@ -79,6 +93,7 @@ export interface AgentState {
   toolCallsOrder: string[];
   reasoning: Map<string, ReasoningSegment>;
   reasoningOrder: string[];
+  optimistic: Map<string, OptimisticEntry>;
 }
 
 /**
@@ -95,6 +110,7 @@ export function createInitialAgentState(): AgentState {
     toolCallsOrder: [],
     reasoning: new Map(),
     reasoningOrder: [],
+    optimistic: new Map(),
   };
 }
 
@@ -265,6 +281,49 @@ function applyReasoningEnd(state: AgentState, e: ReasoningEndEvent): AgentState 
   return { ...state, reasoning };
 }
 
+function applyOptimisticApply(state: AgentState, e: OptimisticApplyEvent): AgentState {
+  // Last-write-wins: overwrites any prior entry for the same entityKey.
+  const expiresAt =
+    e.ttlMs !== undefined
+      ? new Date(Date.parse(e.ts) + e.ttlMs).toISOString()
+      : undefined;
+  const entry: OptimisticEntry = {
+    entityKey: e.entityKey,
+    patch: e.patch,
+    originId: e.originId,
+    appliedAt: e.ts,
+    expiresAt,
+  };
+  const optimistic = new Map(state.optimistic);
+  optimistic.set(e.entityKey, entry);
+  return { ...state, optimistic };
+}
+
+function applyOptimisticConfirm(state: AgentState, e: OptimisticConfirmEvent): AgentState {
+  // Look up by originId — not entityKey. Iterate the Map; remove on match.
+  for (const [key, entry] of state.optimistic) {
+    if (entry.originId === e.originId) {
+      const optimistic = new Map(state.optimistic);
+      optimistic.delete(key);
+      return { ...state, optimistic };
+    }
+  }
+  return state; // no match — silent no-op (stale confirmation)
+}
+
+function applyOptimisticRollback(state: AgentState, e: OptimisticRollbackEvent): AgentState {
+  // Identical reducer logic to confirm: remove by originId. The semantic
+  // distinction (acknowledged vs. rejected) lives at the host layer.
+  for (const [key, entry] of state.optimistic) {
+    if (entry.originId === e.originId) {
+      const optimistic = new Map(state.optimistic);
+      optimistic.delete(key);
+      return { ...state, optimistic };
+    }
+  }
+  return state;
+}
+
 /**
  * Pure reducer over `AgentState`. Returns the same state reference for
  * no-op actions (e.g., `ui.replace` for an unknown key, `tool.result` for
@@ -305,6 +364,12 @@ export function agentReducer(state: AgentState, action: AgentAction): AgentState
       return applyReasoningDelta(state, action);
     case "reasoning.end":
       return applyReasoningEnd(state, action);
+    case "optimistic.apply":
+      return applyOptimisticApply(state, action);
+    case "optimistic.confirm":
+      return applyOptimisticConfirm(state, action);
+    case "optimistic.rollback":
+      return applyOptimisticRollback(state, action);
     default:
       return state;
   }
