@@ -1,2 +1,1 @@
-// Re-exports filled in by adapter tasks.
-export {};
+export { fromAnthropic, type FromAdapterOptions } from "./anthropic.js";
