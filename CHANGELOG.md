@@ -2,6 +2,11 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## [Unreleased]
+
+### Added
+- `@kibadist/agentui-node` — framework-agnostic server companion. `createAgentStream` (Node `ServerResponse`) and `createAgentReadable` (Web `ReadableStream`), `Conversation` + `MemoryConversationStorage`, hooks (`onEventEmitted`, `onConversationAppended`), helpers (`emitTextStream`, `emitToolCall`). DET-154.
+
 ## 0.8.0 — 2026-05-19
 
 ### Added
