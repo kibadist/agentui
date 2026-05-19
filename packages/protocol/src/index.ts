@@ -54,7 +54,7 @@ export interface UIAppendEvent extends BaseEvent {
   turnId?: string;
 }
 
-export interface UIReplaceEvent extends BaseEvent {
+export interface UIReplacePropsEvent extends BaseEvent {
   op: "ui.replace";
   /** Key of the node to patch */
   key: string;
@@ -63,6 +63,29 @@ export interface UIReplaceEvent extends BaseEvent {
   /** If true, fully replace props; if false (default), shallow-merge */
   replace?: boolean;
 }
+
+/** RFC 6901 JSON Pointer (e.g. "/items/3/status", or "" for the document root). */
+export type JsonPointer = string;
+
+export type JsonPatchOp =
+  | { op: "add"; path: JsonPointer; value: unknown }
+  | { op: "remove"; path: JsonPointer }
+  | { op: "replace"; path: JsonPointer; value: unknown }
+  | { op: "move"; from: JsonPointer; path: JsonPointer }
+  | { op: "copy"; from: JsonPointer; path: JsonPointer }
+  | { op: "test"; path: JsonPointer; value: unknown };
+
+export type JsonPatch = JsonPatchOp[];
+
+export interface UIReplacePatchEvent extends BaseEvent {
+  op: "ui.replace";
+  /** Key of the node to patch */
+  key: string;
+  /** RFC 6902 JSON Patch operations applied against the node's props */
+  patch: JsonPatch;
+}
+
+export type UIReplaceEvent = UIReplacePropsEvent | UIReplacePatchEvent;
 
 export interface UIRemoveEvent extends BaseEvent {
   op: "ui.remove";
