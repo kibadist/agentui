@@ -2,6 +2,15 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## 0.6.3
+
+### Added
+- `@kibadist/agentui` CLI package: `npx @kibadist/agentui new-node <PascalCaseName>` scaffolds a typed component (tsx + Zod schema + vitest scaffold), and inserts a registry entry via marker comments. Optional Storybook story when `@storybook/react` or `@storybook/nextjs` is detected in the host `package.json`.
+
+### Notes
+- Subsequent CLI commands (`init`, `add-registry-markers`) deferred to a later minor.
+- Registry insertion requires the host project to add `// agentui:registry-imports-start|end` and `// agentui:registry-entries-start|end` marker comments one time.
+
 ## 0.6.2
 
 ### Added

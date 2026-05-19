@@ -21,6 +21,7 @@ PACKAGES=(
   packages/openai
   packages/ai
   packages/next
+  packages/cli
 )
 
 # Read current version from protocol (source of truth)
