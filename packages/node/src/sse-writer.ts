@@ -57,16 +57,25 @@ export function createAgentStream(
     }
   }
 
-  async function writeChunk(chunk: string): Promise<void> {
-    if (closed || res.destroyed) {
-      closed = true;
-      return;
-    }
-    const ok = res.write(chunk);
-    if (ok) return;
-    await new Promise<void>((resolve) => {
-      res.on("drain", resolve);
+  // Serialize writes so concurrent emit() calls preserve FIFO order even
+  // when an earlier write parks on 'drain' for backpressure.
+  let writeChain: Promise<void> = Promise.resolve();
+  function writeChunk(chunk: string): Promise<void> {
+    const next = writeChain.then(async () => {
+      if (closed || res.destroyed) {
+        closed = true;
+        return;
+      }
+      const ok = res.write(chunk);
+      if (ok) return;
+      await new Promise<void>((resolve) => {
+        res.on("drain", resolve);
+      });
     });
+    // Swallow rejections on the chain itself so one failure doesn't poison
+    // subsequent writes; the caller still sees their own rejection.
+    writeChain = next.catch(() => {});
+    return next;
   }
 
   function buildFrame(event: AgentWireEvent): string {
