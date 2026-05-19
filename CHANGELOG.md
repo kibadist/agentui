@@ -2,6 +2,18 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## 0.6.0
+
+### Added — new package `@kibadist/agentui-llm`
+
+- **Provider-native stream adapters.** Three async-generator functions that map LLM streaming responses to AgentUI `AgentWireEvent`:
+  - `fromAnthropic(stream)` — text deltas, tool_use blocks, thinking (extended-reasoning) blocks, stream errors.
+  - `fromOpenAI(stream)` — text deltas and tool_calls. (Reasoning via the Responses API is out of scope for v0.6.1.)
+  - `fromGemini(stream)` — text (delta-via-diff) and functionCall. (Reasoning is not yet stable in the public Gemini streaming API.)
+- All adapters accept `{ sessionId?, textKey? }` options and yield validated wire events. Stream errors yield a `ui.toast` with `level: "error"`.
+- `tool.result` is NOT emitted by adapters — that's host-driven after executing the tool.
+- Peer-dependencies on the three provider SDKs are marked optional so hosts only install what they need.
+
 ## 0.5.0
 
 ### Added — `@kibadist/agentui-protocol`

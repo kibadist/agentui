@@ -15,6 +15,7 @@ fi
 PACKAGES=(
   packages/protocol
   packages/validate
+  packages/llm
   packages/react
   packages/nest
   packages/openai

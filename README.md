@@ -371,6 +371,34 @@ The component expects three endpoints (relative to `endpoint`):
 
 All hooks accept an optional `id` argument to target a specific agent: `useAgentSession('chat')`, `useAgentNodes('planner')`, `useToolCalls('chat')`, and so on. Without an id, hooks resolve to the nearest `<AgentRoot>` ancestor (the current single-agent behavior, unchanged).
 
+### LLM adapters: provider stream → wire events
+
+`@kibadist/agentui-llm` ships three async-generator adapters that turn a provider's native streaming response into AgentUI wire events. Drop them into your SSE handler to skip the manual state-tracking:
+
+```ts
+import Anthropic from "@anthropic-ai/sdk";
+import { fromAnthropic } from "@kibadist/agentui-llm";
+
+const anthropic = new Anthropic();
+const stream = anthropic.messages.stream({
+  model: "claude-sonnet-4-5",
+  messages: [{ role: "user", content: userMessage }],
+});
+
+for await (const event of fromAnthropic(stream, { sessionId })) {
+  res.write(`data: ${JSON.stringify(event)}\n\n`);
+}
+```
+
+`fromOpenAI` and `fromGemini` follow the same shape. Each adapter maps:
+
+- **Text** → `ui.append` (first delta creates a `text-block` node) + `ui.replace` for subsequent deltas.
+- **Tool calls** → `tool.start` + `tool.args-delta` (host executes the tool and emits `tool.result` itself).
+- **Reasoning** (Anthropic extended thinking only) → `reasoning.start` / `.delta` / `.end`.
+- **Stream errors** → `ui.toast` with `level: "error"`.
+
+Each provider's SDK is a *peer-dependency* of `@kibadist/agentui-llm` — install only the ones you use.
+
 ### Testing helpers
 
 `@kibadist/agentui-react/testing` ships drop-in mocks for vitest setups:
@@ -480,6 +508,7 @@ pnpm dev:app   # Next.js frontend on :3000
 | [`@kibadist/agentui-react`](https://www.npmjs.com/package/@kibadist/agentui-react) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-react)](https://www.npmjs.com/package/@kibadist/agentui-react) | Registry, renderer, SSE hook, action context |
 | [`@kibadist/agentui-nest`](https://www.npmjs.com/package/@kibadist/agentui-nest) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-nest)](https://www.npmjs.com/package/@kibadist/agentui-nest) | Session event bus + controller factory for NestJS |
 | [`@kibadist/agentui-ai`](https://www.npmjs.com/package/@kibadist/agentui-ai) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-ai)](https://www.npmjs.com/package/@kibadist/agentui-ai) | Provider-agnostic adapter via Vercel AI SDK (OpenAI, Anthropic, Google, DeepSeek) |
+| [`@kibadist/agentui-llm`](https://www.npmjs.com/package/@kibadist/agentui-llm) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-llm)](https://www.npmjs.com/package/@kibadist/agentui-llm) | Provider-native LLM stream adapters (Anthropic, OpenAI, Gemini) |
 | [`@kibadist/agentui-next`](https://www.npmjs.com/package/@kibadist/agentui-next) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-next)](https://www.npmjs.com/package/@kibadist/agentui-next) | SSE proxy + action proxy helpers for Next.js App Router |
 
 ---
