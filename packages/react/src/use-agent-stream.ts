@@ -7,11 +7,24 @@ import { createAgentStore, type AgentStore } from "./store.js";
 import type { AgentState } from "./reducer.js";
 
 /**
- * The lifecycle state of the underlying `EventSource`: `idle` before the
- * effect runs, `connecting` during the handshake, `open` after, `closed`
- * when stopped, `error` on transport failure.
+ * Lifecycle state of the SSE connection.
+ *
+ * - `idle` — before the effect runs / disabled
+ * - `connecting` — fetch in flight, no events received yet
+ * - `open` — fetch succeeded, stream is delivering events
+ * - `reauthenticating` — waiting for auth.getToken() / auth.onUnauthorized()
+ * - `reconnecting` — sleeping the backoff delay between attempts
+ * - `closed` — disposed (consumer called close() or effect unmounted)
+ * - `error` — terminal: maxAttempts reached or fatal transport failure
  */
-export type StreamStatus = "idle" | "connecting" | "open" | "closed" | "error";
+export type StreamStatus =
+  | "idle"
+  | "connecting"
+  | "open"
+  | "reauthenticating"
+  | "reconnecting"
+  | "closed"
+  | "error";
 
 /** Options for {@link useAgentStream}. */
 export interface UseAgentStreamOptions {
