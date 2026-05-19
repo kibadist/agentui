@@ -2,6 +2,17 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## 0.6.4
+
+### Added
+- `defineNode({ type, schema, component, requires })` in `@kibadist/agentui-react`: schemas become the source of truth. Component props are inferred from the Zod schema; `Node.build({ key, props })` validates at emit time and produces a `UINode` wire payload. Capability requirements set on `defineNode` flow into `UINode.meta.requires` automatically.
+- `createRegistry([NodeA, NodeB])` array overload accepts `NodeDefinition[]`. The existing `createRegistry({ "type": spec })` object form continues to work unchanged.
+- `zod` listed as an **optional peer dependency** of `@kibadist/agentui-react`. Required only when calling `defineNode` or supplying a Zod `propsSchema` to the legacy object form.
+
+### Notes
+- Type-level safety verified via vitest `expectTypeOf` and `@ts-expect-error` in `packages/react/test/define-node.test-d.ts`.
+- Auto-migration codemod (`@kibadist/agentui-codemods`) deferred — both API forms are supported indefinitely.
+
 ## 0.6.3
 
 ### Added
