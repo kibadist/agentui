@@ -20,6 +20,9 @@ import { SessionProvider, type UseAgentSessionResult } from "./session-context.j
 import { useAgentStream } from "./use-agent-stream.js";
 import { localStorageAdapter, type SessionStorageAdapter } from "./storage-adapter.js";
 import type { AgentError } from "./agent-error.js";
+import type { CapsConfig } from "./store.js";
+import type { Metric } from "./metrics.js";
+import { createMetricEmitter, hashSessionId } from "./metrics.js";
 
 export interface AgentRootProps {
   endpoint: string;
@@ -29,6 +32,12 @@ export interface AgentRootProps {
   onError?: (err: AgentError) => void;
   id?: string;
   children: ReactNode;
+  /** Per-slice memory caps with drop-oldest eviction. */
+  caps?: CapsConfig;
+  /** Receives every emitted metric. */
+  onMetric?: (m: Metric) => void;
+  /** Tags applied to every metric. */
+  tags?: Record<string, string>;
 }
 
 function normalizeEndpoint(endpoint: string): string {
@@ -51,6 +60,9 @@ export function AgentRoot({
   onError,
   id,
   children,
+  caps,
+  onMetric,
+  tags,
 }: AgentRootProps) {
   const endpoint = normalizeEndpoint(endpointProp);
   // Memoize doFetch so the configValue identity is stable across renders
@@ -59,6 +71,11 @@ export function AgentRoot({
   const doFetch = useMemo(
     () => fetchProp ?? globalThis.fetch.bind(globalThis),
     [fetchProp],
+  );
+
+  const metricsEmitter = useMemo(
+    () => createMetricEmitter(onMetric, tags ?? {}),
+    [onMetric, tags],
   );
 
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -82,6 +99,7 @@ export function AgentRoot({
     const seq = ++seqRef.current;
     setError(null);
     setSessionStatus("connecting");
+    const startMs = performance.now();
     try {
       const res = await doFetch(`${endpoint}/session`, { method: "POST" });
       if (!res.ok) {
@@ -97,6 +115,11 @@ export function AgentRoot({
       const data = (await res.json()) as { sessionId: string };
       if (seq !== seqRef.current) return;
       setSessionId(data.sessionId);
+      metricsEmitter.timing(
+        "agentui.session.create_ms",
+        performance.now() - startMs,
+        { sessionId: hashSessionId(data.sessionId) },
+      );
     } catch (cause) {
       if (seq !== seqRef.current) return;
       fireError({
@@ -106,13 +129,14 @@ export function AgentRoot({
       });
       setSessionStatus("error");
     }
-  }, [endpoint, doFetch, fireError]);
+  }, [endpoint, doFetch, fireError, metricsEmitter]);
 
   const resume = useCallback(
     async (conversationIdToResume: string): Promise<void> => {
       const seq = ++seqRef.current;
       setError(null);
       setSessionStatus("connecting");
+      const startMs = performance.now();
       try {
         const url = `${endpoint}/session?conversationId=${encodeURIComponent(
           conversationIdToResume,
@@ -143,6 +167,11 @@ export function AgentRoot({
         if (seq !== seqRef.current) return;
         setSessionId(data.sessionId);
         setConversationId(conversationIdToResume);
+        metricsEmitter.timing(
+          "agentui.session.create_ms",
+          performance.now() - startMs,
+          { sessionId: hashSessionId(data.sessionId) },
+        );
       } catch (cause) {
         if (seq !== seqRef.current) return;
         fireError({
@@ -153,7 +182,7 @@ export function AgentRoot({
         setSessionStatus("error");
       }
     },
-    [endpoint, doFetch, fireError, storage, id, create],
+    [endpoint, doFetch, fireError, storage, id, create, metricsEmitter],
   );
 
   const handleEvent = useCallback(
@@ -175,6 +204,8 @@ export function AgentRoot({
     sessionId: sessionId ?? "",
     enabled: sessionId !== null,
     onEvent: handleEvent,
+    caps,
+    metrics: metricsEmitter,
   });
 
   const combinedStatus: "idle" | "connecting" | "connected" | "error" =
