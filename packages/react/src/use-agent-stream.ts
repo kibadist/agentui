@@ -5,6 +5,9 @@ import type { AgentWireEvent } from "@kibadist/agentui-protocol";
 import { safeParseAgentEvent } from "@kibadist/agentui-validate";
 import { createAgentStore, type AgentStore } from "./store.js";
 import type { AgentState } from "./reducer.js";
+import { connectSse, SseHttpError } from "./sse-transport.js";
+import { computeBackoff, type BackoffOptions } from "./stream-backoff.js";
+import { createBuffer, type OverflowStrategy } from "./stream-buffer.js";
 
 /**
  * Lifecycle state of the SSE connection.
@@ -26,32 +29,53 @@ export type StreamStatus =
   | "closed"
   | "error";
 
+export interface RetryConfig extends Partial<BackoffOptions> {
+  maxAttempts?: number;
+  onGiveUp?: (err: Error) => void;
+}
+
+export interface BufferConfig {
+  max: number;
+  onOverflow: OverflowStrategy;
+  onOverflowCallback?: (dropped: AgentWireEvent) => void;
+}
+
+export interface AuthConfig {
+  getToken: () => Promise<string>;
+  onUnauthorized?: () => Promise<void>;
+}
+
 /** Options for {@link useAgentStream}. */
 export interface UseAgentStreamOptions {
   /** SSE endpoint URL */
   url: string;
   /** Session id (appended as query param) */
   sessionId: string;
-  /** Called for every valid wire event (UIEvent or ToolEvent) after the reducer applies it. */
+  /** Called for every valid wire event after the reducer applies it. */
   onEvent?: (event: AgentWireEvent) => void;
   /** Called when an invalid event is received */
   onInvalidEvent?: (raw: unknown, error: Error) => void;
   /** Whether the stream is enabled (default true) */
   enabled?: boolean;
+  /** Retry / backoff configuration */
+  retry?: RetryConfig;
+  /** Backpressure buffer configuration */
+  buffer?: BufferConfig;
+  /** Auth token provider and 401 handler */
+  auth?: AuthConfig;
 }
 
 /** What {@link useAgentStream} returns: state, status, and control methods. */
 export interface UseAgentStreamResult {
   state: AgentState;
   status: StreamStatus;
-  /** Close the underlying EventSource (state is preserved). */
+  /** Close the underlying SSE connection (state is preserved). */
   close: () => void;
   /** Clear all UI state (nodes, toasts, navigate). Connection is unaffected. */
   reset: () => void;
   /**
    * Inject a wire event into the reducer without going through SSE.
    * Useful for client-side optimistic updates, host-driven UI, and tests.
-   * Accepts any AgentWireEvent (UIEvent, ToolEvent, ReasoningEvent, OptimisticEvent).
    */
   dispatch: (event: AgentWireEvent) => void;
   /**
@@ -61,30 +85,50 @@ export interface UseAgentStreamResult {
   store: AgentStore;
 }
 
+const DEFAULT_BACKOFF: BackoffOptions = {
+  initialDelayMs: 500,
+  maxDelayMs: 30_000,
+  jitter: "full",
+};
+
+function resolveBackoff(retry: RetryConfig | undefined): BackoffOptions {
+  return {
+    initialDelayMs: retry?.initialDelayMs ?? DEFAULT_BACKOFF.initialDelayMs,
+    maxDelayMs: retry?.maxDelayMs ?? DEFAULT_BACKOFF.maxDelayMs,
+    jitter: retry?.jitter ?? DEFAULT_BACKOFF.jitter,
+  };
+}
+
 /**
- * Subscribe to an SSE-backed agent stream. Returns the reducer state, the
+ * Subscribe to an SSE-backed agent stream with retry/backoff, backpressure
+ * buffering, and auth-aware reconnect. Returns the reducer state, the
  * connection status, and methods to close, reset, or dispatch — plus the
  * underlying `store` for wiring `<AgentStateProvider>`.
  */
 export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamResult {
-  const { url, sessionId, onEvent, onInvalidEvent, enabled = true } = options;
+  const { url, sessionId, onEvent, onInvalidEvent, enabled = true, retry, buffer, auth } = options;
 
   // Store is created once per hook instance and stays stable across renders.
   const storeRef = useRef<AgentStore | null>(null);
-  if (storeRef.current === null) {
-    storeRef.current = createAgentStore();
-  }
+  if (storeRef.current === null) storeRef.current = createAgentStore();
   const store = storeRef.current;
 
   const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
   const [status, setStatus] = useState<StreamStatus>("idle");
-  const esRef = useRef<EventSource | null>(null);
 
-  // Stable refs for callbacks
+  // Stable refs for callbacks — updated every render but never trigger effects.
   const onEventRef = useRef(onEvent);
   onEventRef.current = onEvent;
   const onInvalidRef = useRef(onInvalidEvent);
   onInvalidRef.current = onInvalidEvent;
+  const retryRef = useRef(retry);
+  retryRef.current = retry;
+  const bufferRef = useRef(buffer);
+  bufferRef.current = buffer;
+  const authRef = useRef(auth);
+  authRef.current = auth;
+
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!enabled) {
@@ -92,43 +136,151 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
       return;
     }
 
-    const separator = url.includes("?") ? "&" : "?";
-    const sseUrl = `${url}${separator}sessionId=${encodeURIComponent(sessionId)}`;
+    let attempt = 0;
+    let lastEventId: string | undefined;
+    let cancelled = false;
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
 
-    setStatus("connecting");
-    const es = new EventSource(sseUrl);
-    esRef.current = es;
+    const backoffOpts = resolveBackoff(retryRef.current);
+    const maxAttempts = retryRef.current?.maxAttempts ?? Infinity;
 
-    es.onopen = () => setStatus("open");
+    const sep = url.includes("?") ? "&" : "?";
+    const sseUrl = `${url}${sep}sessionId=${encodeURIComponent(sessionId)}`;
 
-    es.onmessage = (msg) => {
-      let raw: unknown;
-      try {
-        raw = JSON.parse(msg.data);
-      } catch {
-        return; // ignore non-JSON heartbeats etc.
-      }
+    const evtBuffer = bufferRef.current
+      ? createBuffer<AgentWireEvent>({
+          max: bufferRef.current.max,
+          onOverflow: bufferRef.current.onOverflow,
+          onOverflowCallback: bufferRef.current.onOverflowCallback,
+        })
+      : null;
 
-      const parsed = safeParseAgentEvent(raw);
-      if (parsed.ok) {
-        store.send(parsed.value);
-        onEventRef.current?.(parsed.value);
+    function drainBuffer() {
+      evtBuffer?.drain((event) => {
+        store.send(event);
+        onEventRef.current?.(event);
+      });
+    }
+
+    function ingest(event: AgentWireEvent) {
+      if (evtBuffer) {
+        evtBuffer.enqueue(event);
+        if (typeof requestAnimationFrame === "function") {
+          requestAnimationFrame(drainBuffer);
+        } else {
+          setTimeout(drainBuffer, 0);
+        }
       } else {
-        onInvalidRef.current?.(raw, parsed.error);
+        store.send(event);
+        onEventRef.current?.(event);
       }
-    };
+    }
 
-    es.onerror = () => {
-      if (es.readyState === EventSource.CLOSED) {
-        setStatus("closed");
-      } else {
+    /** Returns true when the loop should exit (cancelled or gave up). */
+    async function advanceOrGiveUp(err: Error): Promise<boolean> {
+      attempt++;
+      if (attempt >= maxAttempts) {
+        retryRef.current?.onGiveUp?.(err);
         setStatus("error");
+        return true;
       }
-    };
+      setStatus("reconnecting");
+      const delay = computeBackoff(attempt - 1, backoffOpts);
+      await new Promise<void>((resolve) => {
+        const t = setTimeout(resolve, delay);
+        ctrl.signal.addEventListener(
+          "abort",
+          () => {
+            clearTimeout(t);
+            resolve();
+          },
+          { once: true },
+        );
+      });
+      return cancelled;
+    }
+
+    async function attemptConnect(): Promise<void> {
+      while (!cancelled && attempt < maxAttempts) {
+        const a = authRef.current;
+        let headers: Record<string, string> | undefined;
+        if (a) {
+          setStatus("reauthenticating");
+          try {
+            const token = await a.getToken();
+            headers = { Authorization: `Bearer ${token}` };
+          } catch (err) {
+            if (await advanceOrGiveUp(err as Error)) return;
+            continue;
+          }
+        }
+
+        setStatus("connecting");
+        let connectionError: Error | null = null;
+        let unauthorized = false;
+
+        await connectSse({
+          url: sseUrl,
+          headers,
+          lastEventId,
+          signal: ctrl.signal,
+          onOpen: () => {
+            attempt = 0;
+            setStatus("open");
+          },
+          onEvent: (raw, id) => {
+            if (id !== undefined) lastEventId = id;
+            let parsedRaw: unknown;
+            try {
+              parsedRaw = JSON.parse(raw);
+            } catch {
+              return;
+            }
+            const result = safeParseAgentEvent(parsedRaw);
+            if (result.ok) {
+              ingest(result.value);
+            } else {
+              onInvalidRef.current?.(parsedRaw, result.error);
+            }
+          },
+          onError: (err) => {
+            connectionError = err;
+            if (err instanceof SseHttpError && err.status === 401) {
+              unauthorized = true;
+            }
+          },
+        });
+
+        if (cancelled) return;
+
+        if (unauthorized && authRef.current?.onUnauthorized) {
+          try {
+            await authRef.current.onUnauthorized();
+          } catch (err) {
+            if (await advanceOrGiveUp(err as Error)) return;
+            continue;
+          }
+          // After onUnauthorized resolves, retry from the top (getToken again).
+          continue;
+        }
+
+        if (connectionError === null) {
+          // Clean close — server ended the stream normally.
+          setStatus("closed");
+          return;
+        }
+
+        if (await advanceOrGiveUp(connectionError)) return;
+      }
+    }
+
+    attemptConnect();
 
     return () => {
-      es.close();
-      esRef.current = null;
+      cancelled = true;
+      ctrl.abort();
+      abortRef.current = null;
       setStatus("closed");
     };
     // `store` is stable for the life of this hook instance (created once in
@@ -137,8 +289,8 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
   }, [url, sessionId, enabled, store]);
 
   const close = useCallback(() => {
-    esRef.current?.close();
-    esRef.current = null;
+    abortRef.current?.abort();
+    abortRef.current = null;
     setStatus("closed");
   }, []);
 

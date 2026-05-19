@@ -6,6 +6,9 @@ import {
   useAgentSession,
 } from "../src/index.js";
 import type { SessionStorageAdapter, UIAppendEvent } from "../src/index.js";
+import * as sseModule from "../src/sse-transport.js";
+
+type ConnectOpts = Parameters<typeof sseModule.connectSse>[0];
 
 function makeStorage(): SessionStorageAdapter {
   const store = new Map<string, string>();
@@ -18,32 +21,6 @@ function makeStorage(): SessionStorageAdapter {
       store.delete(k);
     },
   };
-}
-
-class MockEventSource {
-  static instances: MockEventSource[] = [];
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSED = 2;
-
-  url: string;
-  readyState = MockEventSource.OPEN;
-  onopen: ((e: Event) => void) | null = null;
-  onmessage: ((e: MessageEvent) => void) | null = null;
-  onerror: ((e: Event) => void) | null = null;
-  close = vi.fn(() => {
-    this.readyState = MockEventSource.CLOSED;
-  });
-
-  constructor(url: string) {
-    this.url = url;
-    MockEventSource.instances.push(this);
-    queueMicrotask(() => this.onopen?.(new Event("open")));
-  }
-
-  emit(data: unknown) {
-    this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(data) }));
-  }
 }
 
 function makeFetchMock(
@@ -65,17 +42,24 @@ function makeFetchMock(
   });
 }
 
+// List of all connectSse calls made this test, in call order.
+let connectOptsList: ConnectOpts[] = [];
+let connectSpy: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
-  MockEventSource.instances.length = 0;
-  // @ts-expect-error
-  globalThis.EventSource = MockEventSource;
-  (globalThis.EventSource as unknown as { CLOSED: number }).CLOSED = MockEventSource.CLOSED;
+  connectOptsList = [];
+  connectSpy = vi.spyOn(sseModule, "connectSse").mockImplementation(async (opts) => {
+    connectOptsList.push(opts);
+    opts.onOpen();
+    return new Promise<void>((resolve) => {
+      opts.signal.addEventListener("abort", () => resolve());
+    });
+  });
 });
 
 afterEach(() => {
   cleanup();
-  // @ts-expect-error
-  delete globalThis.EventSource;
+  connectSpy.mockRestore();
 });
 
 describe("multi-agent namespacing", () => {
@@ -201,14 +185,22 @@ describe("multi-agent namespacing", () => {
       </AgentRoot>,
     );
 
+    // Wait for both SSE connections to be established (2 calls to connectSse).
     await waitFor(() => {
-      expect(MockEventSource.instances.length).toBe(2);
+      expect(connectOptsList.length).toBe(2);
     });
 
-    // React runs effects inner → outer, so the inner AgentRoot (planner) creates
-    // its EventSource first (instances[0]) and the outer (chat) second (instances[1]).
-    const plannerES = MockEventSource.instances[0]!;
-    const chatES = MockEventSource.instances[1]!;
+    // React runs effects inner → outer, so the inner AgentRoot (planner) connects
+    // first (connectOptsList[0]) and the outer (chat) second (connectOptsList[1]).
+    // Match by URL to be explicit and robust.
+    const plannerOpts = connectOptsList.find((o) => o.url.includes("ses_planner"));
+    const chatOpts = connectOptsList.find((o) => o.url.includes("ses_chat"));
+
+    // Fallback: order-based if sessionId hasn't appeared in URL yet
+    // (sessionId is appended as a query param after the session is created).
+    // Use order: inner (planner) is [0], outer (chat) is [1].
+    const resolvedPlannerOpts = plannerOpts ?? connectOptsList[0];
+    const resolvedChatOpts = chatOpts ?? connectOptsList[1];
 
     const chatEvt: UIAppendEvent = {
       v: 1,
@@ -236,9 +228,9 @@ describe("multi-agent namespacing", () => {
     };
 
     act(() => {
-      chatES.emit(chatEvt);
-      plannerES.emit(plannerEvt);
-      plannerES.emit(plannerEvt2);
+      resolvedChatOpts.onEvent(JSON.stringify(chatEvt), undefined);
+      resolvedPlannerOpts.onEvent(JSON.stringify(plannerEvt), undefined);
+      resolvedPlannerOpts.onEvent(JSON.stringify(plannerEvt2), undefined);
     });
 
     expect(getByTestId("chat-count").textContent).toBe("1");

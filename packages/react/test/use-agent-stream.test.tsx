@@ -1,46 +1,28 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import type { UIAppendEvent } from "@kibadist/agentui-protocol";
+import * as sseModule from "../src/sse-transport.js";
 
-class MockEventSource {
-  static instances: MockEventSource[] = [];
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSED = 2;
+type ConnectOpts = Parameters<typeof sseModule.connectSse>[0];
 
-  url: string;
-  readyState = MockEventSource.OPEN;
-  onopen: ((e: Event) => void) | null = null;
-  onmessage: ((e: MessageEvent) => void) | null = null;
-  onerror: ((e: Event) => void) | null = null;
-  close = vi.fn(() => {
-    this.readyState = MockEventSource.CLOSED;
-  });
-
-  constructor(url: string) {
-    this.url = url;
-    MockEventSource.instances.push(this);
-    // Simulate "connected" immediately so status flips to "open".
-    queueMicrotask(() => this.onopen?.(new Event("open")));
-  }
-
-  emit(data: unknown) {
-    this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(data) }));
-  }
-}
+// Per-test queue of opts so tests can push events and errors.
+let currentOpts: ConnectOpts | null = null;
+let connectSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
-  MockEventSource.instances.length = 0;
-  // @ts-expect-error — replacing global for the test
-  globalThis.EventSource = MockEventSource;
-  // jsdom doesn't define these constants on its (absent) EventSource.
-  (globalThis.EventSource as unknown as { CLOSED: number }).CLOSED =
-    MockEventSource.CLOSED;
+  currentOpts = null;
+  connectSpy = vi.spyOn(sseModule, "connectSse").mockImplementation(async (opts) => {
+    currentOpts = opts;
+    opts.onOpen();
+    // Stay open until aborted.
+    return new Promise<void>((resolve) => {
+      opts.signal.addEventListener("abort", () => resolve());
+    });
+  });
 });
 
 afterEach(() => {
-  // @ts-expect-error
-  delete globalThis.EventSource;
+  connectSpy.mockRestore();
 });
 
 function appendEvent(key: string): UIAppendEvent {
@@ -54,7 +36,6 @@ function appendEvent(key: string): UIAppendEvent {
   };
 }
 
-// Import after the mock is wired so the hook closes over MockEventSource.
 async function loadHook() {
   return await import("../src/use-agent-stream.js");
 }
@@ -74,7 +55,7 @@ describe("useAgentStream", () => {
     expect(result.current.state.nodes[0].key).toBe("a");
   });
 
-  it("reset() clears state but does NOT close the EventSource", async () => {
+  it("reset() clears state but does NOT close the SSE connection", async () => {
     const { useAgentStream } = await loadHook();
     const { result } = renderHook(() =>
       useAgentStream({ url: "/sse", sessionId: "s1" }),
@@ -85,8 +66,8 @@ describe("useAgentStream", () => {
     });
     expect(result.current.state.nodes).toHaveLength(1);
 
-    const es = MockEventSource.instances[0];
-    expect(es.close).not.toHaveBeenCalled();
+    // The connection should still be open (connectSpy called once, not aborted).
+    expect(connectSpy).toHaveBeenCalledOnce();
 
     act(() => {
       result.current.reset();
@@ -94,16 +75,12 @@ describe("useAgentStream", () => {
 
     expect(result.current.state.nodes).toEqual([]);
     expect(result.current.state.byKey.size).toBe(0);
-    expect(es.close).not.toHaveBeenCalled();
-    expect(es.readyState).toBe(MockEventSource.OPEN);
+    // Connection still open — signal not aborted.
+    expect(currentOpts?.signal.aborted).toBe(false);
   });
 
   it("interleave: append → reset → append yields one node (not two)", async () => {
-    // This is the regression anchor for the offset-workaround pattern.
-    // If reset state leaks across resets (shared Map ref), the second append
-    // would land in a Map that still contains "a", or "b" would land at the
-    // wrong index. Both variants of this bug used to require the consumer
-    // to track agentNodeOffset.
+    // Regression anchor for the offset-workaround pattern.
     const { useAgentStream } = await loadHook();
     const { result } = renderHook(() =>
       useAgentStream({ url: "/sse", sessionId: "s1" }),
@@ -139,18 +116,21 @@ describe("useAgentStream", () => {
     });
     expect(result.current.state.nodes).toHaveLength(1);
 
-    const es = MockEventSource.instances[0];
     act(() => {
-      es.emit({
-        v: 1,
-        id: "r",
-        ts: "2026-01-01T00:00:00Z",
-        sessionId: "s1",
-        op: "ui.reset",
-      });
+      currentOpts?.onEvent(
+        JSON.stringify({
+          v: 1,
+          id: "r",
+          ts: "2026-01-01T00:00:00Z",
+          sessionId: "s1",
+          op: "ui.reset",
+        }),
+        undefined,
+      );
     });
 
     expect(result.current.state.nodes).toEqual([]);
-    expect(es.close).not.toHaveBeenCalled();
+    // Connection still open — not aborted by a ui.reset event.
+    expect(currentOpts?.signal.aborted).toBe(false);
   });
 });

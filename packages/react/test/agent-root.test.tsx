@@ -10,6 +10,9 @@ import type {
   SessionStorageAdapter,
   UIAppendEvent,
 } from "../src/index.js";
+import * as sseModule from "../src/sse-transport.js";
+
+type ConnectOpts = Parameters<typeof sseModule.connectSse>[0];
 
 function makeStorage(initial: Record<string, string> = {}): SessionStorageAdapter & {
   _store: Map<string, string>;
@@ -29,32 +32,6 @@ function makeStorage(initial: Record<string, string> = {}): SessionStorageAdapte
   };
 }
 
-class MockEventSource {
-  static instances: MockEventSource[] = [];
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSED = 2;
-
-  url: string;
-  readyState = MockEventSource.OPEN;
-  onopen: ((e: Event) => void) | null = null;
-  onmessage: ((e: MessageEvent) => void) | null = null;
-  onerror: ((e: Event) => void) | null = null;
-  close = vi.fn(() => {
-    this.readyState = MockEventSource.CLOSED;
-  });
-
-  constructor(url: string) {
-    this.url = url;
-    MockEventSource.instances.push(this);
-    queueMicrotask(() => this.onopen?.(new Event("open")));
-  }
-
-  emit(data: unknown) {
-    this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(data) }));
-  }
-}
-
 function makeFetchMock(handlers: Record<string, (url: string, init?: RequestInit) => Response>) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
@@ -65,18 +42,32 @@ function makeFetchMock(handlers: Record<string, (url: string, init?: RequestInit
   });
 }
 
+// Per-test SSE connection opts, populated by the spy.
+let connectOptsList: ConnectOpts[] = [];
+let connectSpy: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
-  MockEventSource.instances.length = 0;
-  // @ts-expect-error — replace global for the test
-  globalThis.EventSource = MockEventSource;
-  (globalThis.EventSource as unknown as { CLOSED: number }).CLOSED = MockEventSource.CLOSED;
+  connectOptsList = [];
+  connectSpy = vi.spyOn(sseModule, "connectSse").mockImplementation(async (opts) => {
+    connectOptsList.push(opts);
+    opts.onOpen();
+    // Stay open until the signal is aborted.
+    return new Promise<void>((resolve) => {
+      opts.signal.addEventListener("abort", () => resolve());
+    });
+  });
 });
 
 afterEach(() => {
   cleanup();
-  // @ts-expect-error
-  delete globalThis.EventSource;
+  connectSpy.mockRestore();
 });
+
+/** Push a raw JSON event through the most-recently established SSE connection. */
+function emitToLatest(data: unknown) {
+  const opts = connectOptsList[connectOptsList.length - 1];
+  opts?.onEvent(JSON.stringify(data), undefined);
+}
 
 function StatusProbe() {
   const s = useAgentSession();
@@ -228,7 +219,6 @@ describe("AgentRoot", () => {
       expect(getByTestId("status").textContent).toBe("connected");
     });
 
-    const es = MockEventSource.instances[0]!;
     const appendEvt: UIAppendEvent = {
       v: 1,
       id: "evt-append",
@@ -238,7 +228,7 @@ describe("AgentRoot", () => {
       node: { key: "a", type: "test.node", props: {} },
     };
     act(() => {
-      es.emit(appendEvt);
+      emitToLatest(appendEvt);
     });
     expect(getByTestId("nodes-count").textContent).toBe("1");
 
@@ -279,9 +269,8 @@ describe("AgentRoot", () => {
       expect(getByTestId("status").textContent).toBe("connected");
     });
 
-    const es = MockEventSource.instances[0]!;
     act(() => {
-      es.emit({
+      emitToLatest({
         v: 1,
         id: "evt-meta",
         ts: "2026-01-01T00:00:01Z",
