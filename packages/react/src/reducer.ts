@@ -376,6 +376,7 @@ function applyOptimisticRollback(state: AgentState, e: OptimisticRollbackEvent):
 
 function applyWorkflowStart(state: AgentState, e: WorkflowStartEvent): AgentState {
   if (state.workflows.has(e.id)) return state;
+  if (e.steps.length === 0) return state;
   const steps: WorkflowStep[] = e.steps.map((s, i) => ({
     id: s.id,
     title: s.title,
@@ -397,6 +398,7 @@ function applyWorkflowStart(state: AgentState, e: WorkflowStartEvent): AgentStat
 function applyWorkflowAdvance(state: AgentState, e: WorkflowAdvanceEvent): AgentState {
   const existing = state.workflows.get(e.id);
   if (!existing || existing.status !== "active") return state;
+  if (existing.currentStepId === e.stepId) return state;
   const pos = existing.steps.findIndex((s) => s.id === e.stepId);
   if (pos < 0) return state;
   const steps: WorkflowStep[] = existing.steps.map((s, i) => ({

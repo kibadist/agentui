@@ -143,6 +143,24 @@ describe("workflow reducer", () => {
     expect(s.workflows.size).toBe(0);
   });
 
+  it("workflow.start with empty steps is a no-op", () => {
+    const s0 = createInitialAgentState();
+    const evt: WorkflowStartEvent = {
+      ...base("e1"),
+      op: "workflow.start",
+      id: "wfempty",
+      steps: [],
+    };
+    const s = agentReducer(s0, evt);
+    expect(s.workflows).toBe(s0.workflows);
+  });
+
+  it("advance to the already-current step is a no-op", () => {
+    const s0 = agentReducer(createInitialAgentState(), start());
+    const s = agentReducer(s0, advance("a"));
+    expect(s.workflows).toBe(s0.workflows);
+  });
+
   it("non-workflow action returns the same workflows reference", () => {
     const s0 = agentReducer(createInitialAgentState(), start());
     const s = agentReducer(s0, {
