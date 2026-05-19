@@ -1,0 +1,39 @@
+{
+  "name": "@kibadist/agentui-node",
+  "version": "0.3.1",
+  "description": "Framework-agnostic AgentUI server companion: SSE writer, typed emitter, conversation persistence",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kibadist/agentui.git",
+    "directory": "packages/node"
+  },
+  "homepage": "https://github.com/kibadist/agentui#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "prepublishOnly": "pnpm run build",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kibadist/agentui-protocol": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

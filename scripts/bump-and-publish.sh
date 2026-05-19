@@ -14,6 +14,7 @@ fi
 
 PACKAGES=(
   packages/protocol
+  packages/node
   packages/validate
   packages/llm
   packages/react
