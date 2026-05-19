@@ -86,3 +86,16 @@ export type {
 
 export { AgentRuntimeProvider } from "./runtime-provider.js";
 export type { AgentRuntimeProviderProps } from "./runtime-provider.js";
+
+export { AgentRoot } from "./agent-root.js";
+export type { AgentRootProps } from "./agent-root.js";
+
+export { SessionProvider, useAgentSession } from "./session-context.js";
+export type { UseAgentSessionResult } from "./session-context.js";
+
+export { localStorageAdapter } from "./storage-adapter.js";
+export type { SessionStorageAdapter } from "./storage-adapter.js";
+
+export type { AgentError } from "./agent-error.js";
+
+export type { SessionMetaEvent } from "@kibadist/agentui-protocol";
