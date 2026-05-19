@@ -211,7 +211,11 @@ export type OptimisticEvent =
 
 export type OptimisticEventOp = OptimisticEvent["op"];
 
-/** All wire events flowing server → client (UI patches + tool calls + reasoning + optimistic). */
+/**
+ * All wire events the reducer accepts. Most flow server → client (UI patches,
+ * tool calls, reasoning), but optimistic events are bidirectional —
+ * hosts can dispatch them client-side AND servers can emit them over SSE.
+ */
 export type AgentWireEvent = UIEvent | ToolEvent | ReasoningEvent | OptimisticEvent;
 
 // ─── Action Events (user → agent) ───────────────────────────────────────────

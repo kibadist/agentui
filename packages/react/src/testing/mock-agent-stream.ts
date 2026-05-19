@@ -13,7 +13,7 @@ export interface MockAgentStream {
   store: AgentStore;
   /** Simulate inbound SSE (typed to UIEvent — wire-level events only). */
   push: (event: UIEvent) => void;
-  /** Reducer-level injection. Accepts `AgentAction` (UIEvent | AgentResetAction). */
+  /** Reducer-level injection. Accepts any `AgentAction` (UIEvent, ToolEvent, ReasoningEvent, OptimisticEvent, or AgentResetAction). */
   dispatchInternal: (action: AgentAction) => void;
   /** Drive the StreamStatus subscribers. */
   setStatus: (status: StreamStatus) => void;
