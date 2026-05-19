@@ -59,6 +59,13 @@ export interface AgentRendererProps {
    * error boundary), so it remains mounted even if the inner component throws.
    */
   nodeWrapper?: (node: UINode, children: ReactNode) => ReactNode;
+  /**
+   * Called when a node's `ComponentSpec.requires` lists permissions that are
+   * absent from `state.capabilities.permissions`. Only fires after a
+   * `session.init` event (`declared === true`). If omitted the node is hidden
+   * silently.
+   */
+  permissionFallback?: (node: UINode, missing: string[]) => ReactNode;
 }
 
 /**
@@ -76,6 +83,7 @@ export function AgentRenderer({
   hiddenTypes,
   errorFallback,
   nodeWrapper,
+  permissionFallback,
 }: AgentRendererProps) {
   const slotted = slot ? state.nodes.filter((n) => n.slot === slot) : state.nodes;
   const start = Math.max(0, range?.start ?? 0);
@@ -89,7 +97,7 @@ export function AgentRenderer({
     const node = slotted[i];
     if (filter && !filter(node, i)) continue;
     if (hiddenSet && hiddenSet.has(node.type)) continue;
-    const el = renderOne(node, registry, fallback);
+    const el = renderOne(node, registry, fallback, state.capabilities, permissionFallback);
     if (el === null) continue;
     const guarded = errorFallback
       ? createElement(
@@ -111,6 +119,8 @@ function renderOne(
   node: UINode,
   registry: Registry,
   fallback: ((node: UINode) => ReactNode) | undefined,
+  capabilities: AgentState["capabilities"],
+  permissionFallback: ((node: UINode, missing: string[]) => ReactNode) | undefined,
 ): ReactNode {
   const spec = registry.get(node.type);
   if (!spec) {
@@ -119,6 +129,13 @@ function renderOne(
       console.warn(`[agentui] Unknown component type: "${node.type}"`);
     }
     return null;
+  }
+
+  if (capabilities && capabilities.declared && spec.requires && spec.requires.length > 0) {
+    const missing = spec.requires.filter((p) => !capabilities.permissions.has(p));
+    if (missing.length > 0) {
+      return permissionFallback ? permissionFallback(node, missing) : null;
+    }
   }
 
   if (spec.propsSchema) {
