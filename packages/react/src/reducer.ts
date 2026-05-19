@@ -19,6 +19,7 @@ import type {
   OptimisticConfirmEvent,
   OptimisticRollbackEvent,
   SessionMetaEvent,
+  SessionInitEvent,
 } from "@kibadist/agentui-protocol";
 import { parsePartialJson } from "./partial-json.js";
 
@@ -28,6 +29,13 @@ export interface Toast {
   level: "info" | "success" | "warning" | "error";
   message: string;
   ts: string;
+}
+
+export interface Capabilities {
+  declared: boolean;
+  nodeTypes: ReadonlySet<string>;
+  actions: ReadonlySet<string>;
+  permissions: ReadonlySet<string>;
 }
 
 /** A locally-applied optimistic patch awaiting server confirmation or rollback. */
@@ -97,6 +105,7 @@ export interface AgentState {
   reasoning: Map<string, ReasoningSegment>;
   reasoningOrder: string[];
   optimistic: Map<string, OptimisticEntry>;
+  capabilities: Capabilities;
 }
 
 /**
@@ -114,6 +123,12 @@ export function createInitialAgentState(): AgentState {
     reasoning: new Map(),
     reasoningOrder: [],
     optimistic: new Map(),
+    capabilities: {
+      declared: false,
+      nodeTypes: new Set(),
+      actions: new Set(),
+      permissions: new Set(),
+    },
   };
 }
 
@@ -143,6 +158,7 @@ export type AgentAction =
   | ReasoningEvent
   | OptimisticEvent
   | SessionMetaEvent
+  | SessionInitEvent
   | AgentResetAction;
 
 function rebuildIndex(nodes: UINode[]): Map<string, number> {
@@ -329,6 +345,18 @@ function applyOptimisticRollback(state: AgentState, e: OptimisticRollbackEvent):
   return state;
 }
 
+function applySessionInit(state: AgentState, e: SessionInitEvent): AgentState {
+  return {
+    ...state,
+    capabilities: {
+      declared: true,
+      nodeTypes: new Set(e.capabilities.nodeTypes),
+      actions: new Set(e.capabilities.actions),
+      permissions: new Set(e.capabilities.permissions),
+    },
+  };
+}
+
 /**
  * Pure reducer over `AgentState`. Returns the same state reference for
  * no-op actions (e.g., `ui.replace` for an unknown key, `tool.result` for
@@ -353,8 +381,11 @@ export function agentReducer(state: AgentState, action: AgentAction): AgentState
       // tool calls. Pending navigates are stale intent ("go to /foo" issued
       // by a prior turn); after a reset we're starting over and shouldn't
       // fire them. Always return a fresh reference, even when state is
-      // already empty.
-      return createInitialAgentState();
+      // already empty. Capabilities survive the reset — they describe the
+      // session's permission contract, not transient UI state.
+      return { ...createInitialAgentState(), capabilities: state.capabilities };
+    case "session.init":
+      return applySessionInit(state, action);
     case "tool.start":
       return applyToolStart(state, action);
     case "tool.args-delta":
