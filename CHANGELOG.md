@@ -9,6 +9,7 @@ All notable changes to `@kibadist/agentui-*` packages.
 - New `applyPatch` helper exported from `@kibadist/agentui-react` for in-process patch application.
 - New `onPatchFailure` option on `createAgentStore`; `useAgentStream` wires it into `onInvalidEvent` with a `patch apply failed: …` message.
 - New protocol exports: `JsonPatch`, `JsonPatchOp`, `JsonPointer`, `UIReplacePropsEvent`, `UIReplacePatchEvent`.
+- New `parsePartialJson<T>(text)` and `streamingJsonParse<T>(source)` helpers exported from `@kibadist/agentui-react`. The reducer uses `parsePartialJson` so tool-call args update progressively after each `tool.args-delta`. ([DET-152](https://linear.app/detailing-app/issue/DET-152))
 
 ## 0.7.1
 

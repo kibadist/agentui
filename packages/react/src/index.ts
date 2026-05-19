@@ -1,3 +1,5 @@
+export { parsePartialJson, streamingJsonParse } from "./partial-json.js";
+
 export { createRegistry } from "./registry.js";
 export type { ComponentSpec, Registry } from "./registry.js";
 

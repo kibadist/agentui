@@ -156,6 +156,23 @@ For deeply nested or large nodes, agents can emit minimal [RFC 6902](https://dat
 
 Both forms can interleave for the same key.
 
+### Streaming partial-JSON
+
+LLM tool calls stream their JSON args incrementally. `parsePartialJson` returns a `Partial<T>` after each delta, repairing truncated input:
+
+````ts
+import { parsePartialJson, streamingJsonParse } from "@kibadist/agentui-react";
+
+parsePartialJson<{ q: string; tags: string[] }>('{"q":"foo","tags":[1,2');
+// → { q: "foo", tags: [1, 2] }
+
+for await (const partial of streamingJsonParse<{ q: string }>(stream)) {
+  // partial.q updates progressively
+}
+````
+
+The reducer uses `parsePartialJson` internally so `state.toolCalls.get(id).args` updates after every `tool.args-delta` event, not only at completion.
+
 ### Resetting a conversation
 
 ```tsx

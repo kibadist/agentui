@@ -20,6 +20,7 @@ import type {
   OptimisticRollbackEvent,
   SessionMetaEvent,
 } from "@kibadist/agentui-protocol";
+import { parsePartialJson } from "./partial-json.js";
 
 /** A transient notification queued by `ui.toast` events. */
 export interface Toast {
@@ -216,12 +217,7 @@ function applyToolArgsDelta(state: AgentState, e: ToolArgsDeltaEvent): AgentStat
   const existing = state.toolCalls.get(e.id);
   if (!existing || existing.status !== "pending") return state;
   const argsRaw = existing.argsRaw + e.delta;
-  let args: unknown | undefined;
-  try {
-    args = JSON.parse(argsRaw);
-  } catch {
-    args = undefined;
-  }
+  const args = parsePartialJson(argsRaw);
   const toolCalls = new Map(state.toolCalls);
   toolCalls.set(e.id, { ...existing, argsRaw, args });
   return { ...state, toolCalls };

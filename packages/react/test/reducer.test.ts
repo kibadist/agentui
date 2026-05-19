@@ -133,3 +133,23 @@ describe("agentReducer — sanity", () => {
     expect(initialAgentState.navigate).toBeNull();
   });
 });
+
+describe("agentReducer — tool.args-delta progressive parsing", () => {
+  it("updates tool args progressively from partial args-delta JSON", () => {
+    let state = createInitialAgentState();
+    state = agentReducer(state, {
+      v: 1, id: "t1", ts: "t", sessionId: "s",
+      op: "tool.start", name: "search",
+    });
+    state = agentReducer(state, {
+      v: 1, id: "t1", ts: "t", sessionId: "s",
+      op: "tool.args-delta", delta: '{"q":"foo',
+    });
+    expect(state.toolCalls.get("t1")?.args).toEqual({ q: "foo" });
+    state = agentReducer(state, {
+      v: 1, id: "t1", ts: "t", sessionId: "s",
+      op: "tool.args-delta", delta: 'bar"}',
+    });
+    expect(state.toolCalls.get("t1")?.args).toEqual({ q: "foobar" });
+  });
+});
