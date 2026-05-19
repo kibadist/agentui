@@ -120,7 +120,7 @@ export type { SessionStorageAdapter } from "./storage-adapter.js";
 
 export type { AgentError } from "./agent-error.js";
 
-export type { SessionMetaEvent } from "@kibadist/agentui-protocol";
+export type { SessionMetaEvent, SessionInitEvent } from "@kibadist/agentui-protocol";
 
 export { useAgentHistory } from "./use-agent-history.js";
 export type { HistoryMessage, UseAgentHistoryResult } from "./use-agent-history.js";

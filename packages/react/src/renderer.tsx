@@ -131,7 +131,7 @@ function renderOne(
     return null;
   }
 
-  if (capabilities && capabilities.declared && spec.requires && spec.requires.length > 0) {
+  if (capabilities.declared && spec.requires && spec.requires.length > 0) {
     const missing = spec.requires.filter((p) => !capabilities.permissions.has(p));
     if (missing.length > 0) {
       return permissionFallback ? permissionFallback(node, missing) : null;
