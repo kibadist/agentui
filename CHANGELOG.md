@@ -2,6 +2,18 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## 0.7.1
+
+### Added
+- `<AgentRoot caps={{ maxNodes, maxToasts, maxToolCalls, maxReasoning, onEvict }}>` — per-slice memory caps with drop-oldest eviction. `onEvict(slice, evicted)` fires once per dispatch that exceeds a cap.
+- `<AgentRoot onMetric={...} tags={...}>` — observability hooks. Seven metrics in the `agentui.*` namespace cover session lifecycle, stream lifecycle, and per-event parse/dispatch durations. Host-provided `tags` propagate on every metric.
+- New types: `Metric`, `MetricEmitter`, `CapsConfig`, `EvictableSlice` re-exported from `@kibadist/agentui-react`.
+
+### Notes
+- Metrics emit synchronously and are no-op when `onMetric` is unset (zero allocations).
+- Caps apply only when explicitly set; the default 50-toast trim remains in place.
+- Session ids are FNV-1a hashed (8 hex chars) before landing in metric tags; raw UUIDs are never tagged.
+
 ## 0.7.0
 
 ### Added
