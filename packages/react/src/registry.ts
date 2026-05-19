@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import type { NodeDefinition } from "./define-node.js";
 
 /** Minimal Zod-compatible schema shape (avoids hard dep on zod) */
 interface ZodLike<T = any> {
@@ -25,16 +26,46 @@ export interface Registry {
 }
 
 /**
- * Build a `Registry` from a plain object map. Component specs are looked up
- * by their UI-node type string at render time.
+ * Build a `Registry`. Accepts either:
+ * - a plain object map keyed by node type (legacy)
+ * - an array of `NodeDefinition`s from `defineNode()` (schema-first)
+ *
+ * Both forms produce identical `Registry` behavior.
  */
+export function createRegistry(map: Record<string, ComponentSpec>): Registry;
+export function createRegistry(nodes: NodeDefinition<any>[]): Registry;
 export function createRegistry(
-  map: Record<string, ComponentSpec>,
+  input: Record<string, ComponentSpec> | NodeDefinition<any>[],
 ): Registry {
-  const internal = new Map(Object.entries(map));
+  const internal = new Map<string, ComponentSpec>();
+
+  if (Array.isArray(input)) {
+    for (const node of input) {
+      if (internal.has(node.type)) {
+        throw new Error(`createRegistry: duplicate node type "${node.type}"`);
+      }
+      internal.set(node.type, nodeDefinitionToSpec(node));
+    }
+  } else {
+    for (const [type, spec] of Object.entries(input)) {
+      internal.set(type, spec);
+    }
+  }
+
   return {
     get: (type) => internal.get(type),
     has: (type) => internal.has(type),
     types: () => [...internal.keys()],
   };
+}
+
+function nodeDefinitionToSpec(node: NodeDefinition<any>): ComponentSpec {
+  const spec: ComponentSpec = {
+    component: node.component,
+    propsSchema: node.schema as unknown as ZodLike,
+  };
+  if (node.requires !== undefined) {
+    spec.requires = [...node.requires];
+  }
+  return spec;
 }
