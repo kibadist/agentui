@@ -9,12 +9,14 @@ All notable changes to `@kibadist/agentui-*` packages.
 - **Tool-call wire events.** Four new server→client events: `tool.start`, `tool.args-delta`, `tool.result`, `tool.cancel`. New types: `ToolCallStartEvent`, `ToolArgsDeltaEvent`, `ToolCallResultEvent`, `ToolCallCancelEvent`, `ToolEvent` union, `ToolEventOp`, `AgentWireEvent` (= `UIEvent | ToolEvent`).
 - **Reasoning/thinking wire events.** Three new server→client events: `reasoning.start`, `reasoning.delta`, `reasoning.end`. New types: `ReasoningStartEvent`, `ReasoningDeltaEvent`, `ReasoningEndEvent`, `ReasoningEvent` union, `ReasoningEventOp`. `AgentWireEvent` widens to `UIEvent | ToolEvent | ReasoningEvent`.
 - **Optional `turnId: string`** on `tool.start`, `reasoning.start`, and `ui.append` events. Hosts that ignore it see no change; per-turn grouping selectors will ship in v0.6 if there's demand.
+- **Optimistic wire events.** Three new events for optimistic UI patterns: `optimistic.apply` (entityKey + patch + originId + optional ttlMs), `optimistic.confirm` (originId), `optimistic.rollback` (originId). Server-emittable AND client-dispatchable. New types: `OptimisticApplyEvent`, `OptimisticConfirmEvent`, `OptimisticRollbackEvent`, `OptimisticEvent` union, `OptimisticEventOp`. `AgentWireEvent` widens to include them.
 
 ### Added — `@kibadist/agentui-validate`
 
 - `toolEventSchema` and `agentWireEventSchema` (combined UI + tool discriminated union).
 - `safeParseAgentEvent`, `parseAgentEvent`, `isAgentEvent` — parsers for the combined wire union. `safeParseUIEvent` stays UI-only for back-compat.
 - `reasoningEventSchema` is exported. `agentWireEventSchema` widens to include the three reasoning event schemas plus optional `turnId` on `tool.start` and `ui.append` schemas.
+- `optimisticEventSchema` is exported. `agentWireEventSchema` widens to include the three optimistic event schemas (16 total variants now).
 
 ### Added — `@kibadist/agentui-react`
 
@@ -25,6 +27,9 @@ All notable changes to `@kibadist/agentui-*` packages.
 - **Reasoning state slice on `AgentState`:** `reasoning: Map<string, ReasoningSegment>` and `reasoningOrder: string[]`. Reducer handles the three new event types; `__reset__` and `ui.reset` clear them.
 - **Selector hooks:** `useReasoning()` returns all segments in insertion order; `useLatestReasoning()` returns the most recently started segment (streaming or done).
 - **`turnId` capture:** `ReasoningSegment.turnId` is set from `reasoning.start`. `ToolCall.turnId` is set from `tool.start`. The renderer does not yet thread `turnId` from `ui.append` into `UINode.meta` — consumers needing it read via `onEvent`.
+- **Optimistic state slice on `AgentState`:** `optimistic: Map<string entityKey, OptimisticEntry>`. Reducer handles the three new event types; `__reset__` and `ui.reset` clear them. Last-write-wins on `entityKey`; confirm/rollback match by `originId` so the "apply A → apply B → confirm A" race resolves as a no-op.
+- **Selector hooks:** `useOptimistic(entityKey)` returns the patch for one entity; `useOptimisticAll()` returns the full Map. The single-entity selector is reference-stable when unrelated entities change.
+- **`useAgentStream().dispatch` widens to `AgentWireEvent`.** Consumers can now fire `optimistic.apply` (and any other wire event) from React code. Existing callers passing plain `UIEvent` continue to type-check unchanged. The library does NOT schedule TTL timers — hosts implement expiry via `useEffect` over `useOptimisticAll()` and dispatching `optimistic.rollback`. Documented pattern in README.
 
 ### Behavior
 
