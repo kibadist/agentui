@@ -90,6 +90,9 @@ export type {
   AuthConfig,
 } from "./use-agent-stream.js";
 
+export type { Metric, MetricEmitter } from "./metrics.js";
+export type { CapsConfig, EvictableSlice } from "./store.js";
+
 export { AgentRuntimeProvider } from "./runtime-provider.js";
 export type { AgentRuntimeProviderProps } from "./runtime-provider.js";
 
