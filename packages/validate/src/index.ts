@@ -5,6 +5,7 @@ export {
   toolEventSchema,
   reasoningEventSchema,
   optimisticEventSchema,
+  sessionMetaSchema,
   agentWireEventSchema,
 } from "./schemas.js";
 export {

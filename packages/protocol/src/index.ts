@@ -211,12 +211,26 @@ export type OptimisticEvent =
 
 export type OptimisticEventOp = OptimisticEvent["op"];
 
+// ─── Session Lifecycle Events ───────────────────────────────────────────────
+
+export interface SessionMetaEvent extends BaseEvent {
+  op: "session.meta";
+  /** Server-issued conversation id, persisted by `<AgentRoot>`. */
+  conversationId: string;
+}
+
 /**
  * All wire events the reducer accepts. Most flow server → client (UI patches,
- * tool calls, reasoning), but optimistic events are bidirectional —
- * hosts can dispatch them client-side AND servers can emit them over SSE.
+ * tool calls, reasoning, session metadata), but optimistic events are
+ * bidirectional — hosts can dispatch them client-side AND servers can emit
+ * them over SSE.
  */
-export type AgentWireEvent = UIEvent | ToolEvent | ReasoningEvent | OptimisticEvent;
+export type AgentWireEvent =
+  | UIEvent
+  | ToolEvent
+  | ReasoningEvent
+  | OptimisticEvent
+  | SessionMetaEvent;
 
 // ─── Action Events (user → agent) ───────────────────────────────────────────
 

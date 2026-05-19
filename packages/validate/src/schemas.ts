@@ -177,6 +177,13 @@ export const optimisticEventSchema = z.discriminatedUnion("op", [
   optimisticRollbackSchema,
 ]);
 
+// ─── Session Lifecycle Events ───────────────────────────────────────────────
+
+export const sessionMetaSchema = baseEventSchema.extend({
+  op: z.literal("session.meta"),
+  conversationId: z.string().min(1).max(256),
+});
+
 export const agentWireEventSchema = z.discriminatedUnion("op", [
   uiAppendSchema,
   uiReplaceSchema,
@@ -194,6 +201,7 @@ export const agentWireEventSchema = z.discriminatedUnion("op", [
   optimisticApplySchema,
   optimisticConfirmSchema,
   optimisticRollbackSchema,
+  sessionMetaSchema,
 ]);
 
 // ─── Action Events ───────────────────────────────────────────────────────────
