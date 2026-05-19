@@ -4,10 +4,12 @@ import { createAgentStream } from "../src/sse-writer.js";
 describe("createAgentStream — backpressure", () => {
   it("awaits 'drain' when write returns false; preserves FIFO", async () => {
     const drainListeners: Array<() => void> = [];
+    const chunks: string[] = [];
     let writeCount = 0;
     const res = {
       writeHead: () => {},
-      write(_chunk: string) {
+      write(chunk: string) {
+        chunks.push(chunk);
         writeCount++;
         // Pretend the first event hits a full buffer; subsequent writes succeed.
         return writeCount > 1;
@@ -36,5 +38,15 @@ describe("createAgentStream — backpressure", () => {
 
     await Promise.all([p1, p2]);
     expect(order).toEqual(["a", "b"]);
+
+    // Also assert wire chunks were written in FIFO order — promise resolution
+    // ordering is necessary but not sufficient; the actual bytes on the
+    // socket must be a-before-b too.
+    expect(chunks).toHaveLength(2);
+    const bodies = chunks.map((c) => {
+      const dataLine = c.split("\n")[1];
+      return JSON.parse(dataLine.slice("data: ".length)).message;
+    });
+    expect(bodies).toEqual(["a", "b"]);
   });
 });

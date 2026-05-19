@@ -47,21 +47,21 @@ export function createAgentReadable(opts: AgentStreamOptions): AgentReadable {
   });
 
   function finalize(input: EmitInput): AgentWireEvent {
-    const full = {
-      v: 1 as const,
+    // Authoritative fields (v, sessionId) come AFTER the spread so callers
+    // can't smuggle in conflicting values. id/ts/traceId remain overridable
+    // via the explicit assignments above the spread.
+    return {
       id: input.id ?? randomUUID(),
       ts: input.ts ?? new Date().toISOString(),
-      sessionId: opts.sessionId,
       ...(input.traceId !== undefined
         ? { traceId: input.traceId }
         : opts.traceId !== undefined
           ? { traceId: opts.traceId }
           : {}),
       ...input,
+      v: 1 as const,
+      sessionId: opts.sessionId,
     } as AgentWireEvent;
-    (full as { sessionId: string }).sessionId = opts.sessionId;
-    (full as { v: 1 }).v = 1;
-    return full;
   }
 
   function writeFrame(chunk: string) {

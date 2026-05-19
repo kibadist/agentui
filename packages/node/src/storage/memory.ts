@@ -20,8 +20,12 @@ export class MemoryConversationStorage implements ConversationStorage {
     if (!list) return [];
     let result: StoredEvent[] = list;
     if (opts?.before) {
-      const cutoff = opts.before;
-      result = result.filter((e) => e.ts < cutoff);
+      // Compare as parsed timestamps — lexicographic compare on ISO strings
+      // only equals chronological compare when both sides use the same
+      // timezone formatting (e.g. both `Z`). Callers may pass offset-form
+      // ISO strings (e.g. `+03:00`), so normalize via Date.parse.
+      const cutoffMs = Date.parse(opts.before);
+      result = result.filter((e) => Date.parse(e.ts) < cutoffMs);
     }
     if (opts?.limit !== undefined) {
       result = result.slice(0, opts.limit);

@@ -48,8 +48,11 @@ export function createAgentStream(
     const ms = opts.heartbeatMs ?? DEFAULT_HEARTBEAT_MS;
     if (ms > 0) {
       heartbeat = setInterval(() => {
-        if (!closed) {
+        if (closed || res.destroyed) return;
+        try {
           res.write(":\n\n");
+        } catch {
+          onClientClose();
         }
       }, ms);
       // Don't keep the event loop alive solely for the heartbeat.
@@ -59,22 +62,25 @@ export function createAgentStream(
 
   // Serialize writes so concurrent emit() calls preserve FIFO order even
   // when an earlier write parks on 'drain' for backpressure.
-  let writeChain: Promise<void> = Promise.resolve();
-  function writeChunk(chunk: string): Promise<void> {
+  // Returns true if the chunk was handed to the wire, false if dropped because
+  // the stream was already closed/destroyed.
+  let writeChain: Promise<boolean> = Promise.resolve(true);
+  function writeChunk(chunk: string): Promise<boolean> {
     const next = writeChain.then(async () => {
       if (closed || res.destroyed) {
         closed = true;
-        return;
+        return false;
       }
       const ok = res.write(chunk);
-      if (ok) return;
+      if (ok) return true;
       await new Promise<void>((resolve) => {
         res.on("drain", resolve);
       });
+      return true;
     });
     // Swallow rejections on the chain itself so one failure doesn't poison
     // subsequent writes; the caller still sees their own rejection.
-    writeChain = next.catch(() => {});
+    writeChain = next.catch(() => false);
     return next;
   }
 
@@ -83,29 +89,30 @@ export function createAgentStream(
   }
 
   function finalize(input: EmitInput): AgentWireEvent {
-    const full = {
-      v: 1 as const,
+    // Authoritative fields (v, sessionId) come AFTER the spread so callers
+    // can't smuggle in conflicting values. id/ts/traceId remain overridable
+    // via the explicit assignments above the spread.
+    return {
       id: input.id ?? randomUUID(),
       ts: input.ts ?? new Date().toISOString(),
-      sessionId: opts.sessionId,
       ...(input.traceId !== undefined
         ? { traceId: input.traceId }
         : opts.traceId !== undefined
           ? { traceId: opts.traceId }
           : {}),
       ...input,
+      v: 1 as const,
+      sessionId: opts.sessionId,
     } as AgentWireEvent;
-    // Re-stamp authoritative fields in case `input` smuggled in a sessionId.
-    (full as { sessionId: string }).sessionId = opts.sessionId;
-    (full as { v: 1 }).v = 1;
-    return full;
   }
 
   return {
     async emit(input) {
+      if (closed || res.destroyed) return;
       ensureHeaders();
       const event = finalize(input);
-      await writeChunk(buildFrame(event));
+      const written = await writeChunk(buildFrame(event));
+      if (!written) return;
       opts.onEventEmitted?.(event);
       if (opts.conversation) {
         await opts.conversation.append(opts.sessionId, event);

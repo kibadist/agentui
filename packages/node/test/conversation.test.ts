@@ -35,13 +35,27 @@ describe("Conversation + MemoryConversationStorage", () => {
     expect(hist.map((e) => (e as { id: string }).id)).toEqual(["e0", "e1", "e2"]);
   });
 
-  it("before filters events with ts >= before", async () => {
+  it("before filters events with ts >= before (event whose ts equals cutoff is excluded)", async () => {
     const conv = new Conversation({ storage: new MemoryConversationStorage() });
     for (let i = 0; i < 5; i++) {
       await conv.append("s1", makeEvent(i, `2026-05-19T00:00:0${i}.000Z`));
     }
+    // e3.ts === before — must be excluded (strict `<` semantics).
     const hist = await conv.history("s1", { before: "2026-05-19T00:00:03.000Z" });
     expect(hist.map((e) => (e as { id: string }).id)).toEqual(["e0", "e1", "e2"]);
+  });
+
+  it("before compares timestamps chronologically across timezone formats", async () => {
+    const conv = new Conversation({ storage: new MemoryConversationStorage() });
+    // 12:00 UTC, same instant expressed as +03:00 offset, then 15:00 UTC.
+    await conv.append("s1", makeEvent(0, "2026-05-19T12:00:00.000Z"));
+    await conv.append("s1", makeEvent(1, "2026-05-19T15:00:00.000+03:00")); // same instant as 12:00 UTC
+    await conv.append("s1", makeEvent(2, "2026-05-19T15:00:00.000Z"));
+    // Cutoff is 13:00 UTC expressed as +03:00 offset. e0 and e1 are both at
+    // 12:00 UTC, so both should be excluded (strict `<`) — wait, included.
+    // 12:00 UTC < 13:00 UTC, so both included. e2 (15:00 UTC) excluded.
+    const hist = await conv.history("s1", { before: "2026-05-19T16:00:00.000+03:00" });
+    expect(hist.map((e) => (e as { id: string }).id)).toEqual(["e0", "e1"]);
   });
 
   it("history is empty for unknown session", async () => {

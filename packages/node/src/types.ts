@@ -74,6 +74,11 @@ export interface AgentStreamOptions {
   heartbeatMs?: number;
   /** Fires after each event is written to the wire. */
   onEventEmitted?: (event: AgentWireEvent) => void;
-  /** If set, each emitted event is also forwarded to conversation.append. */
+  /**
+   * If set, each emitted event is forwarded to `conversation.append` AFTER
+   * the wire write succeeds. If append rejects, `emit()` rejects too — but
+   * the frame is already on the wire. Storage failures are visible to the
+   * caller; ordering is wire-first, then persistence.
+   */
   conversation?: import("./conversation.js").Conversation;
 }
