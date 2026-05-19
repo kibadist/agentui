@@ -10,8 +10,8 @@ Commands:
 
 Options:
   --dry-run   Print what would happen without writing files
-  --help, -h  Show this help
-  --version,  Print version
+  --help, -h     Show this help
+  --version, -v  Print version
 
 Config (optional, project root):
   agentui.config.json
