@@ -2,6 +2,16 @@
 
 All notable changes to `@kibadist/agentui-*` packages.
 
+## 0.6.2
+
+### Added
+
+- **`@kibadist/agentui-react/devtools`** — new subpath export. Ships `<AgentDevTools />`, a floating debug panel with a live wire-event log, current `AgentState` tree, dispatch latency stats, and a time-travel scrubber.
+  - Opt-in by default in non-production; production builds must set `NEXT_PUBLIC_AGENTUI_DEVTOOLS=1` (or pass `enabled` explicitly).
+  - The panel doesn't rewind the host app — scrubbing only changes what the panel renders.
+- **`AgentStore.subscribeAction(listener)`** — public API addition. Notifies listeners with `(action, nextState, dispatchMs)` after every non-no-op dispatch. Hosts that implement custom stores (rare) must add the method.
+- `replayConversation` parameter type widened from `UIEvent[]` to `AgentAction[]` (excluding the internal `__reset__`). Existing call sites are unaffected.
+
 ## 0.6.0
 
 ### Added — new package `@kibadist/agentui-llm`

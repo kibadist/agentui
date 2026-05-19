@@ -8,6 +8,7 @@ import {
   AgentActionProvider,
   type ActionSender,
 } from "@kibadist/agentui-react";
+import { AgentDevTools } from "@kibadist/agentui-react/devtools";
 import { registry } from "@/components/registry";
 import { ChatInput } from "@/components/chat-input";
 import { ToastList } from "@/components/toast-list";
@@ -141,6 +142,9 @@ function AgentSession({ sessionId }: { sessionId: string }) {
 
         {/* Input */}
         <ChatInput onSend={sendMessage} disabled={status !== "open"} />
+
+        {/* DevTools */}
+        <AgentDevTools />
       </div>
     </AgentActionProvider>
   );
