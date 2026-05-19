@@ -85,6 +85,9 @@ export type {
   StreamStatus,
   UseAgentStreamOptions,
   UseAgentStreamResult,
+  RetryConfig,
+  BufferConfig,
+  AuthConfig,
 } from "./use-agent-stream.js";
 
 export { AgentRuntimeProvider } from "./runtime-provider.js";
