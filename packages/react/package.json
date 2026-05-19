@@ -47,11 +47,16 @@
     "@kibadist/agentui-validate": "workspace:^"
   },
   "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "zod": "^3.23.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": { "optional": true }
   },
   "devDependencies": {
     "@types/react": "^19.0.8",
     "react": "^19.0.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "zod": "^3.23.0"
   }
 }
