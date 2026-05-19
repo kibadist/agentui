@@ -2,6 +2,10 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import type { AgentError } from "./agent-error.js";
+import {
+  resolveAgentRoot,
+  useAgentRootRegistryEntry,
+} from "./agent-root-registry.js";
 
 export interface UseAgentSessionResult {
   sessionId: string | null;
@@ -50,27 +54,47 @@ export function SessionProvider({ value, config, children }: SessionProviderProp
  *
  * @param id Reserved for multi-agent support (DET-143). Ignored in v0.5.4.
  */
-export function useAgentSession(_id?: string): UseAgentSessionResult {
-  const value = useContext(SessionContext);
-  if (value === null) {
+export function useAgentSession(id?: string): UseAgentSessionResult {
+  const nearest = useContext(SessionContext);
+  const entry = useAgentRootRegistryEntry();
+
+  if (id !== undefined) {
+    const resolved = resolveAgentRoot(entry, id);
+    if (resolved === null) {
+      throw new Error(`[agentui] No <AgentRoot id="${id}"> found in the tree.`);
+    }
+    return resolved.session;
+  }
+
+  if (nearest === null) {
     throw new Error(
       "[agentui] useAgentSession must be used inside <AgentRoot>. " +
         "Wrap your tree in <AgentRoot endpoint=\"...\">.",
     );
   }
-  return value;
+  return nearest;
 }
 
 /**
  * Internal — `useAgentHistory` and similar hooks use this to access the
  * AgentRoot's endpoint and fetch. Throws if no `<AgentRoot>` ancestor.
  */
-export function useAgentRootConfig(): AgentRootConfig {
-  const value = useContext(AgentRootConfigContext);
-  if (value === null) {
+export function useAgentRootConfig(id?: string): AgentRootConfig {
+  const nearest = useContext(AgentRootConfigContext);
+  const entry = useAgentRootRegistryEntry();
+
+  if (id !== undefined) {
+    const resolved = resolveAgentRoot(entry, id);
+    if (resolved === null) {
+      throw new Error(`[agentui] No <AgentRoot id="${id}"> found in the tree.`);
+    }
+    return resolved.config;
+  }
+
+  if (nearest === null) {
     throw new Error(
       "[agentui] useAgentRootConfig must be used inside <AgentRoot>.",
     );
   }
-  return value;
+  return nearest;
 }

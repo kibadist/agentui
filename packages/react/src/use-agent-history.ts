@@ -24,9 +24,9 @@ export interface UseAgentHistoryResult {
  *
  * @param id Reserved for multi-agent support (DET-143). Ignored in v0.5.4.
  */
-export function useAgentHistory(_id?: string): UseAgentHistoryResult {
-  const { sessionId } = useAgentSession();
-  const config = useAgentRootConfig();
+export function useAgentHistory(id?: string): UseAgentHistoryResult {
+  const { sessionId } = useAgentSession(id);
+  const config = useAgentRootConfig(id);
   const [messages, setMessages] = useState<HistoryMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<AgentError | null>(null);
