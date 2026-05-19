@@ -46,12 +46,41 @@ const uiAppendSchema = baseEventSchema.extend({
   turnId: z.string().max(256).optional(),
 });
 
-const uiReplaceSchema = baseEventSchema.extend({
-  op: z.literal("ui.replace"),
-  key: z.string().min(1).max(256),
-  props: z.record(z.string(), z.any()),
-  replace: z.boolean().optional(),
-});
+const jsonPointerSchema = z.string().regex(/^$|^(\/([^/~]|~0|~1)*)+$/, "invalid JSON Pointer");
+
+const jsonPatchOpSchema = z.discriminatedUnion("op", [
+  z.object({ op: z.literal("add"), path: jsonPointerSchema, value: z.unknown() }),
+  z.object({ op: z.literal("remove"), path: jsonPointerSchema }),
+  z.object({ op: z.literal("replace"), path: jsonPointerSchema, value: z.unknown() }),
+  z.object({ op: z.literal("move"), from: jsonPointerSchema, path: jsonPointerSchema }),
+  z.object({ op: z.literal("copy"), from: jsonPointerSchema, path: jsonPointerSchema }),
+  z.object({ op: z.literal("test"), path: jsonPointerSchema, value: z.unknown() }),
+]);
+
+const uiReplaceSchema = baseEventSchema
+  .extend({
+    op: z.literal("ui.replace"),
+    key: z.string().min(1).max(256),
+    props: z.record(z.string(), z.any()).optional(),
+    replace: z.boolean().optional(),
+    patch: z.array(jsonPatchOpSchema).min(1).max(256).optional(),
+  })
+  .superRefine((val, ctx) => {
+    const hasProps = val.props !== undefined;
+    const hasPatch = val.patch !== undefined;
+    if (hasProps === hasPatch) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "ui.replace requires exactly one of `props` or `patch`",
+      });
+    }
+    if (hasPatch && val.replace !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "`replace` cannot be combined with `patch`",
+      });
+    }
+  });
 
 const uiRemoveSchema = baseEventSchema.extend({
   op: z.literal("ui.remove"),
@@ -74,7 +103,7 @@ const uiResetSchema = baseEventSchema.extend({
   op: z.literal("ui.reset"),
 });
 
-export const uiEventSchema = z.discriminatedUnion("op", [
+export const uiEventSchema = z.union([
   uiAppendSchema,
   uiReplaceSchema,
   uiRemoveSchema,
@@ -184,7 +213,7 @@ export const sessionMetaSchema = baseEventSchema.extend({
   conversationId: z.string().min(1).max(256),
 });
 
-export const agentWireEventSchema = z.discriminatedUnion("op", [
+export const agentWireEventSchema = z.union([
   uiAppendSchema,
   uiReplaceSchema,
   uiRemoveSchema,
