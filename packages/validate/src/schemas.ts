@@ -213,6 +213,15 @@ export const sessionMetaSchema = baseEventSchema.extend({
   conversationId: z.string().min(1).max(256),
 });
 
+export const sessionInitSchema = baseEventSchema.extend({
+  op: z.literal("session.init"),
+  capabilities: z.object({
+    nodeTypes: z.array(z.string().min(1).max(256)).max(512),
+    actions: z.array(z.string().min(1).max(256)).max(512),
+    permissions: z.array(z.string().min(1).max(256)).max(512),
+  }),
+});
+
 export const agentWireEventSchema = z.union([
   uiAppendSchema,
   uiReplaceSchema,
@@ -231,6 +240,7 @@ export const agentWireEventSchema = z.union([
   optimisticConfirmSchema,
   optimisticRollbackSchema,
   sessionMetaSchema,
+  sessionInitSchema,
 ]);
 
 // ─── Action Events ───────────────────────────────────────────────────────────
