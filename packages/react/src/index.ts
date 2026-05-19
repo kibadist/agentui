@@ -90,6 +90,13 @@ export type { AgentRuntimeProviderProps } from "./runtime-provider.js";
 export { AgentRoot } from "./agent-root.js";
 export type { AgentRootProps } from "./agent-root.js";
 
+export {
+  AgentRootRegistry,
+  resolveAgentRoot,
+  useAgentRootRegistryEntry,
+} from "./agent-root-registry.js";
+export type { AgentRootRegistryEntry } from "./agent-root-registry.js";
+
 export { SessionProvider, useAgentSession } from "./session-context.js";
 export type { UseAgentSessionResult } from "./session-context.js";
 
