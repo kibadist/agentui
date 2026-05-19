@@ -234,6 +234,50 @@ export type OptimisticEvent =
 
 export type OptimisticEventOp = OptimisticEvent["op"];
 
+// ─── Workflow Events (server → client) ──────────────────────────────────────
+
+export interface WorkflowStartEvent extends BaseEvent {
+  op: "workflow.start";
+  /** Workflow id, unique per session. Shared across workflow.* events. */
+  id: string;
+  /** Ordered steps. First step is the initial `current`. */
+  steps: Array<{ id: string; title: string; nodeKey?: string }>;
+  /** Optional turn correlation. */
+  turnId?: string;
+}
+
+export interface WorkflowAdvanceEvent extends BaseEvent {
+  op: "workflow.advance";
+  /** Workflow id this advance applies to. */
+  id: string;
+  /** Step id to mark as `current`. */
+  stepId: string;
+}
+
+export interface WorkflowCompleteEvent extends BaseEvent {
+  op: "workflow.complete";
+  /** Workflow id being completed. */
+  id: string;
+  /** Optional final result payload. */
+  result?: unknown;
+}
+
+export interface WorkflowCancelEvent extends BaseEvent {
+  op: "workflow.cancel";
+  /** Workflow id being cancelled. */
+  id: string;
+  /** Optional cancellation reason. */
+  reason?: string;
+}
+
+export type WorkflowEvent =
+  | WorkflowStartEvent
+  | WorkflowAdvanceEvent
+  | WorkflowCompleteEvent
+  | WorkflowCancelEvent;
+
+export type WorkflowEventOp = WorkflowEvent["op"];
+
 // ─── Session Lifecycle Events ───────────────────────────────────────────────
 
 export interface SessionMetaEvent extends BaseEvent {
@@ -263,7 +307,8 @@ export type AgentWireEvent =
   | ReasoningEvent
   | OptimisticEvent
   | SessionMetaEvent
-  | SessionInitEvent;
+  | SessionInitEvent
+  | WorkflowEvent;
 
 // ─── Action Events (user → agent) ───────────────────────────────────────────
 
