@@ -1,6 +1,10 @@
 export { createRegistry } from "./registry.js";
 export type { ComponentSpec, Registry } from "./registry.js";
 
+export { applyPatch } from "./json-patch.js";
+export type { ApplyResult } from "./json-patch.js";
+export type { JsonPatch, JsonPatchOp, JsonPointer, UIReplacePropsEvent, UIReplacePatchEvent } from "@kibadist/agentui-protocol";
+
 export { defineNode } from "./define-node.js";
 export type { NodeDefinition, DefineNodeOptions, BuildArgs } from "./define-node.js";
 
