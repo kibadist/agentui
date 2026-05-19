@@ -74,6 +74,6 @@ export interface AgentStreamOptions {
   heartbeatMs?: number;
   /** Fires after each event is written to the wire. */
   onEventEmitted?: (event: AgentWireEvent) => void;
-  // /** If set, each emitted event is also forwarded to conversation.append. */
-  // conversation?: import("./conversation.js").Conversation;
+  /** If set, each emitted event is also forwarded to conversation.append. */
+  conversation?: import("./conversation.js").Conversation;
 }

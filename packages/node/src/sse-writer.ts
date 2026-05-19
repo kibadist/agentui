@@ -107,8 +107,9 @@ export function createAgentStream(
       const event = finalize(input);
       await writeChunk(buildFrame(event));
       opts.onEventEmitted?.(event);
-      // Conversation forwarding is wired in Task 5 once the Conversation type
-      // is available on AgentStreamOptions.
+      if (opts.conversation) {
+        await opts.conversation.append(opts.sessionId, event);
+      }
     },
     async comment(text) {
       ensureHeaders();
