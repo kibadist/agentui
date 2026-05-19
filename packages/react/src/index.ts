@@ -131,6 +131,8 @@ export type { Capabilities } from "./reducer.js";
 
 export { useWorkflow } from "./use-workflow.js";
 export type { UseWorkflowResult } from "./use-workflow.js";
+export { WorkflowStepper } from "./workflow-stepper.js";
+export type { WorkflowStepperProps } from "./workflow-stepper.js";
 export type { Workflow, WorkflowStep, WorkflowStatus, WorkflowStepStatus } from "./reducer.js";
 export type {
   WorkflowEvent,
