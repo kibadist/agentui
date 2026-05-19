@@ -315,6 +315,50 @@ function ConfirmButton({ quoteId, sessionId }: { quoteId: string; sessionId: str
 
 `confirm` and `rollback` both remove the entry — the semantic difference is host-side intent (telemetry, success/error animation). The library does **not** start TTL timers; if you want client-side expiry, watch `useOptimisticAll()` from a `useEffect` and dispatch `optimistic.rollback` when an entry's `expiresAt` passes.
 
+### Quick start with `<AgentRoot>`
+
+For new apps, mount `<AgentRoot>` at the top of your tree. It handles session creation, conversation resume, and history rehydration in one place — and provides all the selector-hook context children need.
+
+```tsx
+import {
+  AgentRoot,
+  useAgentSession,
+  useAgentHistory,
+  useAgentNodes,
+} from "@kibadist/agentui-react";
+
+export function App() {
+  return (
+    <AgentRoot endpoint="/api/agent">
+      <Chat />
+    </AgentRoot>
+  );
+}
+
+function Chat() {
+  const { status, conversationId, reset } = useAgentSession();
+  const { messages } = useAgentHistory();
+  const nodes = useAgentNodes();
+
+  if (status === "connecting") return <div>Connecting…</div>;
+  if (status === "error") return <button onClick={() => reset()}>Reconnect</button>;
+
+  return (
+    <div>
+      <ul>{messages.map((m, i) => <li key={i}>{m.role}: {m.text}</li>)}</ul>
+      <div>{nodes.map((n) => /* render via registry */ null)}</div>
+    </div>
+  );
+}
+```
+
+`<AgentRoot>` reads/writes `conversationId` via `localStorage` by default. For React Native, pass `storage={asyncStorageAdapter}` (host-defined wrapper around AsyncStorage that implements the `SessionStorageAdapter` interface). For auth wrappers, pass a custom `fetch={authedFetch}`.
+
+The component expects three endpoints (relative to `endpoint`):
+- `POST /session` — accepts optional `?conversationId=` to resume; returns `{ sessionId }`.
+- `GET /stream?sessionId=...` — SSE stream emitting validated wire events.
+- `GET /history?sessionId=...` — returns `{ messages: HistoryMessage[] }`. 404 is treated as "no history yet" and not an error.
+
 ### Testing helpers
 
 `@kibadist/agentui-react/testing` ships drop-in mocks for vitest setups:

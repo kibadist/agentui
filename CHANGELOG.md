@@ -10,6 +10,7 @@ All notable changes to `@kibadist/agentui-*` packages.
 - **Reasoning/thinking wire events.** Three new server→client events: `reasoning.start`, `reasoning.delta`, `reasoning.end`. New types: `ReasoningStartEvent`, `ReasoningDeltaEvent`, `ReasoningEndEvent`, `ReasoningEvent` union, `ReasoningEventOp`. `AgentWireEvent` widens to `UIEvent | ToolEvent | ReasoningEvent`.
 - **Optional `turnId: string`** on `tool.start`, `reasoning.start`, and `ui.append` events. Hosts that ignore it see no change; per-turn grouping selectors will ship in v0.6 if there's demand.
 - **Optimistic wire events.** Three new events for optimistic UI patterns: `optimistic.apply` (entityKey + patch + originId + optional ttlMs), `optimistic.confirm` (originId), `optimistic.rollback` (originId). Server-emittable AND client-dispatchable. New types: `OptimisticApplyEvent`, `OptimisticConfirmEvent`, `OptimisticRollbackEvent`, `OptimisticEvent` union, `OptimisticEventOp`. `AgentWireEvent` widens to include them.
+- **Session lifecycle wire event.** New `session.meta` event carrying `conversationId`. `<AgentRoot>` (below) persists this for resume. New type: `SessionMetaEvent`. `AgentWireEvent` widens to include it.
 
 ### Added — `@kibadist/agentui-validate`
 
@@ -17,6 +18,7 @@ All notable changes to `@kibadist/agentui-*` packages.
 - `safeParseAgentEvent`, `parseAgentEvent`, `isAgentEvent` — parsers for the combined wire union. `safeParseUIEvent` stays UI-only for back-compat.
 - `reasoningEventSchema` is exported. `agentWireEventSchema` widens to include the three reasoning event schemas plus optional `turnId` on `tool.start` and `ui.append` schemas.
 - `optimisticEventSchema` is exported. `agentWireEventSchema` widens to include the three optimistic event schemas (16 total variants now).
+- `sessionMetaSchema` is exported. `agentWireEventSchema` widens to 17 variants.
 
 ### Added — `@kibadist/agentui-react`
 
@@ -30,6 +32,10 @@ All notable changes to `@kibadist/agentui-*` packages.
 - **Optimistic state slice on `AgentState`:** `optimistic: Map<string entityKey, OptimisticEntry>`. Reducer handles the three new event types; `__reset__` and `ui.reset` clear them. Last-write-wins on `entityKey`; confirm/rollback match by `originId` so the "apply A → apply B → confirm A" race resolves as a no-op.
 - **Selector hooks:** `useOptimistic(entityKey)` returns the patch for one entity; `useOptimisticAll()` returns the full Map. The single-entity selector is reference-stable when unrelated entities change.
 - **`useAgentStream().dispatch` widens to `AgentWireEvent`.** Consumers can now fire `optimistic.apply` (and any other wire event) from React code. Existing callers passing plain `UIEvent` continue to type-check unchanged. The library does NOT schedule TTL timers — hosts implement expiry via `useEffect` over `useOptimisticAll()` and dispatching `optimistic.rollback`. Documented pattern in README.
+- **`<AgentRoot endpoint="...">`** — single mount-point that bundles session create/resume, conversationId persistence (pluggable `SessionStorageAdapter`), stream wiring, and action dispatching. Replaces ~80 lines of host plumbing.
+- **`useAgentSession()`** — subscribe to session lifecycle (`sessionId`, `conversationId`, `status`, `error`, `create`, `resume`, `reset`, `close`). Must be used inside `<AgentRoot>`.
+- **`useAgentHistory()`** — fetches `GET {endpoint}/history?sessionId={sessionId}` on session start. 404 resolves to an empty list (no error fired). `reload()` re-fetches.
+- **`localStorageAdapter`** (default) and the `SessionStorageAdapter` interface (pluggable for React Native AsyncStorage). New `AgentError` type with discriminated `kind` (`session-create` / `session-resume` / `history-fetch` / `stream`).
 
 ### Behavior
 
