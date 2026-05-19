@@ -10,6 +10,7 @@ All notable changes to `@kibadist/agentui-*` packages.
 - New `onPatchFailure` option on `createAgentStore`; `useAgentStream` wires it into `onInvalidEvent` with a `patch apply failed: …` message.
 - New protocol exports: `JsonPatch`, `JsonPatchOp`, `JsonPointer`, `UIReplacePropsEvent`, `UIReplacePatchEvent`.
 - New `parsePartialJson<T>(text)` and `streamingJsonParse<T>(source)` helpers exported from `@kibadist/agentui-react`. The reducer uses `parsePartialJson` so tool-call args update progressively after each `tool.args-delta`. ([DET-152](https://linear.app/detailing-app/issue/DET-152))
+- New `session.init` wire event declares node types, actions, and effective permissions. `AgentRenderer` gates on `ComponentSpec.requires`; consumers read the declaration via `useCapabilities()` (returns `hasPermission`, `canAct`, `canEmit`). Servers that don't emit `session.init` see no behavior change. ([DET-153](https://linear.app/detailing-app/issue/DET-153))
 
 ## 0.7.1
 

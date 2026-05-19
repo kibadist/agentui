@@ -173,6 +173,48 @@ for await (const partial of streamingJsonParse<{ q: string }>(stream)) {
 
 The reducer uses `parsePartialJson` internally so `state.toolCalls.get(id).args` updates after every `tool.args-delta` event, not only at completion.
 
+### Capabilities handshake
+
+Servers can declare available node types, accepted actions, and the session's effective permissions as the first event of a stream:
+
+````ts
+// server-side
+{
+  op: "session.init",
+  capabilities: {
+    nodeTypes: ["Card", "Quote", "ClientCard"],
+    actions: ["purchase.confirm", "quote.send"],
+    permissions: ["quotes.write", "clients.read"],
+  }
+}
+````
+
+Consumers read the declaration via `useCapabilities()`:
+
+````ts
+import { useCapabilities } from "@kibadist/agentui-react";
+
+function ConfirmButton() {
+  const caps = useCapabilities();
+  if (!caps.canAct("purchase.confirm")) return null;
+  return <button>Confirm</button>;
+}
+````
+
+`AgentRenderer` consults `ComponentSpec.requires` against `permissions`. If the session lacks any required permission, the node hides silently — or renders a host-supplied fallback:
+
+````ts
+<AgentRenderer
+  state={state}
+  registry={registry}
+  permissionFallback={(node, missing) => (
+    <div>You need {missing.join(", ")} to view this.</div>
+  )}
+/>
+````
+
+Servers that don't emit `session.init` see no behavior change — gating only activates after the handshake.
+
 ### Resetting a conversation
 
 ```tsx
