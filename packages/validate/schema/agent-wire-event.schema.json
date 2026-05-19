@@ -1,0 +1,1156 @@
+{
+  "$ref": "#/definitions/AgentWireEvent",
+  "definitions": {
+    "AgentWireEvent": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "traceId": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "sessionId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "op": {
+              "type": "string",
+              "const": "ui.append"
+            },
+            "node": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "type": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "props": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "slot": {
+                  "type": "string",
+                  "maxLength": 128
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/node"
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "ttlMs": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    "requires": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "key",
+                "type",
+                "props"
+              ],
+              "additionalProperties": false
+            },
+            "index": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "turnId": {
+              "type": "string",
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "node"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "ui.replace"
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "props": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "replace": {
+              "type": "boolean"
+            },
+            "patch": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "op": {
+                        "type": "string",
+                        "const": "add"
+                      },
+                      "path": {
+                        "type": "string",
+                        "pattern": "^$|^(\\/([^/~]|~0|~1)*)+$"
+                      },
+                      "value": {}
+                    },
+                    "required": [
+                      "op",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "op": {
+                        "type": "string",
+                        "const": "remove"
+                      },
+                      "path": {
+                        "$ref": "#/definitions/AgentWireEvent/anyOf/1/properties/patch/items/anyOf/0/properties/path"
+                      }
+                    },
+                    "required": [
+                      "op",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "op": {
+                        "type": "string",
+                        "const": "replace"
+                      },
+                      "path": {
+                        "$ref": "#/definitions/AgentWireEvent/anyOf/1/properties/patch/items/anyOf/0/properties/path"
+                      },
+                      "value": {}
+                    },
+                    "required": [
+                      "op",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "op": {
+                        "type": "string",
+                        "const": "move"
+                      },
+                      "from": {
+                        "$ref": "#/definitions/AgentWireEvent/anyOf/1/properties/patch/items/anyOf/0/properties/path"
+                      },
+                      "path": {
+                        "$ref": "#/definitions/AgentWireEvent/anyOf/1/properties/patch/items/anyOf/0/properties/path"
+                      }
+                    },
+                    "required": [
+                      "op",
+                      "from",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "op": {
+                        "type": "string",
+                        "const": "copy"
+                      },
+                      "from": {
+                        "$ref": "#/definitions/AgentWireEvent/anyOf/1/properties/patch/items/anyOf/0/properties/path"
+                      },
+                      "path": {
+                        "$ref": "#/definitions/AgentWireEvent/anyOf/1/properties/patch/items/anyOf/0/properties/path"
+                      }
+                    },
+                    "required": [
+                      "op",
+                      "from",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "op": {
+                        "type": "string",
+                        "const": "test"
+                      },
+                      "path": {
+                        "$ref": "#/definitions/AgentWireEvent/anyOf/1/properties/patch/items/anyOf/0/properties/path"
+                      },
+                      "value": {}
+                    },
+                    "required": [
+                      "op",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "key"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "ui.remove"
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "key"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "ui.toast"
+            },
+            "level": {
+              "type": "string",
+              "enum": [
+                "info",
+                "success",
+                "warning",
+                "error"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "level",
+            "message"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "ui.navigate"
+            },
+            "href": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "replace": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "href"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "ui.reset"
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "tool.start"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "args": {},
+            "turnId": {
+              "type": "string",
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "tool.args-delta"
+            },
+            "delta": {
+              "type": "string",
+              "maxLength": 64000
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "delta"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "tool.result"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "ok",
+                "error"
+              ]
+            },
+            "result": {},
+            "error": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1024
+                },
+                "code": {
+                  "type": "string",
+                  "maxLength": 128
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            },
+            "durationMs": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "tool.cancel"
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "reasoning.start"
+            },
+            "turnId": {
+              "type": "string",
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "reasoning.delta"
+            },
+            "delta": {
+              "type": "string",
+              "maxLength": 64000
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "delta"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "reasoning.end"
+            },
+            "tokens": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "optimistic.apply"
+            },
+            "entityKey": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "patch": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "originId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ttlMs": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 86400000
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "entityKey",
+            "patch",
+            "originId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "optimistic.confirm"
+            },
+            "originId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "originId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "optimistic.rollback"
+            },
+            "originId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "originId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "session.meta"
+            },
+            "conversationId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "conversationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "session.init"
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "nodeTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "maxItems": 512
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "maxItems": 512
+                },
+                "permissions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "maxItems": 512
+                }
+              },
+              "required": [
+                "nodeTypes",
+                "actions",
+                "permissions"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "capabilities"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "workflow.start"
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "nodeKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "id",
+                  "title"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "turnId": {
+              "type": "string",
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "steps"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "workflow.advance"
+            },
+            "stepId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op",
+            "stepId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "workflow.complete"
+            },
+            "result": {}
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "const": "workflow.cancel"
+            },
+            "reason": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

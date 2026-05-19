@@ -1,0 +1,57 @@
+{
+  "$ref": "#/definitions/UINode",
+  "definitions": {
+    "UINode": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "slot": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UINode"
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "ttlMs": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "requires": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "key",
+        "type",
+        "props"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

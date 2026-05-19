@@ -24,19 +24,25 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "schema"
   ],
   "scripts": {
     "prepublishOnly": "pnpm run build",
     "build": "tsc",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "schema:generate": "tsx scripts/generate-schemas.ts",
+    "schema:check": "tsx scripts/generate-schemas.ts --check"
   },
   "dependencies": {
     "@kibadist/agentui-protocol": "workspace:^",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "typescript": "^5.7.3"
+    "ajv": "^8.17.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.3",
+    "zod-to-json-schema": "^3.24.1"
   }
 }

@@ -1,0 +1,209 @@
+{
+  "$ref": "#/definitions/ActionEvent",
+  "definitions": {
+    "ActionEvent": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "type": "number",
+              "const": 1
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "ts": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "traceId": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "sessionId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "kind": {
+              "type": "string",
+              "const": "action"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "payload": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "uiKey": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "const": "action.submit"
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "kind",
+            "name",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/sessionId"
+            },
+            "kind": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/kind"
+            },
+            "name": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/name"
+            },
+            "payload": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/payload"
+            },
+            "uiKey": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/uiKey"
+            },
+            "type": {
+              "type": "string",
+              "const": "action.select"
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "kind",
+            "name",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/sessionId"
+            },
+            "kind": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/kind"
+            },
+            "name": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/name"
+            },
+            "payload": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/payload"
+            },
+            "uiKey": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/uiKey"
+            },
+            "type": {
+              "type": "string",
+              "const": "action.approve"
+            },
+            "approved": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "kind",
+            "name",
+            "type",
+            "approved"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/sessionId"
+            },
+            "kind": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/kind"
+            },
+            "name": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/name"
+            },
+            "payload": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/payload"
+            },
+            "uiKey": {
+              "$ref": "#/definitions/ActionEvent/anyOf/0/properties/uiKey"
+            },
+            "type": {
+              "type": "string",
+              "const": "action"
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "kind",
+            "name",
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
