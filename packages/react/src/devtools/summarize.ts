@@ -38,9 +38,7 @@ export function summarize(action: AgentAction): string {
     case "ui.append":
       return `key=${action.node.key} type=${action.node.type}`;
     case "ui.replace":
-      return "patch" in action && action.patch
-        ? `replace ${action.key} (${action.patch.length} patch ops)`
-        : `replace ${action.key} (${"props" in action ? Object.keys(action.props ?? {}).length : 0} props)`;
+      return `replace ${action.key} (${"props" in action ? Object.keys(action.props).length : 0} props)`;
     case "ui.remove":
       return `key=${action.key}`;
     case "ui.toast":

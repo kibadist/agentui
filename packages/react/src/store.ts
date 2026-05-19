@@ -1,4 +1,4 @@
-import type { UIReplaceEvent } from "@kibadist/agentui-protocol";
+import type { UIReplacePatchEvent, UIReplaceEvent } from "@kibadist/agentui-protocol";
 import { applyPatch } from "./json-patch.js";
 import { agentReducer, createInitialAgentState, type AgentAction, type AgentState } from "./reducer.js";
 
@@ -44,7 +44,7 @@ export interface CreateAgentStoreOptions {
    * Called when a `ui.replace` patch event fails to apply (e.g. a failed
    * `test` op or an invalid path). The event is NOT dispatched to the reducer.
    */
-  onPatchFailure?: (event: UIReplaceEvent, error: string) => void;
+  onPatchFailure?: (event: UIReplacePatchEvent, error: string) => void;
 }
 
 /**
@@ -167,7 +167,7 @@ export function createAgentStore(options?: CreateAgentStoreOptions): AgentStore 
         const existingProps = state.nodes[idx].props;
         const result = applyPatch(existingProps, action.patch);
         if (!result.ok) {
-          onPatchFailure?.(action as UIReplaceEvent, result.error);
+          onPatchFailure?.(action, result.error);
           return;
         }
         action = {
@@ -175,6 +175,7 @@ export function createAgentStore(options?: CreateAgentStoreOptions): AgentStore 
           id: action.id,
           ts: action.ts,
           sessionId: action.sessionId,
+          ...(action.traceId !== undefined && { traceId: action.traceId }),
           op: "ui.replace",
           key: action.key,
           props: result.value as Record<string, unknown>,

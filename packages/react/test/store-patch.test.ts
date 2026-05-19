@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { createAgentStore } from "../src/store.js";
-import type { UIAppendEvent, UIReplaceEvent } from "@kibadist/agentui-protocol";
+import type { UIAppendEvent, UIReplacePatchEvent } from "@kibadist/agentui-protocol";
 
 function append(key: string, props: Record<string, unknown>): UIAppendEvent {
   return {
@@ -10,11 +10,11 @@ function append(key: string, props: Record<string, unknown>): UIAppendEvent {
   };
 }
 
-function patch(key: string, ops: { op: "replace"; path: string; value: unknown }[] | { op: "test"; path: string; value: unknown }[] | { op: "remove"; path: string }[]): UIReplaceEvent {
+function patch(key: string, ops: { op: "replace"; path: string; value: unknown }[] | { op: "test"; path: string; value: unknown }[] | { op: "remove"; path: string }[]): UIReplacePatchEvent {
   return {
     v: 1, id: `r-${key}`, ts: "t", sessionId: "s",
     op: "ui.replace", key, patch: ops,
-  } as UIReplaceEvent;
+  };
 }
 
 describe("createAgentStore — JSON Patch pre-apply", () => {
@@ -61,7 +61,7 @@ describe("createAgentStore — JSON Patch pre-apply", () => {
     store.send({
       v: 1, id: "r1", ts: "t", sessionId: "s",
       op: "ui.replace", key: "n1", props: { c: 3 },
-    } as UIReplaceEvent);
+    });
     store.send(patch("n1", [{ op: "remove", path: "/a" }]));
     expect(store.getState().nodes[0].props).toEqual({ b: 2, c: 3 });
   });
