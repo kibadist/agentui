@@ -117,7 +117,13 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
 
   // Store is created once per hook instance and stays stable across renders.
   const storeRef = useRef<AgentStore | null>(null);
-  if (storeRef.current === null) storeRef.current = createAgentStore({ caps });
+  if (storeRef.current === null) {
+    storeRef.current = createAgentStore({
+      caps,
+      onPatchFailure: (event, error) =>
+        onInvalidRef.current?.(event, new Error(`patch apply failed: ${error}`)),
+    });
+  }
   const store = storeRef.current;
 
   const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
