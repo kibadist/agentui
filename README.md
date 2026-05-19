@@ -359,6 +359,18 @@ The component expects three endpoints (relative to `endpoint`):
 - `GET /stream?sessionId=...` — SSE stream emitting validated wire events.
 - `GET /history?sessionId=...` — returns `{ messages: HistoryMessage[] }`. 404 is treated as "no history yet" and not an error.
 
+**Multiple agents in one app.** Nest `<AgentRoot id="...">` to run two or more agents side-by-side:
+
+```tsx
+<AgentRoot id="chat" endpoint="/api/chat">
+  <AgentRoot id="planner" endpoint="/api/planner">
+    <App />
+  </AgentRoot>
+</AgentRoot>
+```
+
+All hooks accept an optional `id` argument to target a specific agent: `useAgentSession('chat')`, `useAgentNodes('planner')`, `useToolCalls('chat')`, and so on. Without an id, hooks resolve to the nearest `<AgentRoot>` ancestor (the current single-agent behavior, unchanged).
+
 ### Testing helpers
 
 `@kibadist/agentui-react/testing` ships drop-in mocks for vitest setups:

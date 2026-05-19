@@ -36,6 +36,7 @@ All notable changes to `@kibadist/agentui-*` packages.
 - **`useAgentSession()`** — subscribe to session lifecycle (`sessionId`, `conversationId`, `status`, `error`, `create`, `resume`, `reset`, `close`). Must be used inside `<AgentRoot>`.
 - **`useAgentHistory()`** — fetches `GET {endpoint}/history?sessionId={sessionId}` on session start. 404 resolves to an empty list (no error fired). `reload()` re-fetches.
 - **`localStorageAdapter`** (default) and the `SessionStorageAdapter` interface (pluggable for React Native AsyncStorage). New `AgentError` type with discriminated `kind` (`session-create` / `session-resume` / `history-fetch` / `stream`).
+- **Multi-agent namespacing.** `<AgentRoot id="...">` registers itself in an `AgentRootRegistry` context; nested `<AgentRoot>` instances form a linked list. All hooks gain an optional `id` parameter — `useAgentSession('chat')`, `useAgentNodes('planner')`, etc. — to scope lookups to a specific agent. Id-less calls keep current nearest-scope behavior (zero overhead). Duplicate ids in the same nested chain throw at mount.
 
 ### Behavior
 
