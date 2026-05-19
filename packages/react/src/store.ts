@@ -1,3 +1,5 @@
+import type { UIReplaceEvent } from "@kibadist/agentui-protocol";
+import { applyPatch } from "./json-patch.js";
 import { agentReducer, createInitialAgentState, type AgentAction, type AgentState } from "./reducer.js";
 
 /**
@@ -38,6 +40,11 @@ export interface CreateAgentStoreOptions {
   /** Seed the store with a pre-built state (e.g. for testing). */
   initial?: AgentState;
   caps?: CapsConfig;
+  /**
+   * Called when a `ui.replace` patch event fails to apply (e.g. a failed
+   * `test` op or an invalid path). The event is NOT dispatched to the reducer.
+   */
+  onPatchFailure?: (event: UIReplaceEvent, error: string) => void;
 }
 
 /**
@@ -64,6 +71,7 @@ export interface AgentStore {
 /** Build an `AgentStore`. Accepts optional memory-cap configuration. */
 export function createAgentStore(options?: CreateAgentStoreOptions): AgentStore {
   const caps = options?.caps;
+  const onPatchFailure = options?.onPatchFailure;
   let state = options?.initial ?? createInitialAgentState();
   const listeners = new Set<() => void>();
   const actionListeners = new Set<ActionListener>();
@@ -149,6 +157,30 @@ export function createAgentStore(options?: CreateAgentStoreOptions): AgentStore 
     },
     send(action) {
       const start = performance.now();
+      if (
+        action.op === "ui.replace" &&
+        "patch" in action &&
+        action.patch !== undefined
+      ) {
+        const idx = state.byKey.get(action.key);
+        if (idx === undefined) return;
+        const existingProps = state.nodes[idx].props;
+        const result = applyPatch(existingProps, action.patch);
+        if (!result.ok) {
+          onPatchFailure?.(action as UIReplaceEvent, result.error);
+          return;
+        }
+        action = {
+          v: action.v,
+          id: action.id,
+          ts: action.ts,
+          sessionId: action.sessionId,
+          op: "ui.replace",
+          key: action.key,
+          props: result.value as Record<string, unknown>,
+          replace: true,
+        } as AgentAction;
+      }
       const next = agentReducer(state, action);
       if (next === state) return; // no-op: skip both state and action listeners
       state = applyEviction(next);

@@ -164,7 +164,7 @@ function applyAppend(state: AgentState, e: UIAppendEvent): AgentState {
 function applyReplace(state: AgentState, e: UIReplaceEvent): AgentState {
   const idx = state.byKey.get(e.key);
   if (idx === undefined) return state;
-  if ("patch" in e) return state; // handled by store pre-apply (Task 4)
+  if (!("props" in e) || e.props === undefined) return state;
   const nodes = [...state.nodes];
   const existing = nodes[idx];
   nodes[idx] = {
