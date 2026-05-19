@@ -52,7 +52,7 @@ export function SessionProvider({ value, config, children }: SessionProviderProp
  * Subscribe to the current session lifecycle state. Must be used inside an
  * `<AgentRoot>` ancestor.
  *
- * @param id Reserved for multi-agent support (DET-143). Ignored in v0.5.4.
+ * @param id Scope the lookup to the `<AgentRoot id="...">` with this id. Omit to resolve to the nearest agent.
  */
 export function useAgentSession(id?: string): UseAgentSessionResult {
   const nearest = useContext(SessionContext);

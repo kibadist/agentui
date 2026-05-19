@@ -22,7 +22,7 @@ export interface UseAgentHistoryResult {
  * Fetches `GET {endpoint}/history?sessionId={sessionId}` once on session start.
  * Use `reload()` to refetch on demand.
  *
- * @param id Reserved for multi-agent support (DET-143). Ignored in v0.5.4.
+ * @param id Scope the lookup to the `<AgentRoot id="...">` with this id. Omit to resolve to the nearest agent.
  */
 export function useAgentHistory(id?: string): UseAgentHistoryResult {
   const { sessionId } = useAgentSession(id);
