@@ -124,3 +124,7 @@ export type { SessionMetaEvent } from "@kibadist/agentui-protocol";
 
 export { useAgentHistory } from "./use-agent-history.js";
 export type { HistoryMessage, UseAgentHistoryResult } from "./use-agent-history.js";
+
+export { useCapabilities } from "./use-capabilities.js";
+export type { UseCapabilitiesResult } from "./use-capabilities.js";
+export type { Capabilities } from "./reducer.js";
