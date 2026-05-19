@@ -5,5 +5,9 @@ export default defineConfig({
     environment: "jsdom",
     include: ["packages/*/test/**/*.test.ts", "packages/*/test/**/*.test.tsx"],
     globals: false,
+    typecheck: {
+      enabled: true,
+      include: ["packages/*/test/**/*.test-d.ts"],
+    },
   },
 });
