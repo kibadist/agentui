@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui",
-  "version": "0.4.1",
+  "version": "1.0.0",
   "description": "CLI for scaffolding AgentUI components",
   "license": "MIT",
   "repository": {
