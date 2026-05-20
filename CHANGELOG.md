@@ -4,20 +4,68 @@ All notable changes to `@kibadist/agentui-*` packages.
 
 ## [Unreleased]
 
-### Added
-- `@kibadist/agentui-node` — framework-agnostic server companion. `createAgentStream` (Node `ServerResponse`) and `createAgentReadable` (Web `ReadableStream`), `Conversation` + `MemoryConversationStorage`, hooks (`onEventEmitted`, `onConversationAppended`), helpers (`emitTextStream`, `emitToolCall`). DET-154.
-- Workflow primitive — protocol events `workflow.start` / `advance` / `complete` / `cancel`, `workflows` reducer slice, `useWorkflow(id)` hook, `<WorkflowStepper>` render-prop component. DET-155.
-- JSON Schema export of the wire protocol — generated from Zod via `zod-to-json-schema` and shipped in the `@kibadist/agentui-validate` tarball. `pnpm schema:generate` / `pnpm schema:check` scripts. DET-156.
-- Three starter templates in `examples/`: `chat-starter` (minimal hello world), `support-bot` (tool calls + reasoning + file upload), `internal-tools` (agent as side panel in CRUD app). Plus `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), GitHub issue/PR templates, and `rfcs/` framework. DET-159.
-- `STABILITY.md` documenting the public extension points (`Registry`, `ComponentSpec`, `SessionStorageAdapter`, `ConversationStorage`, public hooks, top-level components) and `MIGRATION-1.0.md` covering 0.x → 1.0. DET-157.
+## 0.4.1 — 2026-05-20
+
+The first cut of the v0.8 + v0.9 milestone work, plus the docs restructure and OSS launch prep. **Breaking change:** `initialAgentState` removed (see Migration). The v0.4.0 tag was skipped — npm reserved 0.4.0 for three new packages (`agentui-node`, `agentui-llm`, `agentui` cli) during an aborted publish, blocking same-version retry. Republished as 0.4.1.
+
+### Added — new packages
+
+- **`@kibadist/agentui-node`** — framework-agnostic server companion. `createAgentStream` (Node `ServerResponse`) and `createAgentReadable` (Web `ReadableStream`), `Conversation` + `MemoryConversationStorage`, hooks (`onEventEmitted`, `onConversationAppended`), helpers (`emitTextStream`, `emitToolCall`). DET-154.
+- **`@kibadist/agentui`** — CLI for scaffolding typed nodes. `npx @kibadist/agentui new-node <PascalCaseName>` creates a tsx + Zod schema + vitest scaffold and inserts a registry entry via marker comments. Storybook story added when detected.
+- **`@kibadist/agentui-llm`** — three async-generator adapters (`fromAnthropic`, `fromOpenAI`, `fromGemini`) that map provider-native streams to AgentUI wire events. Provider SDKs are peer-deps.
+
+### Added — protocol
+
+- **Workflow primitive.** Events `workflow.start` / `advance` / `complete` / `cancel`, `workflows` reducer slice, `useWorkflow(id)` hook, `<WorkflowStepper>` render-prop component. DET-155.
+- **`session.init`** capabilities handshake — server declares node types, actions, and effective permissions. `AgentRenderer` gates on `ComponentSpec.requires`; consumers read via `useCapabilities()`. ([DET-153](https://linear.app/detailing-app/issue/DET-153))
+- **`ui.replace` patch payloads.** Alternate `patch` form (RFC 6902 JSON Patch) for minimal deltas on deeply nested nodes. ([DET-151](https://linear.app/detailing-app/issue/DET-151))
+
+### Added — `@kibadist/agentui-validate`
+
+- **JSON Schema export** of the wire protocol — generated from Zod via `zod-to-json-schema` and shipped in the tarball under `schema/`. `pnpm schema:generate` / `pnpm schema:check` scripts for CI drift detection. Non-TS consumers (Python, Go, OpenAPI tooling) can now validate the protocol without TypeScript. DET-156.
+- New `applyPatch` helper exported from `@kibadist/agentui-react` for in-process patch application.
+
+### Added — `@kibadist/agentui-react`
+
+- **`<AgentRoot>`** — single top-level provider that handles session creation, conversation resume, history rehydration, and selector-hook context.
+- **Multi-agent namespacing.** Nest `<AgentRoot id="...">` to run multiple agents side-by-side; all hooks accept an optional id parameter.
+- **Stream resilience.** Opt-in `retry` (backoff + jitter), `buffer` (bounded queue with overflow strategies), and `auth` (token-refresh + `Last-Event-ID` resume) on `useAgentStream`. SSE transport rewritten on `fetch` + `ReadableStream`.
+- **Memory caps + metrics.** `<AgentRoot caps={...}>` for per-slice memory limits with drop-oldest eviction; `<AgentRoot onMetric={...} tags={...}>` for observability. Seven `agentui.*` metrics; session ids FNV-1a hashed in tags.
+- **Schema-first nodes.** `defineNode({ type, schema, component, requires })` — schemas become the source of truth; props inferred from Zod; emit-time validation. Array overload `createRegistry([NodeA, NodeB])`. ([DET-147])
+- **DevTools panel.** `@kibadist/agentui-react/devtools` subpath ships `<AgentDevTools />` — floating debug panel with wire-event log, state tree, dispatch latency, and time-travel scrubber. Zero bundle cost when not imported.
+- **`parsePartialJson<T>(text)` and `streamingJsonParse<T>(source)`** helpers. Reducer uses `parsePartialJson` so tool-call args update progressively after each `tool.args-delta`. ([DET-152](https://linear.app/detailing-app/issue/DET-152))
+
+### Added — examples + governance
+
+- Three starter templates in `examples/`: `chat-starter` (port 3010, minimal hello world), `support-bot` (port 3011, tool calls + reasoning + file upload), `internal-tools` (port 3012, agent as side panel in CRUD app). Each runs standalone with a mock SSE backend. DET-159.
+- `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), GitHub issue/PR templates, `rfcs/` framework with template. DET-159.
+
+### Added — docs
+
+- `STABILITY.md` documenting public extension points (`Registry`, `ComponentSpec`, `SessionStorageAdapter`, `ConversationStorage`, public hooks, top-level components) and `MIGRATION-1.0.md` covering 0.x → 1.0. DET-157.
+- Docs restructure: README split from 942 lines to a ~150-line landing page; topical content moved into 22 markdown files under `docs/` (6 top-level pages + 16 guides). All package READMEs unchanged.
+- Engineering retrospective: `docs/articles/2026-05-20-shipping-agentui-v1.md` covers motivation, the subagent-driven workflow, and lessons.
 
 ### Removed
-- `initialAgentState` constant (deprecated since v0.3). Use `createInitialAgentState()` instead — same as before, just enforces fresh-per-call. See [MIGRATION-1.0.md](./MIGRATION-1.0.md). DET-157.
+
+- **`initialAgentState` constant** (deprecated since v0.3). Use `createInitialAgentState()` instead — same shape, but enforces fresh-per-call to prevent aliasing across sessions. See [MIGRATION-1.0.md](./MIGRATION-1.0.md). DET-157.
 
 ### Changed
-- `scripts/bump-and-publish.sh` now publishes with `--provenance` for npm attestation. No effect on local publishes; takes effect when invoked from GitHub Actions. DET-158.
-- Every published `package.json` now has `bugs` + `keywords` for npm-search discovery. DET-158.
+
+- `scripts/bump-and-publish.sh` passes `--provenance` only when `CI=true` is set. Local publishes (without a recognized CI provider) silently drop the flag and publish without attestation; GitHub Actions publishes still attest. The earlier always-on version of this flag triggered `EUSAGE` failures outside CI.
+- Every published `package.json` now has `bugs` and `keywords` for npm-search discovery. DET-158.
 - `LAUNCH.md` tracks the human-coordinated steps still needed to ship the public OSS launch (repo visibility, docs site, blog post, syndication). DET-158.
+
+### Migration
+
+```diff
+- import { initialAgentState } from "@kibadist/agentui-react";
+- const state = initialAgentState;
++ import { createInitialAgentState } from "@kibadist/agentui-react";
++ const state = createInitialAgentState();
+```
+
+If you read the constant in a long-lived reducer dispatch, call the factory once at module load. Full guide in [MIGRATION-1.0.md](./MIGRATION-1.0.md).
 
 ## 0.8.0 — 2026-05-19
 
