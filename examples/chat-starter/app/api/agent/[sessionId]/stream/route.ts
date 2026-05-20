@@ -1,0 +1,72 @@
+import type { NextRequest } from "next/server";
+
+type StreamCtx = { params: Promise<{ sessionId: string }> };
+
+// In-process pub/sub keyed by sessionId. Echoes ActionEvents back as ui.append.
+const subscribers = new Map<string, Set<(chunk: string) => void>>();
+
+export function subscribe(sessionId: string, push: (chunk: string) => void) {
+  let set = subscribers.get(sessionId);
+  if (!set) {
+    set = new Set();
+    subscribers.set(sessionId, set);
+  }
+  set.add(push);
+  return () => {
+    set?.delete(push);
+    if (set?.size === 0) subscribers.delete(sessionId);
+  };
+}
+
+export function publish(sessionId: string, event: unknown): void {
+  const frame = `id: ${(event as { id: string }).id}\ndata: ${JSON.stringify(event)}\n\n`;
+  subscribers.get(sessionId)?.forEach((push) => push(frame));
+}
+
+export async function GET(_req: NextRequest, ctx: StreamCtx) {
+  const { sessionId } = await ctx.params;
+  const encoder = new TextEncoder();
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const push = (chunk: string) => {
+        try {
+          controller.enqueue(encoder.encode(chunk));
+        } catch {
+          /* closed */
+        }
+      };
+      const unsubscribe = subscribe(sessionId, push);
+
+      // Welcome message
+      const welcome = {
+        v: 1,
+        id: crypto.randomUUID(),
+        ts: new Date().toISOString(),
+        sessionId,
+        op: "ui.append",
+        node: { key: "welcome", type: "chat.text", props: { text: "Hi! Type a message and I'll echo it back." } },
+      };
+      push(`id: ${welcome.id}\ndata: ${JSON.stringify(welcome)}\n\n`);
+
+      const close = () => {
+        unsubscribe();
+        try {
+          controller.close();
+        } catch {
+          /* already closed */
+        }
+      };
+      // Auto-close after 10 min of inactivity isn't implemented in this starter.
+      void close;
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
+}
