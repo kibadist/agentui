@@ -129,7 +129,7 @@ We do **not** use Changesets today. Switching to Changesets is tracked separatel
 3. `tsconfig.json` should `extends` from `tsconfig.base.json` and emit to `dist/`.
 4. Add a `test/` directory if the package has runtime logic; vitest will pick it up.
 5. Update `scripts/bump-and-publish.sh` so the new package gets versioned and published in the right dependency order.
-6. Update `README.md` and `CHANGELOG.md`.
+6. Update `README.md` (the index), the relevant page under `docs/`, and `CHANGELOG.md`.
 7. Run `pnpm install` from the repo root to refresh the lockfile.
 
 ## Adding a starter template under `examples/`
