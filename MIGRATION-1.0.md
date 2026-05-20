@@ -41,7 +41,7 @@ A small number of items remain experimental (`AgentDevTools`, `AgentRootRegistry
 
 ## Migration steps
 
-1. `grep -rn "initialAgentState" .` — replace each usage with `createInitialAgentState()`.
+1. `grep -rn "initialAgentState" src` (or wherever your source lives — avoid `node_modules/`, `.next/`, `dist/`) — replace each usage with `createInitialAgentState()`.
 2. `pnpm install @kibadist/agentui-react@1.0.0` (and the other `@kibadist/agentui-*` packages).
 3. Run your test suite. If anything breaks, open an issue tagged `stability` — we treat that as a contract bug.
 
