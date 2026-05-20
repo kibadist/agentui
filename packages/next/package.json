@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-next",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "AgentUI Next.js integration",
   "license": "MIT",
   "repository": {
