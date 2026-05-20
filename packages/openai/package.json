@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-openai",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "DEPRECATED: Use @kibadist/agentui-ai instead",
   "deprecated": "Use @kibadist/agentui-ai instead. This package is no longer maintained.",
   "license": "MIT",

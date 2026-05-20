@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-llm",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Provider-native LLM stream adapters (Anthropic, OpenAI, Gemini) → AgentUI wire events",
   "license": "MIT",
   "repository": {
