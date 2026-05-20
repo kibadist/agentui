@@ -4,6 +4,37 @@ All notable changes to `@kibadist/agentui-*` packages.
 
 ## [Unreleased]
 
+## 1.0.0 — 2026-05-20
+
+The stability declaration. No functional changes from 0.4.1 — this release promotes the API surface documented in [STABILITY.md](./STABILITY.md) to semver-stable. From 1.0 onward:
+
+- **Major versions** signal breaking changes; migrations land in `MIGRATION-<N>.md` at the repo root.
+- **Minor versions** add backwards-compatible features.
+- **Patch versions** are bug fixes only.
+
+### Stable surface
+
+Locked under the v1.0 contract:
+
+- The full wire protocol — `UIEvent`, `ToolEvent`, `ReasoningEvent`, `OptimisticEvent`, `SessionMetaEvent`, `SessionInitEvent`, `WorkflowEvent`, `ActionEvent`, the `BaseEvent` shape, the `UINode` shape.
+- Extension points: `Registry`, `ComponentSpec`, `SessionStorageAdapter`, `ConversationStorage`.
+- All public hooks in `@kibadist/agentui-react`.
+- Top-level components (`<AgentRoot>`, `<AgentRenderer>`, `<WorkflowStepper>`, `<ToolCallStream>`, `<AgentStateProvider>`, `<AgentActionProvider>`, `<AgentRuntimeProvider>`, `<SessionProvider>`).
+- Server primitives in `@kibadist/agentui-node` (`createAgentStream`, `createAgentReadable`, `Conversation`, `MemoryConversationStorage`, helpers, types).
+- The JSON Schema files shipped in `@kibadist/agentui-validate/schema/`.
+
+### Still experimental
+
+May change without a migration during 1.x minors:
+
+- `@kibadist/agentui-react/devtools` exports (`AgentDevTools` UI).
+- `AgentRoot` namespacing internals (`AgentRootRegistry`, `resolveAgentRoot`, `useAgentRootRegistryEntry`).
+- `metrics` types (`Metric`, `MetricEmitter`) — stabilization tracked separately.
+
+### Migration from 0.x
+
+If you're already on 0.4.1, this upgrade is a no-op — bump the version range and reinstall. The only breaking change from the 0.3.x line (`initialAgentState` constant → `createInitialAgentState()` factory) was already shipped in 0.4.x. See [MIGRATION-1.0.md](./MIGRATION-1.0.md) for the full guide.
+
 ## 0.4.1 — 2026-05-20
 
 The first cut of the v0.8 + v0.9 milestone work, plus the docs restructure and OSS launch prep. **Breaking change:** `initialAgentState` removed (see Migration). The v0.4.0 tag was skipped — npm reserved 0.4.0 for three new packages (`agentui-node`, `agentui-llm`, `agentui` cli) during an aborted publish, blocking same-version retry. Republished as 0.4.1.

@@ -44,7 +44,7 @@ This file tracks the remaining external steps required to flip `@kibadist/agentu
 
 - [ ] **Showcase app.** Deploy `examples/support-bot` (or a richer demo) to a public URL. Wire a real LLM behind it (Anthropic via `@kibadist/agentui-llm`'s `fromAnthropic` is the lowest-lift option).
 - [ ] **Blog post.** "Introducing AgentUI" — motivation, the typed-event approach, how it compares to alternatives, code snippet, links to the docs and showcase.
-- [ ] **Coordinated v1.0 release.** Wait for the v1.0 ship gate from DET-157 (≥1 external consumer migrated) before announcing publicly.
+- [x] **v1.0 release.** Published 2026-05-20. Stability surface in [STABILITY.md](./STABILITY.md), migration in [MIGRATION-1.0.md](./MIGRATION-1.0.md). External-adopter validation moved post-launch — issues with the migration will be tracked under the `stability` label.
 - [ ] **Syndication.**
   - [ ] HN: "Show HN: AgentUI — typed React components for LLM agents" — post Tuesday 9-11am PT for best window.
   - [ ] Twitter/X thread.
