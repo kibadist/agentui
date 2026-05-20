@@ -92,4 +92,80 @@ describe("JSON Schema export — Ajv ↔ Zod cross-check", () => {
     };
     expect(validate(node)).toBe(true);
   });
+
+  it("agent-wire-event.schema.json accepts a valid workflow.start", () => {
+    const schema = loadSchema("agent-wire-event.schema.json");
+    const validate = ajv.compile(schema);
+    const valid = {
+      ...base,
+      op: "workflow.start",
+      id: "wf1",
+      steps: [
+        { id: "a", title: "First" },
+        { id: "b", title: "Second" },
+      ],
+    };
+    expect(validate(valid)).toBe(true);
+    expect(safeParseAgentEvent(valid).ok).toBe(true);
+  });
+
+  it("agent-wire-event.schema.json rejects workflow.start with empty steps (matches Zod)", () => {
+    const schema = loadSchema("agent-wire-event.schema.json");
+    const validate = ajv.compile(schema);
+    const invalid = {
+      ...base,
+      op: "workflow.start",
+      id: "wf1",
+      steps: [],
+    };
+    expect(validate(invalid)).toBe(false);
+    expect(safeParseAgentEvent(invalid).ok).toBe(false);
+  });
+
+  it("agent-wire-event.schema.json accepts session.init", () => {
+    const schema = loadSchema("agent-wire-event.schema.json");
+    const validate = ajv.compile(schema);
+    const valid = {
+      ...base,
+      op: "session.init",
+      capabilities: { nodeTypes: ["x.y"], actions: ["do"], permissions: ["read"] },
+    };
+    expect(validate(valid)).toBe(true);
+    expect(safeParseAgentEvent(valid).ok).toBe(true);
+  });
+
+  it("agent-wire-event.schema.json accepts optimistic.apply", () => {
+    const schema = loadSchema("agent-wire-event.schema.json");
+    const validate = ajv.compile(schema);
+    const valid = {
+      ...base,
+      op: "optimistic.apply",
+      entityKey: "quote:1",
+      patch: { status: "pending" },
+      originId: "o1",
+    };
+    expect(validate(valid)).toBe(true);
+    expect(safeParseAgentEvent(valid).ok).toBe(true);
+  });
+
+  it("agent-wire-event.schema.json accepts reasoning.start", () => {
+    const schema = loadSchema("agent-wire-event.schema.json");
+    const validate = ajv.compile(schema);
+    const valid = { ...base, op: "reasoning.start", id: "r1" };
+    expect(validate(valid)).toBe(true);
+    expect(safeParseAgentEvent(valid).ok).toBe(true);
+  });
+
+  it("action-event.schema.json rejects action.approve missing approved (matches Zod)", () => {
+    const schema = loadSchema("action-event.schema.json");
+    const validate = ajv.compile(schema);
+    const invalid = {
+      ...base,
+      kind: "action",
+      type: "action.approve",
+      name: "release.deploy",
+    };
+    expect(validate(invalid)).toBe(false);
+    expect(safeParseActionEvent(invalid).ok).toBe(false);
+  });
 });
