@@ -8,7 +8,6 @@ import type {
 import {
   agentReducer,
   createInitialAgentState,
-  initialAgentState,
   type AgentResetAction,
 } from "../src/index.js";
 
@@ -127,11 +126,6 @@ describe("agentReducer — sanity", () => {
     expect(s.byKey.get("a")).toBe(0);
   });
 
-  it("initialAgentState constant (deprecated) is structurally empty", () => {
-    expect(initialAgentState.nodes).toEqual([]);
-    expect(initialAgentState.toasts).toEqual([]);
-    expect(initialAgentState.navigate).toBeNull();
-  });
 });
 
 describe("agentReducer — tool.args-delta progressive parsing", () => {

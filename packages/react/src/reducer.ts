@@ -161,13 +161,6 @@ export function createInitialAgentState(): AgentState {
 }
 
 /**
- * @deprecated Use {@link createInitialAgentState} instead. This constant is a
- * single shared object whose `byKey` Map is reused across resets, which can
- * cause state aliasing between sessions. Kept for back-compat with v0.2.x.
- */
-export const initialAgentState: AgentState = createInitialAgentState();
-
-/**
  * Synthetic, client-only action used by `useAgentStream().reset()`.
  * Not a wire protocol event — server-driven resets use `ui.reset`.
  */

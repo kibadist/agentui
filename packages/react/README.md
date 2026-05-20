@@ -129,7 +129,7 @@ Render different parts of the UI in different layout regions:
 | `useAgentAction` | hook | Access the action sender from context |
 | `AgentRuntimeProvider` | component | Composite provider (stream + actions) with render prop |
 | `agentReducer` | function | Processes UIEvents into AgentState |
-| `initialAgentState` | constant | Default empty agent state |
+| `createInitialAgentState` | function | Returns a fresh empty AgentState |
 | `AgentState` | type | State shape: nodes, toasts, navigation |
 | `StreamStatus` | type | `"idle" \| "connecting" \| "open" \| "closed" \| "error"` |
 | `ActionSender` | type | `(action: ActionEvent) => Promise<void>` |

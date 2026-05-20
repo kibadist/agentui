@@ -52,7 +52,7 @@ export type {
   OptimisticRollbackEvent,
 } from "@kibadist/agentui-protocol";
 
-export { agentReducer, initialAgentState, createInitialAgentState } from "./reducer.js";
+export { agentReducer, createInitialAgentState } from "./reducer.js";
 export type { AgentState, AgentAction, AgentResetAction, ToolCall, ReasoningSegment, OptimisticEntry, Toast } from "./reducer.js";
 
 export { createAgentStore } from "./store.js";

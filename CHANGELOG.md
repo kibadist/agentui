@@ -9,6 +9,10 @@ All notable changes to `@kibadist/agentui-*` packages.
 - Workflow primitive — protocol events `workflow.start` / `advance` / `complete` / `cancel`, `workflows` reducer slice, `useWorkflow(id)` hook, `<WorkflowStepper>` render-prop component. DET-155.
 - JSON Schema export of the wire protocol — generated from Zod via `zod-to-json-schema` and shipped in the `@kibadist/agentui-validate` tarball. `pnpm schema:generate` / `pnpm schema:check` scripts. DET-156.
 - Three starter templates in `examples/`: `chat-starter` (minimal hello world), `support-bot` (tool calls + reasoning + file upload), `internal-tools` (agent as side panel in CRUD app). Plus `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), GitHub issue/PR templates, and `rfcs/` framework. DET-159.
+- `STABILITY.md` documenting the public extension points (`Registry`, `ComponentSpec`, `SessionStorageAdapter`, `ConversationStorage`, public hooks, top-level components) and `MIGRATION-1.0.md` covering 0.x → 1.0. DET-157.
+
+### Removed
+- `initialAgentState` constant (deprecated since v0.3). Use `createInitialAgentState()` instead — same as before, just enforces fresh-per-call. See [MIGRATION-1.0.md](./MIGRATION-1.0.md). DET-157.
 
 ## 0.8.0 — 2026-05-19
 
