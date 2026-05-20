@@ -4,9 +4,9 @@ This file tracks the remaining external steps required to flip `@kibadist/agentu
 
 ## Repo
 
-- [ ] **Make the GitHub repo public.** Today the repo at `github.com/kibadist/agentui` is private. Toggling visibility is one click in Settings → General → Danger Zone.
-- [ ] **Decide on npm scope.** Either keep `@kibadist/agentui-*` (recommend — already in lockfiles, no migration) OR transfer to a neutral scope and re-publish. Keeping the existing scope is the path of least friction.
-- [ ] **GitHub topics.** Add `agent`, `llm`, `ui`, `react`, `streaming`, `typescript` to the repo for discovery.
+- [x] **Repo is public.** `github.com/kibadist/agentui`.
+- [x] **npm scope.** Settled on `@kibadist/agentui-*` (all 10 packages published at 1.0.0 under this scope).
+- [x] **GitHub topics.** `agent`, `ai`, `llm`, `react`, `sse`, `streaming`, `typescript`, `ui` applied via `gh repo edit`.
 - [ ] **Social preview image.** Upload a 1200×630 PNG in Settings → Social preview.
 
 ## Repository metadata (already done)
