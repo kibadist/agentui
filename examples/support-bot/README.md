@@ -30,3 +30,7 @@ The "Upload" button is a stub — it sends an action with the file name/size; th
 ## Replacing the mock
 
 Swap the action route handler for one that drives a real LLM (Anthropic / OpenAI / Gemini via `@kibadist/agentui-llm`) and emits the same wire events. The UI is unchanged.
+
+## Limitations
+
+The action handler fires its event sequence with `void runAnswerScript(...)` and no error recovery. A real backend should catch errors and emit a terminal `tool.result` (`status: "error"`) or a `ui.toast` so the UI doesn't appear hung. Demo only.

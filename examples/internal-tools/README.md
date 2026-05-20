@@ -27,3 +27,7 @@ The right-side panel is just an `<AgentRenderer>` scoped to the session. It rece
 ## Replacing the mock
 
 Swap the action route handler for one that wires a real LLM (via `@kibadist/agentui-llm`) and calls actual analytics tools (`@kibadist/agentui-node`'s `emitToolCall`). UI stays the same.
+
+## Limitations
+
+The action handler fires its event sequence with `void runSummarize(...)` and no error recovery. A real backend should catch errors and emit a terminal `ui.toast` or `tool.result` (`status: "error"`) so the panel doesn't appear stuck mid-load.

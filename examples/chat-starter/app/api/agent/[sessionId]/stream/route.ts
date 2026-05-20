@@ -27,6 +27,8 @@ export async function GET(_req: NextRequest, ctx: StreamCtx) {
   const { sessionId } = await ctx.params;
   const encoder = new TextEncoder();
 
+  let unsubscribe: (() => void) | null = null;
+
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const push = (chunk: string) => {
@@ -36,9 +38,8 @@ export async function GET(_req: NextRequest, ctx: StreamCtx) {
           /* closed */
         }
       };
-      const unsubscribe = subscribe(sessionId, push);
+      unsubscribe = subscribe(sessionId, push);
 
-      // Welcome message
       const welcome = {
         v: 1,
         id: crypto.randomUUID(),
@@ -48,17 +49,10 @@ export async function GET(_req: NextRequest, ctx: StreamCtx) {
         node: { key: "welcome", type: "chat.text", props: { text: "Hi! Type a message and I'll echo it back." } },
       };
       push(`id: ${welcome.id}\ndata: ${JSON.stringify(welcome)}\n\n`);
-
-      const close = () => {
-        unsubscribe();
-        try {
-          controller.close();
-        } catch {
-          /* already closed */
-        }
-      };
-      // Auto-close after 10 min of inactivity isn't implemented in this starter.
-      void close;
+    },
+    cancel() {
+      unsubscribe?.();
+      unsubscribe = null;
     },
   });
 

@@ -26,6 +26,8 @@ export async function GET(_req: NextRequest, ctx: StreamCtx) {
   const { sessionId } = await ctx.params;
   const encoder = new TextEncoder();
 
+  let unsubscribe: (() => void) | null = null;
+
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const push = (chunk: string) => {
@@ -35,7 +37,11 @@ export async function GET(_req: NextRequest, ctx: StreamCtx) {
           /* closed */
         }
       };
-      subscribe(sessionId, push);
+      unsubscribe = subscribe(sessionId, push);
+    },
+    cancel() {
+      unsubscribe?.();
+      unsubscribe = null;
     },
   });
 
