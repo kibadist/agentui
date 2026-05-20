@@ -863,6 +863,28 @@ pnpm dev:app   # Next.js frontend on :3000
 
 ---
 
+## Starter templates
+
+Three reference projects in `examples/`. Each runs standalone (mock backend in `/api/agent/*` route handlers — no separate Nest server needed).
+
+| Example | Port | Demonstrates |
+|---|---|---|
+| [`chat-starter`](./examples/chat-starter) | 3010 | Minimal Next.js + `<AgentRoot>` + a single-process mock SSE backend. The 60-second hello world. |
+| [`support-bot`](./examples/support-bot) | 3011 | Multi-turn agent with tool calls (`useToolCalls`), reasoning trace (`useReasoning`), and file upload stub. |
+| [`internal-tools`](./examples/internal-tools) | 3012 | Agent embedded as a side panel in a mock CRUD app. Side-panel pattern with `ui.reset` per selection. |
+
+Run any of them:
+
+```bash
+pnpm install
+pnpm build
+pnpm --filter @kibadist/agentui-example-chat-starter dev
+```
+
+Contribution & RFC process: see [CONTRIBUTING.md](./CONTRIBUTING.md) and [rfcs/](./rfcs/).
+
+---
+
 ```mermaid
 flowchart BT
   protocol["📦 protocol\n(zero deps — pure types)"]

@@ -8,6 +8,7 @@ All notable changes to `@kibadist/agentui-*` packages.
 - `@kibadist/agentui-node` — framework-agnostic server companion. `createAgentStream` (Node `ServerResponse`) and `createAgentReadable` (Web `ReadableStream`), `Conversation` + `MemoryConversationStorage`, hooks (`onEventEmitted`, `onConversationAppended`), helpers (`emitTextStream`, `emitToolCall`). DET-154.
 - Workflow primitive — protocol events `workflow.start` / `advance` / `complete` / `cancel`, `workflows` reducer slice, `useWorkflow(id)` hook, `<WorkflowStepper>` render-prop component. DET-155.
 - JSON Schema export of the wire protocol — generated from Zod via `zod-to-json-schema` and shipped in the `@kibadist/agentui-validate` tarball. `pnpm schema:generate` / `pnpm schema:check` scripts. DET-156.
+- Three starter templates in `examples/`: `chat-starter` (minimal hello world), `support-bot` (tool calls + reasoning + file upload), `internal-tools` (agent as side panel in CRUD app). Plus `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), GitHub issue/PR templates, and `rfcs/` framework. DET-159.
 
 ## 0.8.0 — 2026-05-19
 
