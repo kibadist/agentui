@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a defect in an AgentUI package
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences describing what is broken.
+      placeholder: "useAgentStream() emits an extra ui.append when ..."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Minimal steps to reproduce. Code snippets or a repo link both work.
+      placeholder: |
+        1. Create a registry with ...
+        2. Dispatch ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node version
+      placeholder: "20.11.0"
+    validations:
+      required: true
+  - type: input
+    id: package-versions
+    attributes:
+      label: AgentUI package versions
+      description: Output of `pnpm ls --filter "@kibadist/agentui-*"` or the relevant entries from package.json.
+      placeholder: "@kibadist/agentui-react@0.3.1"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser / runtime (if applicable)
+      placeholder: "Chrome 124 / Node 20 / Bun 1.1"
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Stack traces, screenshots, related issues.
