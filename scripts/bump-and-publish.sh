@@ -70,13 +70,19 @@ if [[ "$DRY_RUN" == "--dry-run" ]]; then
   exit 0
 fi
 
+# --provenance attests the package was built from this repo's GitHub Actions.
+# npm requires a recognized CI provider, so we only pass the flag when CI=true.
+# Local publishes fall back to non-attested.
+PROVENANCE_FLAG=""
+if [ -n "${CI:-}" ]; then
+  PROVENANCE_FLAG="--provenance"
+fi
+
 # Publish in dependency order
 for pkg in "${PACKAGES[@]}"; do
   NAME=$(node -p "require('./${pkg}/package.json').name")
   echo "Publishing ${NAME}@${NEW_VERSION}..."
-  # --provenance attests the package was built from this repo's GitHub Actions
-  # (when run in CI). Local publishes silently fall back without attestation.
-  (cd "$pkg" && pnpm publish --access public --no-git-checks --provenance)
+  (cd "$pkg" && pnpm publish --access public --no-git-checks $PROVENANCE_FLAG)
 done
 
 echo ""
