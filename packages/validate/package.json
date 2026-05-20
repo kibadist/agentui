@@ -44,5 +44,16 @@
     "tsx": "^4.19.0",
     "typescript": "^5.7.3",
     "zod-to-json-schema": "^3.24.1"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/kibadist/agentui/issues"
+  },
+  "keywords": [
+    "agent",
+    "zod",
+    "validation",
+    "schema",
+    "wire-protocol",
+    "agentui"
+  ]
 }

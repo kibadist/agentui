@@ -23,7 +23,9 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prepublishOnly": "pnpm run build",
     "build": "tsc",
@@ -39,14 +41,32 @@
     "@google/genai": ">=0.3.0"
   },
   "peerDependenciesMeta": {
-    "@anthropic-ai/sdk": { "optional": true },
-    "openai": { "optional": true },
-    "@google/genai": { "optional": true }
+    "@anthropic-ai/sdk": {
+      "optional": true
+    },
+    "openai": {
+      "optional": true
+    },
+    "@google/genai": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@anthropic-ai/sdk": ">=0.27.0",
     "openai": ">=4.0.0",
     "@google/genai": ">=0.3.0",
     "typescript": "^5.7.3"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/kibadist/agentui/issues"
+  },
+  "keywords": [
+    "llm",
+    "anthropic",
+    "openai",
+    "gemini",
+    "stream",
+    "adapter",
+    "agentui"
+  ]
 }

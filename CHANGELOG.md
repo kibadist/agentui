@@ -14,6 +14,11 @@ All notable changes to `@kibadist/agentui-*` packages.
 ### Removed
 - `initialAgentState` constant (deprecated since v0.3). Use `createInitialAgentState()` instead — same as before, just enforces fresh-per-call. See [MIGRATION-1.0.md](./MIGRATION-1.0.md). DET-157.
 
+### Changed
+- `scripts/bump-and-publish.sh` now publishes with `--provenance` for npm attestation. No effect on local publishes; takes effect when invoked from GitHub Actions. DET-158.
+- Every published `package.json` now has `bugs` + `keywords` for npm-search discovery. DET-158.
+- `LAUNCH.md` tracks the human-coordinated steps still needed to ship the public OSS launch (repo visibility, docs site, blog post, syndication). DET-158.
+
 ## 0.8.0 — 2026-05-19
 
 ### Added

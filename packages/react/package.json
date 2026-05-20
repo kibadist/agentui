@@ -51,12 +51,26 @@
     "zod": "^3.23.0"
   },
   "peerDependenciesMeta": {
-    "zod": { "optional": true }
+    "zod": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/react": "^19.0.8",
     "react": "^19.0.0",
     "typescript": "^5.7.3",
     "zod": "^3.23.0"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/kibadist/agentui/issues"
+  },
+  "keywords": [
+    "react",
+    "agent",
+    "ui",
+    "llm",
+    "sse",
+    "streaming",
+    "agentui"
+  ]
 }

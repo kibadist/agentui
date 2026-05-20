@@ -42,5 +42,15 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/kibadist/agentui/issues"
+  },
+  "keywords": [
+    "cli",
+    "agent",
+    "scaffold",
+    "generator",
+    "agentui"
+  ]
 }

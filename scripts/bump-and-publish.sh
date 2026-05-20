@@ -74,7 +74,9 @@ fi
 for pkg in "${PACKAGES[@]}"; do
   NAME=$(node -p "require('./${pkg}/package.json').name")
   echo "Publishing ${NAME}@${NEW_VERSION}..."
-  (cd "$pkg" && pnpm publish --access public --no-git-checks)
+  # --provenance attests the package was built from this repo's GitHub Actions
+  # (when run in CI). Local publishes silently fall back without attestation.
+  (cd "$pkg" && pnpm publish --access public --no-git-checks --provenance)
 done
 
 echo ""
