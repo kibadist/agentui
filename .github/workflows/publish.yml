@@ -10,6 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    # NPM_TOKEN lives in the "production" environment, not as a repo secret.
+    # Environment scope also lets us add release-time protections (required
+    # reviewers, wait timers, branch restrictions) without touching the YAML.
+    environment:
+      name: production
+      url: https://www.npmjs.com/package/@kibadist/agentui-react
+
     # `id-token: write` is required for npm provenance attestation.
     # See https://docs.npmjs.com/generating-provenance-statements
     permissions:
