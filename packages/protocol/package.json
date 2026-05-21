@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-protocol",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "AgentUI protocol types and interfaces",
   "license": "MIT",
   "repository": {
