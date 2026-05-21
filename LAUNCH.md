@@ -22,7 +22,7 @@ This file tracks the remaining external steps required to flip `@kibadist/agentu
 ## npm
 
 - [x] `scripts/bump-and-publish.sh` now publishes with `--provenance`. Provenance attestation requires running the publish from GitHub Actions; local runs silently fall back to non-attested publishes.
-- [x] **Wire CI.** GitHub Actions workflows live at `.github/workflows/test.yml` (PR + push:main → build → typecheck → test → schema:check) and `.github/workflows/publish.yml` (v*.*.* tag → publishes all 10 packages in dependency order with `--provenance` attestation). Two manual repo-settings steps remain: add the `NPM_TOKEN` secret and set the test workflow as a required status check on main. ([DET-167](https://linear.app/detailing-app/issue/DET-167))
+- [x] **Wire CI.** GitHub Actions workflows live at `.github/workflows/test.yml` (PR + push:main → build → typecheck → test → schema:check) and `.github/workflows/publish.yml` (v*.*.* tag → publishes all 10 packages in dependency order with `--provenance` attestation). `NPM_TOKEN` is configured on the `production` environment. One manual step still pending: set the `test` workflow as a required status check on `main`. ([DET-167](https://linear.app/detailing-app/issue/DET-167))
 - [ ] **Set up the npm org page.** If using `@kibadist`, verify the npm org is configured as public and has a website + email associated. ([DET-168](https://linear.app/detailing-app/issue/DET-168))
 
 ## Docs site
