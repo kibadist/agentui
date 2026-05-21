@@ -3,10 +3,16 @@ import { applyPatch } from "./json-patch.js";
 import { agentReducer, createInitialAgentState, type AgentAction, type AgentState } from "./reducer.js";
 
 /**
- * Listener invoked by `AgentStore.subscribeAction` after every non-no-op
- * dispatch. Receives the action that just ran, the resulting state, and the
- * wall-clock ms taken by the listener-notify loop (state subscribers + action
- * subscribers, measured together).
+ * Listener invoked by `AgentStore.subscribeAction` after every dispatched
+ * action — including no-op dispatches where the reducer returned the same
+ * state reference (e.g., unknown ops, idempotent state transitions).
+ *
+ * Receives the action that just ran, the resulting state (unchanged on
+ * no-op), and the dispatch duration in milliseconds.
+ *
+ * Host-signal pattern: applications can emit project-local ops (e.g.,
+ * `host.*`) that the reducer ignores but consumers observe via this
+ * subscription.
  */
 export type ActionListener = (
   action: AgentAction,
@@ -57,12 +63,19 @@ export interface AgentStore {
   /** Subscribe to state changes. Returns an unsubscribe function. */
   subscribe(listener: () => void): () => void;
   /**
-   * Subscribe to every non-no-op action with the resulting state and dispatch
-   * latency. Used by `@kibadist/agentui-react/devtools` and any host that
-   * wants to log every wire event (e.g., to Sentry).
+   * Subscribe to every dispatched action with the resulting state and dispatch
+   * latency. Fires on every `send(action)` call — including no-op dispatches
+   * where the reducer returned the same state reference. Used by
+   * `@kibadist/agentui-react/devtools`, any host that wants to log every wire
+   * event (e.g., to Sentry), and the host-signal pattern (project-local ops
+   * that the reducer ignores but listeners observe).
    */
   subscribeAction(listener: ActionListener): () => void;
-  /** Dispatch an action through `agentReducer` and notify listeners if state changed. */
+  /**
+   * Dispatch an action through `agentReducer`. Notifies state listeners only
+   * when state actually changed; notifies action listeners on every dispatch
+   * regardless of state change.
+   */
   send(action: AgentAction): void;
   /** Shorthand for `send({ op: "__reset__" })`. */
   reset(): void;
@@ -163,29 +176,35 @@ export function createAgentStore(options?: CreateAgentStoreOptions): AgentStore 
         action.patch !== undefined
       ) {
         const idx = state.byKey.get(action.key);
-        if (idx === undefined) return;
-        const existingProps = state.nodes[idx].props;
-        const result = applyPatch(existingProps, action.patch);
-        if (!result.ok) {
-          onPatchFailure?.(action, result.error);
-          return;
+        if (idx !== undefined) {
+          const existingProps = state.nodes[idx].props;
+          const result = applyPatch(existingProps, action.patch);
+          if (result.ok) {
+            action = {
+              v: action.v,
+              id: action.id,
+              ts: action.ts,
+              sessionId: action.sessionId,
+              ...(action.traceId !== undefined && { traceId: action.traceId }),
+              op: "ui.replace",
+              key: action.key,
+              props: result.value as Record<string, unknown>,
+              replace: true,
+            } as AgentAction;
+          } else {
+            onPatchFailure?.(action, result.error);
+          }
         }
-        action = {
-          v: action.v,
-          id: action.id,
-          ts: action.ts,
-          sessionId: action.sessionId,
-          ...(action.traceId !== undefined && { traceId: action.traceId }),
-          op: "ui.replace",
-          key: action.key,
-          props: result.value as Record<string, unknown>,
-          replace: true,
-        } as AgentAction;
+        // If idx === undefined or the patch failed, the original action
+        // falls through to the reducer (which will no-op it) so action
+        // listeners observe the attempted dispatch.
       }
       const next = agentReducer(state, action);
-      if (next === state) return; // no-op: skip both state and action listeners
-      state = applyEviction(next);
-      listeners.forEach((l) => l());
+      const stateChanged = next !== state;
+      if (stateChanged) {
+        state = applyEviction(next);
+        listeners.forEach((l) => l());
+      }
       if (actionListeners.size > 0) {
         const dispatchMs = performance.now() - start;
         actionListeners.forEach((l) => l(action, state, dispatchMs));

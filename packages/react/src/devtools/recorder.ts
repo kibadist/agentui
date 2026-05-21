@@ -33,10 +33,11 @@ export interface UseAgentDevToolsRecorderResult {
 }
 
 /**
- * Subscribe to every non-no-op action on the current `AgentStore` and keep a
- * ring buffer of the last `maxEvents` `RecordedEvent`s. Re-renders the
- * consuming component at most once per animation frame to absorb bursty
- * streams.
+ * Subscribe to every dispatched action on the current `AgentStore` (including
+ * no-ops — actions that left state unchanged, e.g., a `ui.replace` for an
+ * unknown key) and keep a ring buffer of the last `maxEvents` `RecordedEvent`s.
+ * Re-renders the consuming component at most once per animation frame to
+ * absorb bursty streams.
  *
  * MUST be used inside an `<AgentStateProvider>` (i.e., inside `<AgentRoot>`).
  */

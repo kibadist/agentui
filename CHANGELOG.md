@@ -4,6 +4,16 @@ All notable changes to `@kibadist/agentui-*` packages.
 
 ## [Unreleased]
 
+## 1.1.0 — 2026-05-21
+
+Minor: loosens `AgentStore.subscribeAction` to fire on every dispatched action, including no-ops.
+
+### Changed — `@kibadist/agentui-react`
+
+- **`AgentStore.subscribeAction` fires on every dispatch.** Previously, action listeners were short-circuited along with state listeners whenever the reducer returned the same state reference (unknown ops, idempotent transitions, `ui.replace` with an unknown key, failed JSON Patch). Now state listeners keep their no-op skip (performance optimization preserved) but action listeners are notified on every `store.send(action)`. Enables the **host-signal pattern**: consumers can emit project-local ops (e.g. `host.*`) that the reducer ignores via its `default: return state` branch but downstream code observes via `subscribeAction`. Existing consumers receive *more* notifications, not fewer; the `state` they receive is unchanged on no-op (still semantically correct). The `useAgentDevToolsRecorder` hook now records no-op dispatches alongside state-changing ones, which makes it easier to debug "why didn't my `ui.replace` apply?"-style questions.
+
+No protocol changes. No deprecations.
+
 ## 1.0.0 — 2026-05-20
 
 The stability declaration. No functional changes from 0.4.1 — this release promotes the API surface documented in [STABILITY.md](./STABILITY.md) to semver-stable. From 1.0 onward:

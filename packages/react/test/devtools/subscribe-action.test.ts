@@ -28,11 +28,61 @@ describe("AgentStore.subscribeAction", () => {
     expect(dispatchMs).toBeGreaterThanOrEqual(0);
   });
 
-  it("does NOT notify action listeners on no-op (unknown key replace)", () => {
+  it("notifies action listeners on no-op (unknown key replace)", () => {
+    // v1.1: action listeners fire on every dispatched action, including
+    // no-ops where the reducer returned the same state reference.
     const store = createAgentStore();
     const listener = vi.fn();
     store.subscribeAction(listener);
 
+    const action: AgentAction = {
+      op: "ui.replace",
+      id: "e-1",
+      ts: new Date().toISOString(),
+      sessionId: "s-1",
+      key: "does-not-exist",
+      props: { text: "x" },
+    };
+    store.send(action);
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    const [seenAction, seenState] = listener.mock.calls[0]!;
+    expect(seenAction).toBe(action);
+    expect(seenState.nodes).toHaveLength(0);
+  });
+
+  it("notifies action listeners on unknown ops (host-signal pattern)", () => {
+    // The host-signal pattern: consumers emit project-local ops the reducer
+    // doesn't understand. The reducer's default branch returns state
+    // unchanged; action listeners observe the dispatch.
+    const store = createAgentStore();
+    const listener = vi.fn();
+    store.subscribeAction(listener);
+
+    const action = {
+      op: "host.signal" as AgentAction["op"],
+      id: "e-host-1",
+      ts: new Date().toISOString(),
+      sessionId: "s-1",
+      payload: { kind: "panelPatch", field: "totalPrice", value: 42 },
+    } as unknown as AgentAction;
+    store.send(action);
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    const [seenAction, , dispatchMs] = listener.mock.calls[0]!;
+    expect(seenAction).toBe(action);
+    expect(typeof dispatchMs).toBe("number");
+    expect(dispatchMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it("does NOT notify state listeners on no-op (the optimization is preserved)", () => {
+    const store = createAgentStore();
+    const stateListener = vi.fn();
+    const actionListener = vi.fn();
+    store.subscribe(stateListener);
+    store.subscribeAction(actionListener);
+
+    // Two no-op shapes: known op that returns same-state ref + unknown op.
     store.send({
       op: "ui.replace",
       id: "e-1",
@@ -41,8 +91,15 @@ describe("AgentStore.subscribeAction", () => {
       key: "does-not-exist",
       props: { text: "x" },
     });
+    store.send({
+      op: "host.signal" as AgentAction["op"],
+      id: "e-2",
+      ts: new Date().toISOString(),
+      sessionId: "s-1",
+    } as unknown as AgentAction);
 
-    expect(listener).not.toHaveBeenCalled();
+    expect(stateListener).not.toHaveBeenCalled();
+    expect(actionListener).toHaveBeenCalledTimes(2);
   });
 
   it("unsubscribe removes the listener", () => {

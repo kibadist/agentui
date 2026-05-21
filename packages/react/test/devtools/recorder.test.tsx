@@ -45,7 +45,10 @@ describe("useAgentDevToolsRecorder", () => {
     expect(result.current.events[2].state.nodes).toHaveLength(3);
   });
 
-  it("skips no-op actions (unknown-key replace)", async () => {
+  it("records no-op actions (unknown-key replace) with unchanged state", async () => {
+    // v1.1: the store fires action listeners on every dispatch, including
+    // no-ops. The recorder captures them so devs can see attempted dispatches
+    // that didn't mutate state.
     const store = createAgentStore();
     const { result } = renderHook(() => useAgentDevToolsRecorder({ maxEvents: 100 }), {
       wrapper: makeWrapper(store),
@@ -65,7 +68,9 @@ describe("useAgentDevToolsRecorder", () => {
       await new Promise((r) => requestAnimationFrame(() => r(undefined)));
     });
 
-    expect(result.current.events).toHaveLength(0);
+    expect(result.current.events).toHaveLength(1);
+    expect(result.current.events[0].action.op).toBe("ui.replace");
+    expect(result.current.events[0].state.nodes).toHaveLength(0);
   });
 
   it("evicts oldest when ring buffer is full, keeping seq monotonic", async () => {
