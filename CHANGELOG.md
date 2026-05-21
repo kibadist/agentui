@@ -4,9 +4,9 @@ All notable changes to `@kibadist/agentui-*` packages.
 
 ## [Unreleased]
 
-## 1.1.0 — 2026-05-21
+## 1.2.0 — 2026-05-21
 
-Minor: loosens `AgentStore.subscribeAction` to fire on every dispatched action, including no-ops.
+Minor: loosens `AgentStore.subscribeAction` to fire on every dispatched action, including no-ops. (Version 1.1.0 was skipped — the publish script's dry-run pre-bumped the version, so the real run landed on 1.2.0.)
 
 ### Changed — `@kibadist/agentui-react`
 
