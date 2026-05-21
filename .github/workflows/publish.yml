@@ -1,0 +1,99 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # `id-token: write` is required for npm provenance attestation.
+    # See https://docs.npmjs.com/generating-provenance-statements
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Build before typecheck + test because cross-package imports resolve
+      # through `exports.types` (`./dist/index.d.ts`) which only exists after
+      # build. Match the order in `scripts/bump-and-publish.sh` (build → publish);
+      # we layer typecheck + test in front as a pre-publish safety net.
+      - name: Build
+        run: pnpm build
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      # Tag-push trigger means versions in package.json are already bumped
+      # and committed; we just need to publish each package with provenance.
+      # Order matches scripts/bump-and-publish.sh (dependency order).
+      # Skip any package whose current version is already on the registry so
+      # a re-run of a partial publish picks up where it left off rather than
+      # aborting on the first `version already exists` error.
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          CI: "true"
+        run: |
+          set -euo pipefail
+          PACKAGES=(
+            packages/protocol
+            packages/node
+            packages/validate
+            packages/llm
+            packages/react
+            packages/nest
+            packages/openai
+            packages/ai
+            packages/next
+            packages/cli
+          )
+          for pkg in "${PACKAGES[@]}"; do
+            NAME=$(node -p "require('./${pkg}/package.json').name")
+            VERSION=$(node -p "require('./${pkg}/package.json').version")
+            PUBLISHED=$(npm view "${NAME}@${VERSION}" version 2>/dev/null || true)
+            if [ "${PUBLISHED}" = "${VERSION}" ]; then
+              echo "Skipping ${NAME}@${VERSION} (already published)"
+              continue
+            fi
+            echo "::group::Publishing ${NAME}@${VERSION}"
+            (cd "$pkg" && pnpm publish --access public --no-git-checks --provenance)
+            echo "::endgroup::"
+          done
+
+      - name: Summary
+        if: success()
+        run: |
+          VERSION=$(node -p "require('./packages/protocol/package.json').version")
+          {
+            echo "## Published @kibadist/agentui-*@${VERSION}"
+            echo ""
+            echo "All 10 packages published to npm with provenance attestation."
+            echo ""
+            echo "Triggered by tag: \`${GITHUB_REF_NAME}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
