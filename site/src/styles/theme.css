@@ -1,0 +1,15 @@
+/* Subtle violet accent for AgentUI brand */
+:root {
+  --sl-color-accent-low: #2a1768;
+  --sl-color-accent: #6d4cff;
+  --sl-color-accent-high: #c5b7ff;
+}
+:root[data-theme="light"] {
+  --sl-color-accent-low: #ddd2ff;
+  --sl-color-accent: #5a35ff;
+  --sl-color-accent-high: #2b1e63;
+}
+
+.hero h1 {
+  letter-spacing: -0.02em;
+}

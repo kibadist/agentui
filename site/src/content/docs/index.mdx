@@ -1,0 +1,102 @@
+---
+title: AgentUI
+description: An AI-native component system for agent-driven UIs. Typed UIEvents over SSE, validated server-side, rendered through a whitelisted React registry.
+template: splash
+hero:
+  tagline: An AI-native component system for agent-driven UIs. Let LLMs compose typed UI, not raw HTML.
+  actions:
+    - text: Get started
+      link: /agentui/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: Concepts
+      link: /agentui/concepts/
+      icon: open-book
+    - text: View on GitHub
+      link: https://github.com/kibadist/agentui
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, Code, LinkCard, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## The shape of it
+
+```tsx
+import { createRegistry, AgentRoot, AgentRenderer } from '@kibadist/agentui-react';
+
+const registry = createRegistry({
+  'data-table': DataTable,
+  'info-card':  InfoCard,
+});
+
+export function App() {
+  return (
+    <AgentRoot endpoint="/api/agent">
+      <AgentRenderer registry={registry} />
+    </AgentRoot>
+  );
+}
+```
+
+The agent emits structured **UIEvents** through a tool call. Your frontend renders them through a **whitelisted component registry** you control. User interactions return as **ActionEvents** on the same SSE-backed session.
+
+## Why AgentUI
+
+<CardGrid>
+  <Card title="Typed, not stringly" icon="seti:typescript">
+    Agents emit validated `UIEvent`s — never raw HTML or JSX. The wire protocol is a Zod-validated schema, not a string contract.
+  </Card>
+  <Card title="Registry is the sandbox" icon="seti:lock">
+    Only components you register via `createRegistry()` can be rendered. There is no escape hatch — the model cannot reach your DOM.
+  </Card>
+  <Card title="Streaming, resumable, observable" icon="rocket">
+    SSE-backed sessions with `Last-Event-ID` resume, partial-JSON parsing during tool calls, and built-in metrics for parse latency and dropped events.
+  </Card>
+  <Card title="Bring your own LLM" icon="puzzle">
+    Adapters for Anthropic, OpenAI, Google, DeepSeek via the Vercel AI SDK, or provider-native streams.
+  </Card>
+</CardGrid>
+
+## Install
+
+<Tabs>
+  <TabItem label="React + a backend you build">
+    ```bash
+    pnpm add @kibadist/agentui-react @kibadist/agentui-validate
+    ```
+  </TabItem>
+  <TabItem label="Next.js App Router">
+    ```bash
+    pnpm add @kibadist/agentui-react @kibadist/agentui-next @kibadist/agentui-ai
+    ```
+  </TabItem>
+  <TabItem label="NestJS backend">
+    ```bash
+    pnpm add @kibadist/agentui-nest @kibadist/agentui-validate @kibadist/agentui-ai
+    ```
+  </TabItem>
+</Tabs>
+
+## Where to next
+
+<LinkCard
+  title="Getting started"
+  description="Clone the repo, set an API key, run the dev server, send your first prompt."
+  href="/agentui/getting-started/"
+/>
+<LinkCard
+  title="Concepts"
+  description="The problem AgentUI solves, the typed-event protocol, the four-step flow."
+  href="/agentui/concepts/"
+/>
+<LinkCard
+  title="Wire protocol"
+  description="Every operation in the protocol, with JSON Patch deltas, capabilities, and the streaming partial-JSON parser."
+  href="/agentui/wire-protocol/"
+/>
+<LinkCard
+  title="Packages"
+  description="The eight published @kibadist/agentui-* packages and how they fit together."
+  href="/agentui/packages/"
+/>
