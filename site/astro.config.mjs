@@ -1,16 +1,52 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import remarkMermaid from "./src/plugins/remark-mermaid.mjs";
 
 export default defineConfig({
   site: "https://kibadist.github.io",
   base: "/agentui",
   trailingSlash: "ignore",
+  markdown: {
+    remarkPlugins: [remarkMermaid],
+  },
   integrations: [
     starlight({
       title: "AgentUI",
       description:
         "An AI-native component system for agent-driven UIs. Typed UIEvents over SSE, validated server-side, rendered through a whitelisted React registry.",
+      head: [
+        {
+          tag: "script",
+          attrs: { type: "module" },
+          // Load mermaid from a CDN and render any <pre class="mermaid">
+          // emitted by the remark-mermaid plugin. Theme tracks Starlight's
+          // `data-theme` attribute on <html>.
+          content: `
+            import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+            const isDark = () => document.documentElement.getAttribute("data-theme") === "dark";
+            async function render() {
+              mermaid.initialize({ startOnLoad: false, theme: isDark() ? "dark" : "default", securityLevel: "loose" });
+              const nodes = document.querySelectorAll("pre.mermaid[data-mermaid]");
+              if (nodes.length === 0) return;
+              // mermaid.run mutates the elements in place, replacing source
+              // text with an SVG. Mark processed nodes so a theme-toggle
+              // re-render starts from the raw source.
+              for (const node of nodes) {
+                if (!node.dataset.source) node.dataset.source = node.textContent ?? "";
+                node.textContent = node.dataset.source;
+                node.removeAttribute("data-processed");
+              }
+              await mermaid.run({ nodes });
+            }
+            render();
+            // Re-render when the user toggles light/dark.
+            new MutationObserver((mutations) => {
+              if (mutations.some((m) => m.attributeName === "data-theme")) render();
+            }).observe(document.documentElement, { attributes: true });
+          `,
+        },
+      ],
       logo: {
         light: "./src/assets/logo-light.svg",
         dark: "./src/assets/logo-dark.svg",
