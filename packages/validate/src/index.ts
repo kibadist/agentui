@@ -7,6 +7,7 @@ export {
   optimisticEventSchema,
   sessionMetaSchema,
   agentWireEventSchema,
+  RESERVED_PROTOCOL_OPS,
 } from "./schemas.js";
 export {
   ValidationError,
@@ -19,5 +20,6 @@ export {
   isUIEvent,
   isActionEvent,
   isAgentEvent,
+  isCustomWireEvent,
 } from "./parse.js";
 export { describeComponents, type ComponentDef } from "./describe.js";

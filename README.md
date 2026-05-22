@@ -4,7 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![pnpm](https://img.shields.io/badge/pnpm-workspace-orange?logo=pnpm)](https://pnpm.io/)
-[![packages](https://img.shields.io/badge/packages-8-blueviolet)](./docs/packages.md)
+[![packages](https://img.shields.io/badge/packages-8-blueviolet)](https://kibadist.github.io/agentui/packages/)
 
 **An AI-native component system for agent-driven UIs.**
 
@@ -52,48 +52,51 @@ export function App() {
 }
 ```
 
-For the full walkthrough see [Concepts](./docs/concepts.md) and [Getting Started](./docs/getting-started.md).
+For the full walkthrough see [Concepts](https://kibadist.github.io/agentui/concepts/) and [Getting Started](https://kibadist.github.io/agentui/getting-started/).
 
 ---
 
 ## Documentation
 
+All long-form documentation lives at **[kibadist.github.io/agentui](https://kibadist.github.io/agentui/)**.
+
 ### Start here
 
-- [Getting Started](./docs/getting-started.md) — prereqs, install, dev server, example prompts
-- [Concepts](./docs/concepts.md) — the problem, the typed-event approach, the flow
-- [Wire Protocol](./docs/wire-protocol.md) — every operation, with payload examples
+- [Getting Started](https://kibadist.github.io/agentui/getting-started/) — prereqs, install, dev server, example prompts
+- [Concepts](https://kibadist.github.io/agentui/concepts/) — the problem, the typed-event approach, the flow
+- [Wire Protocol](https://kibadist.github.io/agentui/wire-protocol/) — every operation, with payload examples
 
 ### Guides — Client (`@kibadist/agentui-react`)
 
-- [`<AgentRoot>`](./docs/guides/agent-root.md)
-- [Renderer](./docs/guides/renderer.md)
-- [State selectors](./docs/guides/state-selectors.md)
-- [Tool calls](./docs/guides/tool-calls.md)
-- [Reasoning](./docs/guides/reasoning.md)
-- [Workflows / steppers](./docs/guides/workflows.md)
-- [Optimistic updates](./docs/guides/optimistic.md)
-- [Schema-first nodes](./docs/guides/schema-first-nodes.md)
-- [Stream resilience](./docs/guides/stream-resilience.md)
-- [Memory caps & metrics](./docs/guides/memory-caps.md)
-- [Testing](./docs/guides/testing.md)
-- [DevTools panel](./docs/guides/devtools.md)
+- [`<AgentRoot>`](https://kibadist.github.io/agentui/guides/agent-root/)
+- [Renderer](https://kibadist.github.io/agentui/guides/renderer/)
+- [State selectors](https://kibadist.github.io/agentui/guides/state-selectors/)
+- [Custom wire events](https://kibadist.github.io/agentui/guides/custom-wire-events/)
+- [Tool calls](https://kibadist.github.io/agentui/guides/tool-calls/)
+- [Reasoning](https://kibadist.github.io/agentui/guides/reasoning/)
+- [Workflows / steppers](https://kibadist.github.io/agentui/guides/workflows/)
+- [Optimistic updates](https://kibadist.github.io/agentui/guides/optimistic/)
+- [Schema-first nodes](https://kibadist.github.io/agentui/guides/schema-first-nodes/)
+- [Stream resilience](https://kibadist.github.io/agentui/guides/stream-resilience/)
+- [Memory caps & metrics](https://kibadist.github.io/agentui/guides/memory-caps/)
+- [Testing](https://kibadist.github.io/agentui/guides/testing/)
+- [DevTools panel](https://kibadist.github.io/agentui/guides/devtools/)
 
 ### Guides — Server
 
-- [Server companion (Node)](./docs/guides/server-node.md)
-- [LLM adapters](./docs/guides/llm-adapters.md)
-- [JSON Schema export](./docs/guides/json-schema-export.md)
+- [Server companion (Node)](https://kibadist.github.io/agentui/guides/server-node/)
+- [LLM adapters](https://kibadist.github.io/agentui/guides/llm-adapters/)
+- [JSON Schema export](https://kibadist.github.io/agentui/guides/json-schema-export/)
 
 ### Guides — Tooling
 
-- [CLI generator](./docs/guides/cli-generator.md)
+- [CLI generator](https://kibadist.github.io/agentui/guides/cli-generator/)
 
 ### Reference
 
-- [Packages](./docs/packages.md) — full package matrix + dependency graph
-- [Use Cases](./docs/use-cases.md)
-- [Roadmap](./docs/roadmap.md)
+- [Packages](https://kibadist.github.io/agentui/packages/) — full package matrix + dependency graph
+- [Use Cases](https://kibadist.github.io/agentui/use-cases/)
+- [Roadmap](https://kibadist.github.io/agentui/roadmap/)
 - [Stability](./STABILITY.md) — what's covered by semver
 - [Migration: 0.x → 1.0](./MIGRATION-1.0.md)
 - [Changelog](./CHANGELOG.md)
@@ -113,7 +116,7 @@ For the full walkthrough see [Concepts](./docs/concepts.md) and [Getting Started
 | [`@kibadist/agentui-llm`](https://www.npmjs.com/package/@kibadist/agentui-llm) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-llm)](https://www.npmjs.com/package/@kibadist/agentui-llm) | Provider-native LLM stream adapters |
 | [`@kibadist/agentui-next`](https://www.npmjs.com/package/@kibadist/agentui-next) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-next)](https://www.npmjs.com/package/@kibadist/agentui-next) | SSE + action proxy for Next.js App Router |
 
-See [Packages](./docs/packages.md) for the dependency graph.
+See [Packages](https://kibadist.github.io/agentui/packages/) for the dependency graph.
 
 ---
 

@@ -296,10 +296,48 @@ export interface SessionInitEvent extends BaseEvent {
 }
 
 /**
+ * Consumer-defined wire event. Any `op` string that is NOT a reserved
+ * protocol op (anything outside `ui.*`, `tool.*`, `reasoning.*`,
+ * `optimistic.*`, `session.*`, `workflow.*`) is accepted by the validate
+ * schema and arrives through the same `onEvent` callback as protocol events.
+ *
+ * **The TS type system intentionally keeps `AgentWireEvent` closed.** Adding
+ * an open `op: string` variant to the union collapses discriminated-union
+ * narrowing across the library (e.g., `event.op === "session.meta"` would no
+ * longer narrow cleanly). Instead, `CustomWireEvent` is exported here as a
+ * separate type for consumers to cast to when they need typed access to
+ * project-local wire ops in `subscribeAction` listeners.
+ *
+ * Use {@link isCustomWireEvent} (from `@kibadist/agentui-validate`) to detect
+ * custom events at runtime. The library reducer no-ops them; consumers
+ * observe them via `AgentStore.subscribeAction`.
+ *
+ * @example
+ *   import { isCustomWireEvent } from "@kibadist/agentui-validate";
+ *
+ *   store.subscribeAction((action) => {
+ *     if (isCustomWireEvent(action)) {
+ *       // `action` is narrowed to CustomWireEvent here — no cast needed.
+ *       if (action.op === "host.panelPatch") {
+ *         // …project-local handler
+ *       }
+ *     }
+ *   });
+ */
+export interface CustomWireEvent extends BaseEvent {
+  op: string;
+  [key: string]: unknown;
+}
+
+/**
  * All wire events the reducer accepts. Most flow server → client (UI patches,
  * tool calls, reasoning, session metadata), but optimistic events are
  * bidirectional — hosts can dispatch them client-side AND servers can emit
  * them over SSE.
+ *
+ * Custom wire events (see {@link CustomWireEvent}) also flow through the same
+ * transport surface at runtime, but they are intentionally NOT in this union
+ * — keeping the union closed preserves discriminated-union narrowing on `op`.
  */
 export type AgentWireEvent =
   | UIEvent

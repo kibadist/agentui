@@ -1,6 +1,16 @@
 import type { ZodError } from "zod";
-import type { UIEvent, ActionEvent, AgentWireEvent } from "@kibadist/agentui-protocol";
-import { uiEventSchema, actionEventSchema, agentWireEventSchema } from "./schemas.js";
+import type {
+  UIEvent,
+  ActionEvent,
+  AgentWireEvent,
+  CustomWireEvent,
+} from "@kibadist/agentui-protocol";
+import {
+  uiEventSchema,
+  actionEventSchema,
+  agentWireEventSchema,
+  RESERVED_PROTOCOL_OPS,
+} from "./schemas.js";
 
 /** Validation error that preserves Zod issue details */
 export class ValidationError extends Error {
@@ -71,4 +81,29 @@ export function safeParseAgentEvent(
 
 export function isAgentEvent(x: unknown): x is AgentWireEvent {
   return agentWireEventSchema.safeParse(x).success;
+}
+
+// ─── Custom Wire Events ─────────────────────────────────────────────────────
+
+/**
+ * Type predicate that returns `true` when the event's `op` is NOT a reserved
+ * protocol op (`ui.*`, `tool.*`, `reasoning.*`, `optimistic.*`, `session.*`,
+ * `workflow.*`). Use this in `subscribeAction` listeners to route
+ * project-local wire events to your own handlers — the narrowing flows
+ * through TypeScript so no cast is needed inside the guard.
+ *
+ * @example
+ *   import { isCustomWireEvent } from "@kibadist/agentui-validate";
+ *
+ *   store.subscribeAction((action) => {
+ *     if (isCustomWireEvent(action)) {
+ *       // action is narrowed to CustomWireEvent here
+ *       handleCustomOp(action);
+ *     }
+ *   });
+ */
+export function isCustomWireEvent<E extends { op: string }>(
+  event: E,
+): event is E & CustomWireEvent {
+  return !RESERVED_PROTOCOL_OPS.has(event.op);
 }

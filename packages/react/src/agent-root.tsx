@@ -61,6 +61,16 @@ export interface AgentRootProps {
   storage?: SessionStorageAdapter;
   autoConnect?: boolean;
   onError?: (err: AgentError) => void;
+  /**
+   * Receives every wire event that fails `safeParseAgentEvent` (bad JSON,
+   * schema mismatch). Without this prop the transport silently increments a
+   * `agentui.event.parse_error_count` metric and the event is dropped — use
+   * `onInvalidEvent` to log or surface the failure. Note: valid custom wire
+   * events (any non-reserved `op`) do NOT come through here; they reach
+   * `subscribeAction` like protocol events. See the "Custom wire events"
+   * guide.
+   */
+  onInvalidEvent?: (raw: unknown, err: Error) => void;
   id?: string;
   children: ReactNode;
   /** Per-slice memory caps with drop-oldest eviction. */
@@ -89,6 +99,7 @@ export function AgentRoot({
   storage = localStorageAdapter,
   autoConnect = true,
   onError,
+  onInvalidEvent,
   id,
   children,
   caps,
@@ -237,6 +248,7 @@ export function AgentRoot({
     sessionId: sessionId ?? "",
     enabled: sessionId !== null,
     onEvent: handleEvent,
+    onInvalidEvent,
     caps,
     metrics: metricsEmitter,
   });

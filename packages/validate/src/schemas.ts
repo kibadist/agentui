@@ -279,6 +279,61 @@ export const sessionInitSchema = baseEventSchema.extend({
   }),
 });
 
+/**
+ * Reserved op names — every variant in the closed union above. Used by
+ * `customWireEventSchema` to forbid host events from shadowing protocol ops,
+ * so a malformed `ui.append` (or any other known op) still fails closed
+ * instead of slipping through the passthrough variant. Also exported as
+ * `RESERVED_PROTOCOL_OPS` so consumers can detect custom events at runtime.
+ */
+export const RESERVED_PROTOCOL_OPS: ReadonlySet<string> = new Set<string>([
+  "ui.append",
+  "ui.replace",
+  "ui.remove",
+  "ui.toast",
+  "ui.navigate",
+  "ui.reset",
+  "tool.start",
+  "tool.args-delta",
+  "tool.result",
+  "tool.cancel",
+  "reasoning.start",
+  "reasoning.delta",
+  "reasoning.end",
+  "optimistic.apply",
+  "optimistic.confirm",
+  "optimistic.rollback",
+  "session.meta",
+  "session.init",
+  "workflow.start",
+  "workflow.advance",
+  "workflow.complete",
+  "workflow.cancel",
+]);
+
+/**
+ * Passthrough variant for consumer-defined wire ops. Requires the standard
+ * base envelope (`v`, `id`, `ts`, `sessionId`, `op`) and accepts any
+ * additional fields. The `op` must NOT be a reserved protocol name — that
+ * keeps the closed variants authoritative for protocol ops while letting
+ * hosts add their own typed seams (e.g. `host.panelPatch`, `myapp.refresh`).
+ *
+ * The reducer no-ops unknown ops; consumers observe them via
+ * `AgentStore.subscribeAction` (fires on every dispatch, including no-ops).
+ */
+const customWireEventSchema = baseEventSchema
+  .extend({
+    op: z
+      .string()
+      .min(1)
+      .max(256)
+      .refine((op) => !RESERVED_PROTOCOL_OPS.has(op), {
+        message:
+          "custom wire event op cannot reuse a reserved protocol op name",
+      }),
+  })
+  .passthrough();
+
 export const agentWireEventSchema = z.union([
   uiAppendSchema,
   uiReplaceSchema,
@@ -302,6 +357,7 @@ export const agentWireEventSchema = z.union([
   workflowAdvanceSchema,
   workflowCompleteSchema,
   workflowCancelSchema,
+  customWireEventSchema,
 ]);
 
 // ─── Action Events ───────────────────────────────────────────────────────────

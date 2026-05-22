@@ -52,6 +52,18 @@ protocol   pure TS types, zero deps
 - **Registry is the security boundary**: only types registered via `createRegistry(map)` can be emitted/rendered. Don't add escape hatches.
 - **Sessions** are UUID-keyed RxJS `Subject`s for UI + Actions with a 30-min default TTL.
 
+## Documentation is part of every change
+
+The Starlight site at `site/src/content/docs/` (published to https://kibadist.github.io/agentui/) is the **single source of truth** for user-facing docs. Every behavior change must update the docs in the same PR — there is no separate docs follow-up step.
+
+- **New public API** (schema field, exported function, prop, hook): add or extend a guide under `site/src/content/docs/guides/` and link it from `site/astro.config.mjs` sidebar.
+- **Changed behavior** of an existing public API: update the relevant guide AND add a CHANGELOG entry at the package level.
+- **New protocol op or wire-event shape**: update `site/src/content/docs/wire-protocol.md` AND a guide page if it has its own UX surface.
+- **Bug fix that changes observable behavior**: update the guide that describes the affected surface; a CHANGELOG entry is enough only when behavior is unchanged.
+- **Internal-only refactor** (no API or behavior change): no docs change required.
+
+Verify with `pnpm --filter @kibadist/agentui-site build` — broken sidebar slugs or content collection schema errors fail the build.
+
 ## Examples
 
 - `examples/nest-api/` — NestJS backend, Anthropic agent. Reads `ANTHROPIC_API_KEY` from `.env`; falls back to mock UI events if unset.

@@ -172,6 +172,12 @@ export interface AgentResetAction {
  * Discriminated union over actions accepted by {@link agentReducer}: any
  * `UIEvent`, any `ToolEvent`, any `ReasoningEvent` (pass-through, no state
  * change), plus the synthetic `__reset__` action.
+ *
+ * Custom wire events (`CustomWireEvent`, e.g. `host.*`) also flow through
+ * `store.send` at runtime — the reducer's `default` case no-ops them, and
+ * `subscribeAction` listeners observe them. They are not in this union
+ * type for narrowing reasons; consumers cast to `CustomWireEvent` when
+ * needed.
  */
 export type AgentAction =
   | UIEvent

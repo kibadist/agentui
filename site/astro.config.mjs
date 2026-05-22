@@ -50,6 +50,7 @@ export default defineConfig({
             { label: "<AgentRoot>", slug: "guides/agent-root" },
             { label: "Renderer", slug: "guides/renderer" },
             { label: "State selectors", slug: "guides/state-selectors" },
+            { label: "Custom wire events", slug: "guides/custom-wire-events" },
             { label: "Tool calls", slug: "guides/tool-calls" },
             { label: "Reasoning", slug: "guides/reasoning" },
             { label: "Workflows", slug: "guides/workflows" },
