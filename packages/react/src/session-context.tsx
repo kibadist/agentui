@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
+import type { Transport } from "@kibadist/agentui-protocol";
 import type { AgentError } from "./agent-error.js";
 import {
   resolveAgentRoot,
@@ -19,11 +20,23 @@ export interface UseAgentSessionResult {
 }
 
 /**
- * Connection config — endpoint + fetch — published by `<AgentRoot>` so hooks
- * like `useAgentHistory` can issue requests without needing those as props.
+ * Connection config published by `<AgentRoot>` so hooks like
+ * `useAgentHistory` can call the backend without needing props of their own.
+ *
+ * `transport` is the canonical handle; `endpoint`/`fetch` remain on this
+ * shape for one minor cycle so existing third-party hooks that read them
+ * keep working — they're deprecated and removed in v2.0.
  */
 export interface AgentRootConfig {
+  transport: Transport;
+  /**
+   * @deprecated Read `config.transport` instead. Removed in v2.0.
+   * Only meaningful when AgentRoot is using the default HTTP transport.
+   */
   endpoint: string;
+  /**
+   * @deprecated Configure fetch on the transport. Removed in v2.0.
+   */
   fetch: typeof fetch;
 }
 

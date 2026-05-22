@@ -1,9 +1,11 @@
-export class SseHttpError extends Error {
-  constructor(public readonly status: number, public readonly statusText: string) {
-    super(`SSE HTTP ${status}: ${statusText}`);
-    this.name = "SseHttpError";
-  }
-}
+import { TransportHttpError } from "@kibadist/agentui-protocol";
+
+/**
+ * @deprecated Use `TransportHttpError` from `@kibadist/agentui-protocol`.
+ * This re-export will be removed in v2.0. Aliased to the same class —
+ * existing `err instanceof SseHttpError` checks continue to match.
+ */
+export { TransportHttpError as SseHttpError } from "@kibadist/agentui-protocol";
 
 export interface SseTransportOptions {
   url: string;
@@ -13,6 +15,12 @@ export interface SseTransportOptions {
   onEvent: (raw: string, id: string | undefined) => void;
   onOpen: () => void;
   onError: (err: Error) => void;
+  /**
+   * Custom fetch implementation. Defaults to `globalThis.fetch`. Lets callers
+   * route the SSE GET through the same wrapper used for session + action
+   * requests (auth headers, credentials, telemetry, etc.).
+   */
+  fetch?: typeof fetch;
 }
 
 export async function connectSse(opts: SseTransportOptions): Promise<void> {
@@ -24,9 +32,10 @@ export async function connectSse(opts: SseTransportOptions): Promise<void> {
     headers["Last-Event-ID"] = opts.lastEventId;
   }
 
+  const doFetch = opts.fetch ?? fetch;
   let response: Response;
   try {
-    response = await fetch(opts.url, { headers, signal: opts.signal });
+    response = await doFetch(opts.url, { headers, signal: opts.signal });
   } catch (err) {
     if ((err as Error).name === "AbortError") return;
     opts.onError(err as Error);
@@ -34,7 +43,7 @@ export async function connectSse(opts: SseTransportOptions): Promise<void> {
   }
 
   if (!response.ok) {
-    opts.onError(new SseHttpError(response.status, response.statusText));
+    opts.onError(new TransportHttpError(response.status, response.statusText));
     return;
   }
 

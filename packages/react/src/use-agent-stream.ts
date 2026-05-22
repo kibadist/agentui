@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState, useSyncExternalStore } from "react";
-import type { AgentWireEvent } from "@kibadist/agentui-protocol";
-import { safeParseAgentEvent } from "@kibadist/agentui-validate";
+import { useEffect, useRef, useCallback, useMemo, useState, useSyncExternalStore } from "react";
+import type { AgentWireEvent, Transport } from "@kibadist/agentui-protocol";
+import { TransportHttpError } from "@kibadist/agentui-protocol";
 import { createAgentStore, type AgentStore } from "./store.js";
 import type { CapsConfig } from "./store.js";
 import type { AgentState } from "./reducer.js";
-import { connectSse, SseHttpError } from "./sse-transport.js";
 import { computeBackoff, type BackoffOptions } from "./stream-backoff.js";
 import { createBuffer, type OverflowStrategy } from "./stream-buffer.js";
 import type { MetricEmitter } from "./metrics.js";
 import { hashSessionId } from "./metrics.js";
+import { httpTransport } from "./http-transport.js";
 
 /**
  * Lifecycle state of the SSE connection.
@@ -50,10 +50,32 @@ export interface AuthConfig {
 
 /** Options for {@link useAgentStream}. */
 export interface UseAgentStreamOptions {
-  /** SSE endpoint URL */
-  url: string;
-  /** Session id (appended as query param) */
+  /**
+   * Session id passed to {@link Transport.openStream}.
+   */
   sessionId: string;
+  /**
+   * Transport to drive the stream. If omitted, a default HTTP transport is
+   * constructed from {@link UseAgentStreamOptions.url} (and optionally
+   * `fetch`) so existing callers keep working.
+   */
+  transport?: Transport;
+  /**
+   * Legacy: SSE endpoint URL. Used only when {@link UseAgentStreamOptions.transport}
+   * is not provided — the hook builds a default {@link httpTransport} whose
+   * base endpoint is `url` with any trailing `/stream` segment stripped.
+   *
+   * @deprecated Pass `transport={httpTransport({ endpoint, fetch })}` directly.
+   * Will be removed in v2.0.
+   */
+  url?: string;
+  /**
+   * Legacy: custom fetch for the default transport. Ignored when
+   * {@link UseAgentStreamOptions.transport} is provided.
+   *
+   * @deprecated Configure fetch on the transport you pass in.
+   */
+  fetch?: typeof fetch;
   /** Called for every valid wire event after the reducer applies it. */
   onEvent?: (event: AgentWireEvent) => void;
   /** Called when an invalid event is received */
@@ -76,12 +98,12 @@ export interface UseAgentStreamOptions {
 export interface UseAgentStreamResult {
   state: AgentState;
   status: StreamStatus;
-  /** Close the underlying SSE connection (state is preserved). */
+  /** Close the underlying stream connection (state is preserved). */
   close: () => void;
   /** Clear all UI state (nodes, toasts, navigate). Connection is unaffected. */
   reset: () => void;
   /**
-   * Inject a wire event into the reducer without going through SSE.
+   * Inject a wire event into the reducer without going through the transport.
    * Useful for client-side optimistic updates, host-driven UI, and tests.
    */
   dispatch: (event: AgentWireEvent) => void;
@@ -107,13 +129,53 @@ function resolveBackoff(retry: RetryConfig | undefined): BackoffOptions {
 }
 
 /**
- * Subscribe to an SSE-backed agent stream with retry/backoff, backpressure
- * buffering, and auth-aware reconnect. Returns the reducer state, the
- * connection status, and methods to close, reset, or dispatch — plus the
- * underlying `store` for wiring `<AgentStateProvider>`.
+ * Strip a trailing `/stream` (with or without trailing slash) from a URL so
+ * the legacy `url`-based caller can be mapped onto an httpTransport whose
+ * `endpoint` is the base path. Leaves unrelated paths alone.
+ */
+function deriveEndpointFromStreamUrl(url: string): string {
+  return url.replace(/\/stream\/?$/, "");
+}
+
+/**
+ * Subscribe to a transport-backed agent stream with retry/backoff,
+ * backpressure buffering, and auth-aware reconnect. Returns the reducer
+ * state, the connection status, and methods to close, reset, or dispatch —
+ * plus the underlying `store` for wiring `<AgentStateProvider>`.
  */
 export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamResult {
-  const { url, sessionId, onEvent, onInvalidEvent, enabled = true, retry, buffer, auth, caps, metrics } = options;
+  const {
+    sessionId,
+    transport,
+    url,
+    fetch: fetchProp,
+    onEvent,
+    onInvalidEvent,
+    enabled = true,
+    retry,
+    buffer,
+    auth,
+    caps,
+    metrics,
+  } = options;
+
+  // Resolve which transport to use. If the caller supplied one, use it as-is.
+  // Otherwise build a default httpTransport from the legacy url+fetch pair.
+  // Memoized so the effect doesn't re-run on every render when the caller
+  // passes inline objects but stable inputs.
+  const resolvedTransport = useMemo<Transport>(() => {
+    if (transport !== undefined) return transport;
+    if (url === undefined) {
+      throw new Error(
+        "[agentui] useAgentStream requires either `transport` or `url`.",
+      );
+    }
+    return httpTransport({
+      endpoint: deriveEndpointFromStreamUrl(url),
+      fetch: fetchProp,
+      metrics,
+    });
+  }, [transport, url, fetchProp, metrics]);
 
   // Store is created once per hook instance and stays stable across renders.
   const storeRef = useRef<AgentStore | null>(null);
@@ -159,9 +221,6 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
 
     const backoffOpts = resolveBackoff(retryRef.current);
     const maxAttempts = retryRef.current?.maxAttempts ?? Infinity;
-
-    const sep = url.includes("?") ? "&" : "?";
-    const sseUrl = `${url}${sep}sessionId=${encodeURIComponent(sessionId)}`;
 
     const evtBuffer = bufferRef.current
       ? createBuffer<AgentWireEvent>({
@@ -239,8 +298,8 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
         const connectStartMs = performance.now();
         let firstEventEmitted = false;
 
-        await connectSse({
-          url: sseUrl,
+        await resolvedTransport.openStream({
+          sessionId,
           headers,
           lastEventId,
           signal: ctrl.signal,
@@ -253,47 +312,31 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
               { sessionId: hashSessionId(sessionId) },
             );
           },
-          onEvent: (raw, id) => {
+          onEvent: (event, id) => {
             if (id !== undefined) lastEventId = id;
-            let parsedRaw: unknown;
-            try {
-              parsedRaw = JSON.parse(raw);
-            } catch {
-              return;
-            }
-
-            const parseStart = performance.now();
-            const result = safeParseAgentEvent(parsedRaw);
-            metricsRef.current?.timing(
-              "agentui.event.parse_ms",
-              performance.now() - parseStart,
-              { eventOp: (parsedRaw as { op?: string }).op ?? "unknown" },
-            );
-
-            if (result.ok) {
-              if (!firstEventEmitted) {
-                firstEventEmitted = true;
-                metricsRef.current?.timing(
-                  "agentui.stream.first_event_ms",
-                  performance.now() - connectStartMs,
-                  { sessionId: hashSessionId(sessionId) },
-                );
-              }
-              const dispatchStart = performance.now();
-              ingest(result.value);
+            if (!firstEventEmitted) {
+              firstEventEmitted = true;
               metricsRef.current?.timing(
-                "agentui.event.dispatch_ms",
-                performance.now() - dispatchStart,
-                { eventOp: result.value.op },
+                "agentui.stream.first_event_ms",
+                performance.now() - connectStartMs,
+                { sessionId: hashSessionId(sessionId) },
               );
-            } else {
-              metricsRef.current?.counter("agentui.event.parse_error_count");
-              onInvalidRef.current?.(parsedRaw, result.error);
             }
+            const dispatchStart = performance.now();
+            ingest(event);
+            metricsRef.current?.timing(
+              "agentui.event.dispatch_ms",
+              performance.now() - dispatchStart,
+              { eventOp: event.op },
+            );
+          },
+          onInvalidEvent: (raw, err) => {
+            metricsRef.current?.counter("agentui.event.parse_error_count");
+            onInvalidRef.current?.(raw, err);
           },
           onError: (err) => {
             connectionError = err;
-            if (err instanceof SseHttpError && err.status === 401) {
+            if (err instanceof TransportHttpError && err.status === 401) {
               unauthorized = true;
             }
           },
@@ -333,7 +376,7 @@ export function useAgentStream(options: UseAgentStreamOptions): UseAgentStreamRe
     // `store` is stable for the life of this hook instance (created once in
     // storeRef above); it's in the dep array only to satisfy the exhaustive-deps
     // rule and will never actually cause this effect to re-run.
-  }, [url, sessionId, enabled, store]);
+  }, [resolvedTransport, sessionId, enabled, store]);
 
   const close = useCallback(() => {
     abortRef.current?.abort();

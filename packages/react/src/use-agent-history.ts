@@ -1,14 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { HistoryMessage } from "@kibadist/agentui-protocol";
 import { useAgentRootConfig, useAgentSession } from "./session-context.js";
 import type { AgentError } from "./agent-error.js";
 
-export interface HistoryMessage {
-  role: "user" | "assistant" | "system" | "tool";
-  text: string;
-  ts: string;
-}
+export type { HistoryMessage } from "@kibadist/agentui-protocol";
 
 export interface UseAgentHistoryResult {
   messages: HistoryMessage[];
@@ -19,7 +16,7 @@ export interface UseAgentHistoryResult {
 
 /**
  * Subscribe to the conversation history for the current session.
- * Fetches `GET {endpoint}/history?sessionId={sessionId}` once on session start.
+ * Calls `transport.getHistory({ sessionId })` once on session start.
  * Use `reload()` to refetch on demand.
  *
  * @param id Scope the lookup to the `<AgentRoot id="...">` with this id. Omit to resolve to the nearest agent.
@@ -38,28 +35,9 @@ export function useAgentHistory(id?: string): UseAgentHistoryResult {
       setLoading(true);
       setError(null);
       try {
-        const url = `${config.endpoint}/history?sessionId=${encodeURIComponent(sid)}`;
-        const res = await config.fetch(url, { method: "GET" });
-        if (res.status === 404) {
-          if (seq !== seqRef.current) return;
-          setMessages([]);
-          setLoading(false);
-          return;
-        }
-        if (!res.ok) {
-          if (seq !== seqRef.current) return;
-          setMessages([]);
-          setLoading(false);
-          setError({
-            kind: "history-fetch",
-            message: `History fetch failed: ${res.status} ${res.statusText}`,
-            cause: res,
-          });
-          return;
-        }
-        const data = (await res.json()) as { messages: HistoryMessage[] };
+        const result = await config.transport.getHistory({ sessionId: sid });
         if (seq !== seqRef.current) return;
-        setMessages(data.messages ?? []);
+        setMessages(result.messages);
         setLoading(false);
       } catch (cause) {
         if (seq !== seqRef.current) return;

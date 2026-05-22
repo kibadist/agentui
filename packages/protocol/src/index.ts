@@ -353,3 +353,15 @@ export type AgentUIEvent = UIEvent | ActionEvent;
 /** Discriminant helpers */
 export type UIEventOp = UIEvent["op"];
 export type ActionEventType = ActionEvent["type"];
+
+// ─── Transport ───────────────────────────────────────────────────────────────
+
+export type {
+  Transport,
+  StreamHandlers,
+  HistoryMessage,
+} from "./transport.js";
+export {
+  TransportHttpError,
+  SessionNotFoundError,
+} from "./transport.js";

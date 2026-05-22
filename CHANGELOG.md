@@ -4,6 +4,31 @@ All notable changes to `@kibadist/agentui-*` packages.
 
 ## [Unreleased]
 
+### Added — `@kibadist/agentui-protocol`
+
+- **`Transport` interface** — `{ createSession, openStream, dispatchAction, getHistory }`. Replaces the previously implicit "HTTP-only with a fetch override" assumption with an explicit, swappable seam. Custom transports (in-process, WebSocket, BroadcastChannel for tests, RN bridge) plug in without monkey-patching fetch. `Transport.openStream` delivers **parsed** `AgentWireEvent`s — line-shape concerns stay inside HTTP transports, not in the abstraction.
+- **`TransportHttpError`** — structured error carrying `status` + `statusText`, thrown by HTTP-style transports from any of the four methods. Replaces ad-hoc `Error('Action failed: ...')` strings; now `err instanceof TransportHttpError && err.status === 401` works across session create, action dispatch, and stream connect uniformly.
+- **`SessionNotFoundError`** — thrown by `createSession` when a resume target is gone. `AgentRoot` catches it and falls back to a fresh session.
+- **`HistoryMessage`** — moved from `@kibadist/agentui-react` to protocol (it's a transport-level shape). Re-exported from react for back-compat; v1.x: text-only flattened content — will widen when servers need to return structured content.
+
+### Added — `@kibadist/agentui-react`
+
+- **`<AgentRoot transport={...}>`** — preferred way to wire AgentRoot. Pass any `Transport` (typically `httpTransport({ endpoint, fetch })`, or your own implementation) and AgentRoot routes session creation, the event stream, action dispatch, and history fetches through it.
+- **`httpTransport({ endpoint, fetch?, metrics? })`** — the default HTTP transport. Composes the existing SSE line-parser internally; consumers receive parsed wire events. Same network shape as before (`POST /session`, `GET /stream`, `POST /action`, `GET /history`) so existing servers keep working.
+- **`AgentRootConfig.transport`** — third-party hooks that previously read `config.endpoint`/`config.fetch` should migrate to `config.transport`.
+
+### Fixed — `@kibadist/agentui-react`
+
+- **SSE transport now honors the `<AgentRoot fetch>` override.** Previously the stream GET went through bare `globalThis.fetch`, so host-wrapper concerns (auth headers, credentials, request IDs, Sentry tagging, error normalization) silently didn't apply to the stream — even though session/action/history calls did. Fixed end-to-end by routing every request through the resolved `Transport`. Fixes [#1](https://github.com/kibadist/agentui/issues/1).
+- **`AgentRoot` action dispatch now throws `TransportHttpError`** instead of a plain `Error("Action failed: ${status} ${statusText}")`. Hosts that want auth-aware retry on action POSTs can now `instanceof`-check the same way they would for stream failures.
+
+### Deprecated — `@kibadist/agentui-react` (removed in 2.0)
+
+- `<AgentRoot endpoint>` and `<AgentRoot fetch>` props. Pass `transport={httpTransport({ endpoint, fetch })}` instead. The old props continue to work — AgentRoot constructs the default transport for you — but emit a one-time `console.warn` (module-scoped so SSR / multi-instance pages don't spam).
+- `useAgentStream({ url, fetch })` shape. Pass `{ transport, sessionId }` instead; the legacy shape still works and builds a default `httpTransport` internally.
+- `SseHttpError` (from `@kibadist/agentui-react/sse-transport`). Re-exported as an alias of `TransportHttpError` for one minor cycle — existing `err instanceof SseHttpError` checks continue to match.
+- `AgentRootConfig.endpoint` and `AgentRootConfig.fetch`. Read `config.transport` instead.
+
 ## 1.2.0 — 2026-05-21
 
 Minor: loosens `AgentStore.subscribeAction` to fire on every dispatched action, including no-ops. (Version 1.1.0 was skipped — the publish script's dry-run pre-bumped the version, so the real run landed on 1.2.0.)

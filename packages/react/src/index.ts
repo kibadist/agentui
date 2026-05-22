@@ -96,6 +96,18 @@ export type {
   AuthConfig,
 } from "./use-agent-stream.js";
 
+export { httpTransport } from "./http-transport.js";
+export type { HttpTransportConfig } from "./http-transport.js";
+export type {
+  Transport,
+  StreamHandlers,
+  HistoryMessage,
+} from "@kibadist/agentui-protocol";
+export {
+  TransportHttpError,
+  SessionNotFoundError,
+} from "@kibadist/agentui-protocol";
+
 export type { Metric, MetricEmitter } from "./metrics.js";
 export type { CapsConfig, EvictableSlice, CreateAgentStoreOptions } from "./store.js";
 
@@ -123,7 +135,7 @@ export type { AgentError } from "./agent-error.js";
 export type { SessionMetaEvent, SessionInitEvent } from "@kibadist/agentui-protocol";
 
 export { useAgentHistory } from "./use-agent-history.js";
-export type { HistoryMessage, UseAgentHistoryResult } from "./use-agent-history.js";
+export type { UseAgentHistoryResult } from "./use-agent-history.js";
 
 export { useCapabilities } from "./use-capabilities.js";
 export type { UseCapabilitiesResult } from "./use-capabilities.js";

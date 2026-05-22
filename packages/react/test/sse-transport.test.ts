@@ -112,6 +112,24 @@ describe("connectSse", () => {
     expect(headers["Accept"]).toBe("text/event-stream");
   });
 
+  it("uses the supplied fetch override and leaves global fetch untouched", async () => {
+    const globalSpy = vi.fn();
+    globalThis.fetch = globalSpy;
+    const customFetch = vi.fn().mockResolvedValue(mockResponse(`data: hi\n\n`));
+    const events: string[] = [];
+    await connectSse({
+      url: "x",
+      fetch: customFetch as unknown as typeof fetch,
+      signal: new AbortController().signal,
+      onEvent: (raw) => events.push(raw),
+      onOpen: () => {},
+      onError: () => {},
+    });
+    expect(customFetch).toHaveBeenCalledOnce();
+    expect(globalSpy).not.toHaveBeenCalled();
+    expect(events).toEqual(["hi"]);
+  });
+
   it("respects abort signal", async () => {
     const ctrl = new AbortController();
     globalThis.fetch = vi.fn().mockImplementation(

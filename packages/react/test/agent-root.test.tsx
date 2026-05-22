@@ -285,4 +285,112 @@ describe("AgentRoot", () => {
     });
     expect(storage._store.get("agentui:default:conversationId")).toBe("conv_new");
   });
+
+  it("SSE connect receives the same fetch wrapper as session/action calls", async () => {
+    // Regression for github.com/kibadist/agentui#1: SSE transport must use
+    // the host-supplied fetch override, not bare global fetch.
+    const storage = makeStorage();
+    const fetchMock = makeFetchMock({
+      "/session": () =>
+        new Response(JSON.stringify({ sessionId: "ses_1" }), { status: 200 }),
+    });
+
+    render(
+      <AgentRoot endpoint="/api/agent" storage={storage} fetch={fetchMock}>
+        <StatusProbe />
+      </AgentRoot>,
+    );
+
+    await waitFor(() => {
+      expect(connectOptsList.length).toBe(1);
+    });
+    expect(connectOptsList[0].fetch).toBe(fetchMock);
+  });
+
+  it("transport prop: drives session create + action dispatch through the supplied Transport (no httpTransport involvement)", async () => {
+    const storage = makeStorage();
+    const createSession = vi
+      .fn()
+      .mockResolvedValue({ sessionId: "ses_custom" });
+    const openStream = vi.fn(async (opts: ConnectOpts & { onOpen: () => void }) => {
+      opts.onOpen();
+      await new Promise<void>((resolve) => {
+        opts.signal.addEventListener("abort", () => resolve());
+      });
+    });
+    const dispatchAction = vi.fn().mockResolvedValue(undefined);
+    const getHistory = vi.fn().mockResolvedValue({ messages: [] });
+
+    const customTransport = {
+      createSession,
+      openStream,
+      dispatchAction,
+      getHistory,
+    };
+
+    function Probe() {
+      const s = useAgentSession();
+      return <span data-testid="sid">{s.sessionId ?? ""}</span>;
+    }
+
+    const { getByTestId } = render(
+      <AgentRoot transport={customTransport} storage={storage}>
+        <Probe />
+      </AgentRoot>,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId("sid").textContent).toBe("ses_custom");
+    });
+
+    expect(createSession).toHaveBeenCalledOnce();
+    expect(openStream).toHaveBeenCalledOnce();
+    // The connectSse spy must NOT have fired — proving httpTransport was bypassed.
+    expect(connectSpy).not.toHaveBeenCalled();
+  });
+
+  it("transport prop: a custom transport's SessionNotFoundError on resume falls back to fresh session", async () => {
+    const storage = makeStorage({
+      "agentui:default:conversationId": "conv_gone",
+    });
+    let createCalls = 0;
+    const customTransport = {
+      createSession: vi.fn(async (opts: { conversationId?: string }) => {
+        createCalls++;
+        if (opts.conversationId === "conv_gone") {
+          // Mirrors what httpTransport throws on 404 resume.
+          const { SessionNotFoundError } = await import(
+            "@kibadist/agentui-protocol"
+          );
+          throw new SessionNotFoundError(opts.conversationId);
+        }
+        return { sessionId: "ses_fresh" };
+      }),
+      openStream: vi.fn(async (opts: ConnectOpts & { onOpen: () => void }) => {
+        opts.onOpen();
+        await new Promise<void>((resolve) => {
+          opts.signal.addEventListener("abort", () => resolve());
+        });
+      }),
+      dispatchAction: vi.fn().mockResolvedValue(undefined),
+      getHistory: vi.fn().mockResolvedValue({ messages: [] }),
+    };
+
+    function Probe() {
+      const s = useAgentSession();
+      return <span data-testid="sid">{s.sessionId ?? ""}</span>;
+    }
+
+    const { getByTestId } = render(
+      <AgentRoot transport={customTransport} storage={storage}>
+        <Probe />
+      </AgentRoot>,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId("sid").textContent).toBe("ses_fresh");
+    });
+    expect(createCalls).toBe(2);
+    expect(storage._store.has("agentui:default:conversationId")).toBe(false);
+  });
 });
