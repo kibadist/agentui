@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-node",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Framework-agnostic AgentUI server companion: SSE writer, typed emitter, conversation persistence",
   "license": "MIT",
   "repository": {
