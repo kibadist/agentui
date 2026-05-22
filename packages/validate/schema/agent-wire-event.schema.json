@@ -1148,6 +1148,39 @@
             "op"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "v": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/v"
+            },
+            "id": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/id"
+            },
+            "ts": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/ts"
+            },
+            "traceId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/traceId"
+            },
+            "sessionId": {
+              "$ref": "#/definitions/AgentWireEvent/anyOf/0/properties/sessionId"
+            },
+            "op": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "ts",
+            "sessionId",
+            "op"
+          ],
+          "additionalProperties": true
         }
       ]
     }
