@@ -31,7 +31,7 @@ export default defineConfig({
         {
           label: "Start here",
           items: [
-            { label: "Introduction", link: "/agentui/" },
+            { label: "Introduction", link: "/" },
             { label: "Getting started", slug: "getting-started" },
             { label: "Concepts", slug: "concepts" },
             { label: "Wire protocol", slug: "wire-protocol" },
