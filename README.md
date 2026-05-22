@@ -1,11 +1,14 @@
 # AgentUI
 
+[![Docs](https://img.shields.io/badge/docs-kibadist.github.io%2Fagentui-6d4cff)](https://kibadist.github.io/agentui/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![pnpm](https://img.shields.io/badge/pnpm-workspace-orange?logo=pnpm)](https://pnpm.io/)
 [![packages](https://img.shields.io/badge/packages-8-blueviolet)](./docs/packages.md)
 
 **An AI-native component system for agent-driven UIs.**
+
+> 📖 **Full documentation:** [kibadist.github.io/agentui](https://kibadist.github.io/agentui/)
 
 Instead of letting a model generate raw HTML or JSX (unsafe, unpredictable, impossible to style consistently), AgentUI gives LLM agents a typed event protocol to **compose, update, and remove UI components** — all validated against a schema and rendered through a developer-controlled registry.
 
