@@ -4,6 +4,10 @@ All notable changes to `@kibadist/agentui-*` packages.
 
 ## [Unreleased]
 
+## 1.3.0 — 2026-05-21
+
+Minor: introduces a `Transport` interface and the default `httpTransport`, separating wire concerns from protocol logic. Custom transports (in-process, WebSocket, host-side API clients, BroadcastChannel for tests) now plug in without monkey-patching fetch. Also fixes [#1](https://github.com/kibadist/agentui/issues/1) — the SSE GET now routes through the same `Transport` as session/action/history, so a host-supplied `fetch` wrapper applies uniformly.
+
 ### Added — `@kibadist/agentui-protocol`
 
 - **`Transport` interface** — `{ createSession, openStream, dispatchAction, getHistory }`. Replaces the previously implicit "HTTP-only with a fetch override" assumption with an explicit, swappable seam. Custom transports (in-process, WebSocket, BroadcastChannel for tests, RN bridge) plug in without monkey-patching fetch. `Transport.openStream` delivers **parsed** `AgentWireEvent`s — line-shape concerns stay inside HTTP transports, not in the abstraction.
