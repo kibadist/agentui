@@ -280,11 +280,29 @@ export const sessionInitSchema = baseEventSchema.extend({
 });
 
 /**
- * Reserved op names — every variant in the closed union above. Used by
- * `customWireEventSchema` to forbid host events from shadowing protocol ops,
- * so a malformed `ui.append` (or any other known op) still fails closed
- * instead of slipping through the passthrough variant. Also exported as
- * `RESERVED_PROTOCOL_OPS` so consumers can detect custom events at runtime.
+ * Reserved op-namespace prefixes. The protocol owns these — any wire op
+ * whose name starts with one of these prefixes is treated as a closed
+ * protocol variant. Custom wire events must use a different prefix
+ * (`host.*`, `myapp.*`, etc.). Used by `customWireEventSchema` to refuse
+ * shadowing and exported so consumers can detect custom events at
+ * runtime; also drives the JSON Schema `pattern` constraint via
+ * `zod-to-json-schema` (which can translate `.regex()` but not
+ * `.refine()`), keeping AJV-based validation in lockstep with the zod
+ * runtime.
+ */
+export const RESERVED_PROTOCOL_OP_PREFIXES: readonly string[] = [
+  "ui.",
+  "tool.",
+  "reasoning.",
+  "optimistic.",
+  "session.",
+  "workflow.",
+];
+
+/**
+ * Exact protocol op names. Kept for back-compat (was the public seam in
+ * v1.3.1 / v1.3.2) and for drift tests, but the schema constraint is
+ * now prefix-based via {@link RESERVED_PROTOCOL_OP_PREFIXES}.
  */
 export const RESERVED_PROTOCOL_OPS: ReadonlySet<string> = new Set<string>([
   "ui.append",
@@ -312,11 +330,25 @@ export const RESERVED_PROTOCOL_OPS: ReadonlySet<string> = new Set<string>([
 ]);
 
 /**
+ * Negative-lookahead pattern: an `op` value is valid for a custom wire
+ * event iff it does NOT start with any reserved protocol prefix. The
+ * pattern is intentionally a JavaScript-compatible regex so
+ * `zod-to-json-schema` translates it cleanly into JSON Schema's
+ * `pattern` field — that keeps AJV validation aligned with zod (without
+ * the alignment, AJV would accept malformed protocol events via the
+ * passthrough arm, since refines don't survive the JSON Schema
+ * translation).
+ */
+const CUSTOM_WIRE_EVENT_OP_PATTERN =
+  /^(?!(?:ui|tool|reasoning|optimistic|session|workflow)\.).+$/;
+
+/**
  * Passthrough variant for consumer-defined wire ops. Requires the standard
  * base envelope (`v`, `id`, `ts`, `sessionId`, `op`) and accepts any
- * additional fields. The `op` must NOT be a reserved protocol name — that
- * keeps the closed variants authoritative for protocol ops while letting
- * hosts add their own typed seams (e.g. `host.panelPatch`, `myapp.refresh`).
+ * additional fields. The `op` must NOT start with a reserved protocol
+ * prefix — that keeps the closed variants authoritative for protocol ops
+ * while letting hosts add their own typed seams (e.g. `host.panelPatch`,
+ * `myapp.refresh`).
  *
  * The reducer no-ops unknown ops; consumers observe them via
  * `AgentStore.subscribeAction` (fires on every dispatch, including no-ops).
@@ -327,10 +359,10 @@ const customWireEventSchema = baseEventSchema
       .string()
       .min(1)
       .max(256)
-      .refine((op) => !RESERVED_PROTOCOL_OPS.has(op), {
-        message:
-          "custom wire event op cannot reuse a reserved protocol op name",
-      }),
+      .regex(
+        CUSTOM_WIRE_EVENT_OP_PATTERN,
+        "custom wire event op cannot use a reserved protocol prefix (ui., tool., reasoning., optimistic., session., workflow.)",
+      ),
   })
   .passthrough();
 

@@ -8,6 +8,7 @@ export {
   sessionMetaSchema,
   agentWireEventSchema,
   RESERVED_PROTOCOL_OPS,
+  RESERVED_PROTOCOL_OP_PREFIXES,
 } from "./schemas.js";
 export {
   ValidationError,

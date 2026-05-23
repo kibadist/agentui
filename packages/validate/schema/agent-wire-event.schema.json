@@ -1170,7 +1170,8 @@
             "op": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "pattern": "^(?!(?:ui|tool|reasoning|optimistic|session|workflow)\\.).+$"
             }
           },
           "required": [

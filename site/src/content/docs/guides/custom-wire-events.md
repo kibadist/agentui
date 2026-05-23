@@ -30,16 +30,15 @@ A custom wire event must satisfy the base envelope:
 }
 ```
 
-Reserved op names are exported as `RESERVED_PROTOCOL_OPS` from `@kibadist/agentui-validate`:
+Reservation is **prefix-based**: any op starting with `ui.`, `tool.`, `reasoning.`, `optimistic.`, `session.`, or `workflow.` belongs to the protocol. Custom events must use a different prefix.
 
 ```ts
-import { RESERVED_PROTOCOL_OPS } from "@kibadist/agentui-validate";
+import { RESERVED_PROTOCOL_OP_PREFIXES } from "@kibadist/agentui-validate";
 
-RESERVED_PROTOCOL_OPS.has("ui.append");       // → true
-RESERVED_PROTOCOL_OPS.has("host.panelPatch"); // → false
+RESERVED_PROTOCOL_OP_PREFIXES; // → ["ui.", "tool.", "reasoning.", "optimistic.", "session.", "workflow."]
 ```
 
-The schema **rejects** custom events that try to reuse a reserved op. This keeps malformed protocol events (e.g. a `ui.append` missing `node`) failing closed — they don't slip through the passthrough variant.
+The schema **rejects** custom events that use a reserved prefix. This keeps malformed protocol events (e.g. a `ui.append` missing `node`) failing closed — they don't slip through the passthrough variant. Prefix reservation also future-proofs the namespace: if v1.x adds new ops to an existing prefix (`ui.dialog`, `tool.retry`, etc.) hosts that already shipped a custom op there would suddenly start matching the closed variant and fail validation. With prefix reservation, those collisions are rejected upfront.
 
 ## Emitting from the server
 
