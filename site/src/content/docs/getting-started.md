@@ -35,6 +35,20 @@ pnpm dev:api   # NestJS backend on :3001
 pnpm dev:app   # Next.js frontend on :3000
 ```
 
+## Try it live
+
+No clone required — the [`chat-starter`](https://github.com/kibadist/agentui/tree/main/examples/chat-starter) example runs in your browser below. It uses a mock SSE backend (in-process Next.js route handlers), so there's no API key to set. Send a message, then edit `app/page.tsx` or `components/registry.tsx` and watch the change reflect live.
+
+<iframe
+  title="AgentUI chat-starter — live StackBlitz playground"
+  src="https://stackblitz.com/github/kibadist/agentui/tree/main/examples/chat-starter?embed=1&file=app%2Fpage.tsx&view=preview&hideNavigation=1&theme=dark"
+  loading="lazy"
+  style="width:100%;height:640px;border:1px solid var(--sl-color-gray-5);border-radius:8px;"
+  allow="cross-origin-isolated"
+></iframe>
+
+> Cold boots take a few seconds while StackBlitz installs the published `@kibadist/agentui-*` packages. If the embed doesn't load, [open it in a new tab](https://stackblitz.com/github/kibadist/agentui/tree/main/examples/chat-starter?file=app%2Fpage.tsx).
+
 ## Example Prompts
 
 Try these once you have the dev server running:

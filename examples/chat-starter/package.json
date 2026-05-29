@@ -10,9 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kibadist/agentui-protocol": "workspace:*",
-    "@kibadist/agentui-react": "workspace:*",
-    "@kibadist/agentui-validate": "workspace:*",
+    "@kibadist/agentui-protocol": "^1.3.3",
+    "@kibadist/agentui-react": "^1.3.3",
+    "@kibadist/agentui-validate": "^1.3.3",
     "next": "^15.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
