@@ -109,6 +109,13 @@ export default defineConfig({
           ],
         },
         {
+          label: "Guides — SVG components",
+          collapsed: true,
+          items: [
+            { label: "SVG Agent UI components", slug: "guides/svg-components" },
+          ],
+        },
+        {
           label: "Reference",
           items: [
             { label: "Use cases", slug: "use-cases" },

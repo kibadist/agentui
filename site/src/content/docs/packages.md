@@ -1,6 +1,6 @@
 ---
 title: "Packages"
-description: "The AgentUI monorepo publishes seven packages under the `@kibadist/agentui-*` scope."
+description: "The AgentUI monorepo publishes eight packages under the `@kibadist/agentui-*` scope."
 ---
 
 | Package | npm | Purpose |
@@ -12,6 +12,7 @@ description: "The AgentUI monorepo publishes seven packages under the `@kibadist
 | [`@kibadist/agentui-ai`](https://www.npmjs.com/package/@kibadist/agentui-ai) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-ai)](https://www.npmjs.com/package/@kibadist/agentui-ai) | Provider-agnostic adapter via Vercel AI SDK (OpenAI, Anthropic, Google, DeepSeek) |
 | [`@kibadist/agentui-llm`](https://www.npmjs.com/package/@kibadist/agentui-llm) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-llm)](https://www.npmjs.com/package/@kibadist/agentui-llm) | Provider-native LLM stream adapters (Anthropic, OpenAI, Gemini) |
 | [`@kibadist/agentui-next`](https://www.npmjs.com/package/@kibadist/agentui-next) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-next)](https://www.npmjs.com/package/@kibadist/agentui-next) | SSE proxy + action proxy helpers for Next.js App Router |
+| [`@kibadist/agentui-svg`](https://www.npmjs.com/package/@kibadist/agentui-svg) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-svg)](https://www.npmjs.com/package/@kibadist/agentui-svg) | SVG-native Web Components for agent workflows, timelines, approvals, memory, and state ([guide](./guides/svg-components.md)) |
 
 ## Dependency graph
 
@@ -23,6 +24,7 @@ flowchart BT
   nest["📦 nest\n(+@nestjs/common, rxjs)"]
   ai["📦 ai\n(+Vercel AI SDK)"]
   next["📦 next\n(no runtime deps)"]
+  svg["📦 svg\n(zero deps — standalone Web Components)"]
 
   validate --> protocol
   react --> protocol
@@ -30,6 +32,9 @@ flowchart BT
   ai --> protocol
   next --> protocol
 ```
+
+`@kibadist/agentui-svg` is standalone — framework-agnostic SVG Web Components with
+no dependency on the protocol or React packages.
 
 ## Related
 

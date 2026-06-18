@@ -111,6 +111,7 @@ All long-form documentation lives at **[kibadist.github.io/agentui](https://kiba
 | [`@kibadist/agentui-ai`](https://www.npmjs.com/package/@kibadist/agentui-ai) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-ai)](https://www.npmjs.com/package/@kibadist/agentui-ai) | Provider-agnostic adapter via Vercel AI SDK |
 | [`@kibadist/agentui-llm`](https://www.npmjs.com/package/@kibadist/agentui-llm) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-llm)](https://www.npmjs.com/package/@kibadist/agentui-llm) | Provider-native LLM stream adapters |
 | [`@kibadist/agentui-next`](https://www.npmjs.com/package/@kibadist/agentui-next) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-next)](https://www.npmjs.com/package/@kibadist/agentui-next) | SSE + action proxy for Next.js App Router |
+| [`@kibadist/agentui-svg`](https://www.npmjs.com/package/@kibadist/agentui-svg) | [![npm](https://img.shields.io/npm/v/@kibadist/agentui-svg)](https://www.npmjs.com/package/@kibadist/agentui-svg) | SVG-native Web Components for agent workflows, timelines, approvals, memory, and state |
 
 See [Packages](https://kibadist.github.io/agentui/packages/) for the dependency graph.
 
