@@ -2,9 +2,9 @@ import { z } from "zod";
 
 /**
  * Prop schemas for the agent-observability component registry. Mirrors the
- * backend's COMPONENT_DEFS in svg-api's agent.service.ts — keep the two in
+ * node shapes the backend's RunRecorder emits in svg-api — keep the two in
  * sync. These give the renderer runtime prop validation (the security
- * boundary), and the agent only emits component types registered here.
+ * boundary), and only component types registered here render.
  *
  * Enums (status / level / type) are kept permissive with `z.string()` so the
  * SVG components own their own vocabulary handling.

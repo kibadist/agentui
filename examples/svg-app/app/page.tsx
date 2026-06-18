@@ -136,9 +136,10 @@ function AgentSession({ sessionId }: { sessionId: string }) {
           <main style={{ flex: 1, padding: 24, overflow: "auto" }}>
             {state.nodes.length === 0 && (
               <p style={{ color: "#666" }}>
-                Ask the agent to visualize a recorded run — workflows, tool
-                timelines, state machines, memory, and approval gates — or tap a
-                quick action below.
+                Ask the agent to investigate an incident. It runs real tool calls
+                over the service data, and the workflow, tool timeline, state
+                machine, memory map, and approval gate are rendered live from its
+                actual execution. Tap a quick action below to start.
               </p>
             )}
             <AgentRenderer state={state} registry={registry} />

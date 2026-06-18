@@ -1,12 +1,16 @@
 "use client";
 
-/** Quick-action prompts shown above the input for the observability demo. */
+/**
+ * Quick-action prompts that kick off a real, instrumented agent investigation.
+ * The agent runs live tool calls over the SQLite incident data; the SVG
+ * components are rendered from its actual execution.
+ */
 const QUICK_ACTIONS = [
-  "Visualize the deploy investigation",
-  "Show the patient intake run",
-  "Show the competitor research run",
-  "Which runs are recorded?",
-  "Show me a run with a pending approval",
+  "checkout-service is failing — investigate and recommend a fix",
+  "What changed recently across our services?",
+  "Why is the error rate on payments-api elevated?",
+  "Find the bad deploy and propose a rollback",
+  "Triage the current incident end to end",
 ];
 
 export function QuickActions({

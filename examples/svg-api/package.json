@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/main.js",
-    "dev": "node --env-file-if-exists=.env --import tsx src/main.ts"
+    "dev": "node --env-file-if-exists=.env --import tsx src/main.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.58",

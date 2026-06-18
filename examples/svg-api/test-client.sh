@@ -6,7 +6,8 @@
 # 2. In another terminal: ./test-client.sh
 
 BASE="http://localhost:3003"
-PROMPT="${1:-Visualize the deploy investigation}"
+# Requires ANTHROPIC_API_KEY set in the server's env — there is no offline mock.
+PROMPT="${1:-checkout-service is failing — investigate and recommend a fix}"
 
 echo "==> Creating session..."
 SESSION=$(curl -s -X POST "$BASE/agent/session" | grep -o '"sessionId":"[^"]*"' | cut -d'"' -f4)

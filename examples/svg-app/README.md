@@ -4,8 +4,9 @@ An **agent-observability** demo UI. A Next.js App Router app that renders the
 [`@kibadist/agentui-svg`](../../packages/svg) SVG Web Components — workflow
 canvases, tool timelines, state machines, memory maps, and approval gates —
 driven by an agent over SSE, with quick-action buttons. It pairs with the
-[`svg-api`](../svg-api) backend (`:3003`), which owns the recorded runs and the
-agent loop.
+[`svg-api`](../svg-api) backend (`:3003`), which runs a **real, instrumented SRE
+agent** and streams the components live from its actual tool calls (requires
+`ANTHROPIC_API_KEY` — no offline mock).
 
 ## Run
 
@@ -40,5 +41,5 @@ screen.
   `agent.inspect` / `agent.decision` actions back via `useAgentAction`;
   `text-block` is plain React.
 
-The component types and prop shapes mirror the backend's `COMPONENT_DEFS` in
-`svg-api` — keep the two in sync.
+The component types and prop shapes mirror what the backend's `RunRecorder` emits
+in `svg-api` — keep the two in sync.

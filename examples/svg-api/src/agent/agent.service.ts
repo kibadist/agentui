@@ -1,146 +1,40 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { createAnthropic } from "@ai-sdk/anthropic";
-import type { LanguageModel } from "ai";
-import { z } from "zod";
+import { generateText, stepCountIs, tool, type LanguageModel, type ToolSet } from "ai";
 import { AgentSessionService } from "@kibadist/agentui-nest";
-import { runAgentLoop } from "@kibadist/agentui-ai";
-import { describeComponents, type ComponentDef } from "@kibadist/agentui-validate";
 import type { ActionEvent, UIEvent } from "@kibadist/agentui-protocol";
-import { AgentDB, type RunDetail } from "../db/agent-db.js";
-import { createAgentTools } from "../db/agent-tools.js";
+import { AgentDB } from "../db/agent-db.js";
+import { createIncidentTools } from "../db/agent-tools.js";
+import { RunRecorder, rollbackSummary } from "./run-recorder.js";
 
 /**
- * Agent-observability component schemas — the allowed UI vocabulary. Mirrors the
- * frontend SVG registry; keep the two in sync. `describeComponents` turns these
- * into the system prompt's component catalog.
+ * Live, instrumented SRE incident-investigation agent. On a user prompt we run a
+ * single `generateText` call with the READ-only incident tools (+ a write
+ * `propose_rollback`), and WRAP every tool's `execute` so each real call drives
+ * a per-turn `RunRecorder`. The recorder streams the SVG observability
+ * components (workflow-canvas, tool-timeline, state-machine, memory-map,
+ * review-checkpoint, text-block) LIVE as the agent works.
+ *
+ * There is NO offline mock: without ANTHROPIC_API_KEY the example shows a clear
+ * "set the key" message rather than fabricating a run.
  */
-const COMPONENT_DEFS: Record<string, ComponentDef> = {
-  "workflow-canvas": {
-    propsSchema: z.object({
-      title: z.string().optional(),
-      nodes: z
-        .array(
-          z.object({
-            id: z.string(),
-            label: z.string(),
-            sublabel: z.string().optional(),
-            status: z.string().optional(),
-          }),
-        )
-        .describe("workflow steps, drawn as a node graph"),
-      edges: z
-        .array(
-          z.object({
-            id: z.string(),
-            from: z.string(),
-            to: z.string(),
-            label: z.string().optional(),
-            status: z.string().optional(),
-          }),
-        )
-        .optional()
-        .describe("directed edges between node ids; include branch/merge edges"),
-    }),
-  },
-  "tool-timeline": {
-    propsSchema: z.object({
-      title: z.string().optional(),
-      items: z
-        .array(
-          z.object({
-            id: z.string(),
-            label: z.string(),
-            status: z.string().optional(),
-            durationMs: z.number().optional(),
-            detail: z.string().optional(),
-          }),
-        )
-        .describe("time-ordered tool calls / steps"),
-    }),
-  },
-  "state-machine": {
-    propsSchema: z.object({
-      title: z.string().optional(),
-      states: z.array(
-        z.object({
-          id: z.string(),
-          label: z.string(),
-          status: z.string().optional(),
-        }),
-      ),
-      transitions: z
-        .array(
-          z.object({
-            id: z.string(),
-            from: z.string(),
-            to: z.string(),
-            label: z.string().optional(),
-          }),
-        )
-        .optional(),
-      active: z.string().optional().describe("id of the currently active state"),
-    }),
-  },
-  "memory-map": {
-    propsSchema: z.object({
-      title: z.string().optional(),
-      nodes: z.array(
-        z.object({
-          id: z.string(),
-          label: z.string(),
-          type: z.string().describe("preference | project | source | rule | output"),
-          strength: z.number().optional(),
-        }),
-      ),
-      links: z
-        .array(
-          z.object({
-            id: z.string(),
-            from: z.string(),
-            to: z.string(),
-            strength: z.number().optional(),
-          }),
-        )
-        .optional(),
-    }),
-  },
-  "review-checkpoint": {
-    propsSchema: z.object({
-      title: z.string(),
-      description: z.string().optional(),
-      level: z.string().optional().describe("low | medium | high"),
-      summary: z.string().optional(),
-    }),
-  },
-  "text-block": {
-    propsSchema: z.object({
-      title: z.string().optional().describe("heading"),
-      body: z.string().describe("markdown or plain text — good for summaries"),
-    }),
-  },
-};
 
-const ALLOWED_TYPES = Object.keys(COMPONENT_DEFS);
+const SYSTEM_PROMPT = `You are an SRE on-call agent investigating a production incident.
 
-const SYSTEM_PROMPT = `You are an agent run visualizer. You turn recorded agent runs into a live observability dashboard built from typed SVG components.
+You have READ-ONLY tools over the live fleet — call them to find the root cause, never invent values:
+- list_services: fleet overview + health
+- get_deploys({ service?, limit? }): recent deploys with a healthy flag
+- query_error_logs({ service, sinceMinutes? }): recent error/warn logs
+- get_metrics({ service }): error_rate / p99_ms / cpu series
 
-You have READ-ONLY database tools — call them to fetch real run data, never invent runs or values:
-- list_runs: every recorded run (slug, task, status)
-- get_run(slug): one run's full data — workflow graph, tool timeline, state machine, memory map, and an optional review checkpoint
+Investigate the user's incident: find the affected service, identify the recent BAD deploy (healthy=0) that lines up with the error/metric spike, then call:
+- propose_rollback({ service, toVersion, reason }): roll back to the last known-good version. Call this exactly ONCE, only after you've identified the bad deploy, then STOP.
 
-Workflow: call list_runs and/or get_run, then RENDER the run with the emit_ui_event tool. For the chosen run, emit:
-- a "workflow-canvas" from run.workflow (nodes + edges)
-- a "tool-timeline" from run.timeline (items)
-- a "state-machine" from run.machine (states + transitions + active)
-- a "memory-map" from run.memory (nodes + links)
-- a "review-checkpoint" ONLY if the run has a checkpoint
-- a short "text-block" summary at the end
+The UI (a live observability dashboard) is rendered AUTOMATICALLY from your tool calls — do NOT describe components or UI. Just investigate and end with a short (1-3 sentence) plain-text conclusion naming the bad deploy and the recommended rollback.`;
 
-Each component needs a unique "key". Pass the run's data straight into the matching component props and always include a "title". Be concise; always respond with UI components, not just text.
-
-Component types and props:
-
-${describeComponents(COMPONENT_DEFS)}`;
+interface TurnState {
+  recorder: RunRecorder;
+}
 
 @Injectable()
 export class AgentService {
@@ -148,6 +42,10 @@ export class AgentService {
   readonly sessionService = new AgentSessionService();
   private readonly db = new AgentDB();
   private model: LanguageModel | null = null;
+
+  /** Per-session turn counter + the latest turn's recorder, for decision/inspect. */
+  private readonly turnCounters = new Map<string, number>();
+  private readonly current = new Map<string, TurnState>();
 
   constructor() {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -157,7 +55,7 @@ export class AgentService {
       this.logger.log("Anthropic model initialized");
     } else {
       this.logger.warn(
-        "ANTHROPIC_API_KEY not set – using DB-backed mock responses",
+        "ANTHROPIC_API_KEY not set — svg-api shows a real instrumented agent run and has no offline mock.",
       );
     }
     this.sessionService.startCleanup();
@@ -168,68 +66,164 @@ export class AgentService {
     this.emit(sessionId, {
       op: "ui.toast",
       level: "info",
-      message: "Connected. Ask to visualize a run: deploy, intake, or competitor research.",
+      message:
+        "Connected. Ask the SRE agent to investigate an incident, e.g. \"checkout is throwing 500s\".",
     });
   }
 
-  /** Run the agent (or mock) when a user action arrives. */
+  /** Route a user action to the right handler. */
   async handleAction(sessionId: string, action: ActionEvent): Promise<void> {
-    // Inspecting a workflow node / timeline item / memory node renders its detail.
     if (action.name === "agent.inspect") {
-      const kind = action.payload?.["kind"] as string | undefined;
-      const id = action.payload?.["id"] as string | undefined;
-      const slug = action.payload?.["slug"] as string | undefined;
-      const detail =
-        slug && id
-          ? kind === "memory"
-            ? this.db.memoryDetail(slug, id)
-            : this.db.stepDetail(slug, id)
-          : null;
-      this.append(sessionId, `inspect-${id ?? "x"}-${Date.now()}`, "text-block", {
-        title: "Inspect",
-        body: detail ?? `No detail available for ${kind ?? "item"} "${id ?? "unknown"}".`,
-      });
+      this.handleInspect(sessionId, action);
       return;
     }
-
-    // A decision from a review checkpoint is acknowledged with a toast.
     if (action.name === "agent.decision") {
-      const decision = (action.payload?.["action"] as string | undefined) ?? "unknown";
-      this.emit(sessionId, {
-        op: "ui.toast",
-        level: "success",
-        message: `Recorded decision: ${decision}`,
-      });
+      this.handleDecision(sessionId, action);
       return;
     }
 
     const userMessage =
       (action.payload?.["message"] as string | undefined) ??
-      `User performed action: ${action.name}`;
+      `Investigate: ${action.name}`;
 
     if (!this.model) {
-      this.mockResponse(sessionId, userMessage);
+      this.append(sessionId, "no-key", "text-block", {
+        title: "No model configured",
+        body:
+          "Set ANTHROPIC_API_KEY in examples/svg-api/.env to run the agent — this example shows a real, instrumented agent run and has no offline mock.",
+      });
+      this.emit(sessionId, {
+        op: "ui.toast",
+        level: "warning",
+        message: "ANTHROPIC_API_KEY not set — no agent run.",
+      });
       return;
     }
 
+    await this.runInvestigation(sessionId, userMessage);
+  }
+
+  /** Run one instrumented investigation turn. */
+  private async runInvestigation(sessionId: string, userMessage: string): Promise<void> {
+    const turn = (this.turnCounters.get(sessionId) ?? 0) + 1;
+    this.turnCounters.set(sessionId, turn);
+
+    const recorder = new RunRecorder(turn, (partial) => this.emit(sessionId, partial));
+    this.current.set(sessionId, { recorder });
+
+    // Emit the initial (empty) live components so the dashboard appears at once.
+    recorder.emitLive();
+
+    const tools = this.instrument(recorder, createIncidentTools(this.db));
+
     try {
-      await runAgentLoop({
-        model: this.model,
+      const result = await generateText({
+        model: this.model!,
         system: SYSTEM_PROMPT,
         prompt: userMessage,
-        allowedTypes: [...ALLOWED_TYPES],
-        sessionId,
-        extraTools: createAgentTools(this.db),
-        onUIEvent: (event) => this.sessionService.emitUI(sessionId, event),
+        tools,
+        stopWhen: stepCountIs(8),
       });
+      recorder.finish(result.text ?? "");
+      if (!recorder.proposedRollback) {
+        recorder.setActive("resolved");
+      }
     } catch (err) {
-      this.logger.error("Agent loop error", err);
+      this.logger.error("Investigation error", err);
       this.emit(sessionId, {
         op: "ui.toast",
         level: "error",
         message: `Agent error: ${err instanceof Error ? err.message : "unknown"}`,
       });
     }
+  }
+
+  /**
+   * Wrap each incident tool's `execute` so the recorder observes the REAL tool
+   * name, args, timing, result, and whether it threw. `propose_rollback` also
+   * emits the review checkpoint (built from real metrics/logs).
+   */
+  private instrument(recorder: RunRecorder, tools: ToolSet): ToolSet {
+    const wrapped: ToolSet = {};
+    for (const [name, def] of Object.entries(tools)) {
+      const original = def.execute;
+      wrapped[name] = tool({
+        description: def.description,
+        inputSchema: def.inputSchema,
+        execute: async (args: unknown, opts: unknown) => {
+          const id = recorder.start(name, args);
+          try {
+            const result = await (original as (a: unknown, o: unknown) => unknown)(args, opts);
+            recorder.end(id, { failed: false, result });
+            if (name === "propose_rollback") {
+              this.emitCheckpoint(recorder, args as Record<string, unknown>);
+            }
+            return result;
+          } catch (err) {
+            recorder.end(id, { failed: true, result: err });
+            throw err;
+          }
+        },
+      } as never) as ToolSet[string];
+    }
+    return wrapped;
+  }
+
+  /** Build the rollback checkpoint from the real metrics/logs for that service. */
+  private emitCheckpoint(recorder: RunRecorder, args: Record<string, unknown>): void {
+    const service = String(args["service"] ?? "");
+    const toVersion = String(args["toVersion"] ?? "");
+    const reason = String(args["reason"] ?? "Roll back to the last known-good version.");
+
+    const series = this.db.metrics(service);
+    const latest = series[series.length - 1];
+    const logs = this.db.errorLogs(service);
+    const topLog = logs.reduce((a, b) => (b.count > a.count ? b : a), logs[0]);
+    const summary = latest
+      ? rollbackSummary(latest.error_rate * 100, latest.p99_ms, topLog?.count ?? 0)
+      : reason;
+
+    recorder.checkpoint(service, toVersion, reason, summary);
+  }
+
+  /** A decision from the review checkpoint toggles the run state + a toast. */
+  private handleDecision(sessionId: string, action: ActionEvent): void {
+    const decision = (action.payload?.["action"] as string | undefined) ?? "unknown";
+    const state = this.current.get(sessionId);
+
+    let message: string;
+    let level: "info" | "success" | "warning" | "error" = "success";
+    let active = "awaiting";
+    if (decision === "continue") {
+      message = "Rollback executed — service recovering";
+      active = "resolved";
+    } else if (decision === "stop") {
+      message = "Rollback held";
+      level = "warning";
+      active = "awaiting";
+    } else if (decision === "revise") {
+      message = "Revision requested";
+      level = "info";
+      active = "awaiting";
+    } else {
+      message = `Recorded decision: ${decision}`;
+    }
+
+    this.emit(sessionId, { op: "ui.toast", level, message });
+    if (state) state.recorder.setActive(active);
+  }
+
+  /** Inspecting a workflow node / timeline item renders that step's detail. */
+  private handleInspect(sessionId: string, action: ActionEvent): void {
+    const kind = (action.payload?.["kind"] as string | undefined) ?? "step";
+    const id = action.payload?.["id"] as string | undefined;
+    const state = this.current.get(sessionId);
+    const detail = id && state ? state.recorder.stepDetail(id) : null;
+    this.append(sessionId, `insp-${id ?? "x"}-${Date.now()}`, "text-block", {
+      title: "Inspect",
+      body:
+        detail ?? `No detail available for ${kind} "${id ?? "unknown"}".`,
+    });
   }
 
   /** Build + emit a UIEvent, filling in the envelope fields. */
@@ -245,75 +239,5 @@ export class AgentService {
 
   private append(sessionId: string, key: string, type: string, props: unknown): void {
     this.emit(sessionId, { op: "ui.append", node: { key, type, props } });
-  }
-
-  // ---- DB-backed mock backend (no API key) -------------------------------
-  // Keyword-routes the user's message to a recorded run and emits every
-  // matching observability component, so the example is fully usable offline.
-
-  private mockResponse(sessionId: string, message: string): void {
-    const text = message.toLowerCase();
-    let slug = "deploy-investigation";
-    if (text.includes("intake") || text.includes("patient")) {
-      slug = "intake-summary";
-    } else if (
-      text.includes("competitor") ||
-      text.includes("research") ||
-      text.includes("pricing")
-    ) {
-      slug = "competitor-research";
-    } else if (text.includes("deploy")) {
-      slug = "deploy-investigation";
-    }
-
-    const run = this.db.getRun(slug);
-    if (!run) {
-      this.emit(sessionId, { op: "ui.toast", level: "warning", message: `No run "${slug}".` });
-      return;
-    }
-    this.renderRun(sessionId, run);
-  }
-
-  /** Emit the full set of observability components for one run. */
-  private renderRun(sessionId: string, run: RunDetail): void {
-    const stamp = Date.now();
-
-    this.append(sessionId, `wf-${run.slug}-${stamp}`, "workflow-canvas", {
-      title: `${run.task} — workflow`,
-      nodes: run.workflow.nodes,
-      edges: run.workflow.edges,
-    });
-
-    this.append(sessionId, `tl-${run.slug}-${stamp}`, "tool-timeline", {
-      title: `${run.task} — timeline`,
-      items: run.timeline.items,
-    });
-
-    this.append(sessionId, `sm-${run.slug}-${stamp}`, "state-machine", {
-      title: `${run.task} — state`,
-      states: run.machine.states,
-      transitions: run.machine.transitions,
-      ...(run.machine.active ? { active: run.machine.active } : {}),
-    });
-
-    this.append(sessionId, `mm-${run.slug}-${stamp}`, "memory-map", {
-      title: `${run.task} — memory`,
-      nodes: run.memory.nodes,
-      links: run.memory.links,
-    });
-
-    if (run.checkpoint) {
-      this.append(sessionId, `cp-${run.slug}-${stamp}`, "review-checkpoint", {
-        title: run.checkpoint.title,
-        ...(run.checkpoint.description ? { description: run.checkpoint.description } : {}),
-        ...(run.checkpoint.level ? { level: run.checkpoint.level } : {}),
-        ...(run.checkpoint.summary ? { summary: run.checkpoint.summary } : {}),
-      });
-    }
-
-    this.append(sessionId, `tx-${run.slug}-${stamp}`, "text-block", {
-      title: run.task,
-      body: `Run **${run.slug}** is currently *${run.status}*. ${run.workflow.nodes.length} workflow steps, ${run.machine.states.length} states, ${run.memory.nodes.length} memory items.`,
-    });
   }
 }

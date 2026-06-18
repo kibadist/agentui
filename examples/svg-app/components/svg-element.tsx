@@ -50,6 +50,19 @@ export function SvgElement({
       (ref.current as unknown as { data: unknown }).data = data;
   }, [ready, data]);
 
+  // Apply config as real HTML attributes (the components read them via
+  // getAttribute / observedAttributes). We do NOT pass these through
+  // createElement, because React 19 sets known *properties* on custom
+  // elements — and e.g. `layout` is a getter-only accessor on the element,
+  // so `el.layout = "..."` throws "Cannot set property … which has only a getter".
+  const attrsKey = JSON.stringify(attrs ?? {});
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !attrs) return;
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, attrsKey]);
+
   useEffect(() => {
     const el = ref.current;
     if (!el || !on) return;
@@ -61,5 +74,5 @@ export function SvgElement({
     return () => entries.forEach(([n, h]) => el.removeEventListener(n, h));
   }, [ready, on]);
 
-  return createElement(tag, { ref, ...attrs, style });
+  return createElement(tag, { ref, style });
 }

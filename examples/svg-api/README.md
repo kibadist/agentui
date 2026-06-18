@@ -1,8 +1,26 @@
 # Agent-observability example — backend (`svg-api`)
 
-An AgentUI example where an LLM agent turns **recorded agent runs** into a live observability dashboard built from the typed SVG components (`@kibadist/agentui-svg`). The agent queries a real **SQLite** database of runs, then renders each one as a workflow graph, a tool timeline, a state machine, a memory map, and an optional review checkpoint.
+An AgentUI example where a **real LLM agent investigates an incident** and the typed
+SVG components (`@kibadist/agentui-svg`) render its **actual execution, live**. The
+agent runs real tool calls over a **SQLite** fleet database; each call streams into
+a workflow graph, a tool timeline, a state machine, and a memory map, with a review
+checkpoint when it proposes a rollback.
 
-This package is the backend half. It speaks the same SSE + action protocol as the clinic [`nest-api`](../nest-api).
+Nothing is canned — the components reflect the agent's genuine tool calls (real
+names, real durations, real results). This package is the backend half; it speaks
+the same SSE + action protocol as the clinic [`nest-api`](../nest-api).
+
+## Requires an Anthropic API key
+
+This example shows a **real instrumented agent run and has no offline mock**. Set a
+key before using it:
+
+```bash
+cp examples/svg-api/.env.example examples/svg-api/.env
+# edit examples/svg-api/.env and set ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Without a key the agent renders a "set the key" message instead of fabricating a run.
 
 ## Run the backend
 
@@ -12,40 +30,50 @@ pnpm build                   # build all workspace packages first
 pnpm --filter @kibadist/agentui-example-svg-api dev   # starts svg-api on :3003
 ```
 
-### Optional: real LLM
-
-With no key, the agent serves **DB-backed mock responses** and is fully usable. To use a real Anthropic model, copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`:
-
-```bash
-cp examples/svg-api/.env.example examples/svg-api/.env
-# edit it, then restart
-```
-
-The dev script loads `.env` only if present (`--env-file-if-exists`), so no file is required to run.
+(Or `pnpm dev:svg` from the root to run this plus the [`svg-app`](../svg-app) frontend.)
 
 ## The database
 
-`src/db/agent-db.ts` is an **in-memory SQLite DB** (via `better-sqlite3`), seeded fresh on boot with **3 recorded runs**. Nothing persists — restart for a clean slate.
+`src/db/agent-db.ts` is an **in-memory SQLite DB** (via `better-sqlite3`), seeded
+fresh on boot with a production fleet: `services`, `deploys` (one recent **bad**
+deploy on `checkout-service`), `error_logs` (spiking after it), and `metrics`
+(elevated error rate / p99). Timestamps are anchored to now. Nothing persists —
+restart for a clean slate.
 
-| Run slug | Task |
-|----------|------|
-| `deploy-investigation` | Investigate the failing production deploy (has a high-level review checkpoint) |
-| `intake-summary` | Summarize the new patient intake |
-| `competitor-research` | Research competitor pricing tiers |
+## How it works
 
-Each run carries steps (workflow nodes + timeline items), edges (with branch/merge), memory items (one `output` node the rest link to), and a state machine with an active state.
+- **Real tools** (`src/db/agent-tools.ts`): `list_services`, `get_deploys`,
+  `query_error_logs`, `get_metrics` (read-only) and `propose_rollback` (the write
+  action — it doesn't mutate the DB; it asks for human approval).
+- **Instrumented run** (`src/agent/agent.service.ts`): on a user prompt the service
+  calls the AI SDK's `generateText` with those tools, **wrapping each tool's
+  `execute`** so a per-turn `RunRecorder` observes every real call. No
+  `emit_ui_event` — the service emits the components from the instrumentation, not
+  the model.
+- **Live components** (`src/agent/run-recorder.ts`): after each tool start/finish the
+  recorder (re)emits the components with stable keys — first `ui.append`, then
+  `ui.replace` (`{ key, props, replace: true }`). The agent's real tool calls become
+  the **timeline**; the plan → tools → respond flow becomes the **workflow**; the
+  loop phase (planning → investigating → awaiting-approval → resolved) becomes the
+  **state machine**; the data it pulled becomes the **memory map**. `propose_rollback`
+  emits a **review-checkpoint** built from the real metrics/logs.
+- **Actions back**: `agent.decision` (checkpoint continue/stop/revise) toasts and
+  advances the state machine; `agent.inspect` (selecting a node/item) renders that
+  step's real detail as a text-block.
 
-Query methods: `listRuns()`, `getRun(slug)`, `stepDetail(slug, stepKey)`, `memoryDetail(slug, memKey)`.
+## Component shapes
 
-## The agent
+The recorder emits these node `type`s, whose props must match the frontend registry
+in [`svg-app/components/schemas.ts`](../svg-app/components/schemas.ts):
 
-`src/agent/agent.service.ts`:
-
-- **Read-only DB tools** (`src/db/agent-tools.ts`) are passed to `runAgentLoop` as `extraTools`: `list_runs`, `get_run`. The agent calls these to fetch a run, then emits UI with `emit_ui_event`.
-- **Allowed component types** are defined once as Zod schemas (`COMPONENT_DEFS`) and turned into the system prompt via `describeComponents`. They mirror the frontend SVG registry — keep the two in sync. The vocabulary is `workflow-canvas`, `tool-timeline`, `state-machine`, `memory-map`, `review-checkpoint`, and `text-block`.
-- **Mock fallback** (no API key) keyword-routes the message to a run and emits every matching component, so the demo works offline.
-- **Inspect:** an `agent.inspect` action (`{ kind, id, slug }`) renders a `text-block` with the step/memory detail.
-- **Decision:** an `agent.decision` action from a `review-checkpoint` is acknowledged with a `ui.toast`.
+| Type | Props |
+| --- | --- |
+| `workflow-canvas` | `{ title?, nodes, edges }` |
+| `tool-timeline` | `{ title?, items }` |
+| `state-machine` | `{ title?, states, transitions, active }` |
+| `memory-map` | `{ title?, nodes, links }` |
+| `review-checkpoint` | `{ title, description?, level?, summary? }` |
+| `text-block` | `{ title?, body }` |
 
 ## Endpoints
 
@@ -55,13 +83,15 @@ Built from `@kibadist/agentui-nest`'s `createAgentController`:
 - `GET  /agent/:sessionId/stream` → SSE stream of UIEvents
 - `POST /agent/:sessionId/action` → submit an `ActionEvent`
 
-## Smoke test
+## Tests
 
-With the server running, in another terminal:
+`test/instrumentation.test.ts` drives the framework-pure `RunRecorder` directly (no
+model needed) and asserts the emitted `ui.append`/`ui.replace` events reflect the
+tool order, statuses, and durations. It runs under this package's own
+`vitest.config.ts` (not the root suite):
 
 ```bash
-./test-client.sh                              # default: "Visualize the deploy investigation"
-./test-client.sh "Show the competitor research run"
+npx vitest run --config examples/svg-api/vitest.config.ts
 ```
 
-It creates a session, opens the SSE stream, submits the prompt, and prints the emitted UIEvents.
+`test-client.sh` is a curl smoke test (needs a key, since there's no mock run).
