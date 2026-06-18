@@ -71,6 +71,7 @@ export default defineConfig({
             { label: "Getting started", slug: "getting-started" },
             { label: "Concepts", slug: "concepts" },
             { label: "Wire protocol", slug: "wire-protocol" },
+            { label: "Examples", slug: "examples" },
           ],
         },
         {

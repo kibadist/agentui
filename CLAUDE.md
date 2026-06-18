@@ -66,10 +66,20 @@ Verify with `pnpm --filter @kibadist/agentui-site build` — broken sidebar slug
 
 ## Examples
 
-- `examples/nest-api/` — NestJS backend, Anthropic agent. Reads `ANTHROPIC_API_KEY` from `.env`; falls back to mock UI events if unset.
-- `examples/next-app/` — Next.js App Router frontend with a custom component registry.
+All examples are workspace members but **not published**, and each runs on its own port so several can run at once. The mock-backed examples need no API key; only `nest-api` talks to a real LLM.
 
-Examples are workspace members but not published.
+**Split backend + frontend (real LLM):**
+
+- `examples/nest-api/` (`:3001`) — NestJS backend, Anthropic agent via `runAgentLoop`. Reads `ANTHROPIC_API_KEY` from `.env`; falls back to mock UI events if unset. `test-client.sh` is a curl smoke test for the session/stream/action endpoints.
+- `examples/next-app/` (`:3000`) — Next.js App Router frontend with a custom component registry. Pairs with `nest-api` (set `NEXT_PUBLIC_API_URL`). Shows `useAgentStream`, `AgentRenderer`, action/state providers, and `AgentDevTools`.
+
+**Single-process, mock backend (no API key, no Nest server):**
+
+- `examples/chat-starter/` (`:3010`) — minimal Next.js; the mock backend lives in `/api/agent/*` route handlers. Start here.
+- `examples/support-bot/` (`:3011`) — multi-turn agent UI: tool calls, reasoning trace, file-upload stub.
+- `examples/internal-tools/` (`:3012`) — agent embedded as a side panel in a CRUD app (the "agent inside an app shell" pattern); demonstrates `ui.reset`.
+
+Run any of them with `pnpm --filter @kibadist/agentui-example-<name> dev` (after `pnpm build`).
 
 ## Gotchas
 
