@@ -46,20 +46,18 @@ Or fully declaratively in HTML:
 </agentui-review-checkpoint>
 ```
 
-## Demo
+## Demo / example app
 
-A self-contained demo page renders all five components in one realistic agent run,
-with live cross-component selection and an event log. Build the package, then
-serve the folder:
+A full **agent-observability example** drives these components with a real LLM
+(Anthropic, with a DB-backed mock fallback so it runs with zero setup) over a
+SQLite-backed NestJS API + Next.js frontend, with quick-action buttons:
 
 ```bash
-pnpm --filter @kibadist/agentui-svg build
-npx serve packages/svg            # then open /demo/index.html
-# or: python3 -m http.server -d packages/svg 8731  →  http://localhost:8731/demo/
+pnpm dev:svg   # builds packages, then runs examples/svg-api (:3003) + examples/svg-app (:3002)
 ```
 
-See [`demo/`](./demo/index.html). Edit [`demo/fixtures.js`](./demo/fixtures.js) to
-change the sample data.
+See [`examples/svg-api/`](../../examples/svg-api) and
+[`examples/svg-app/`](../../examples/svg-app).
 
 ## Components
 

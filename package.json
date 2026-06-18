@@ -10,6 +10,9 @@
     "dev": "pnpm build && pnpm --filter @kibadist/agentui-example-nest-api dev & pnpm --filter @kibadist/agentui-example-next-app dev",
     "dev:api": "pnpm --filter @kibadist/agentui-example-nest-api dev",
     "dev:app": "pnpm --filter @kibadist/agentui-example-next-app dev",
+    "dev:svg": "pnpm build && pnpm --filter @kibadist/agentui-example-svg-api dev & pnpm --filter @kibadist/agentui-example-svg-app dev",
+    "dev:svg-api": "pnpm --filter @kibadist/agentui-example-svg-api dev",
+    "dev:svg-app": "pnpm --filter @kibadist/agentui-example-svg-app dev",
     "release": "./scripts/bump-and-publish.sh",
     "release:dry": "./scripts/bump-and-publish.sh patch --dry-run"
   },

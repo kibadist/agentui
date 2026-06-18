@@ -23,3 +23,9 @@ All notable changes to `@kibadist/agentui-svg` are documented here.
   event delegation), CSS-custom-property theming, reusable SVG filter defs, and an
   accessibility baseline (keyboard activation, roles, labels, focus ring).
 - `register` entry and `registerAll()` for idempotent custom-element registration.
+
+### Fixed
+
+- `agentui-tool-timeline` rows now have a full-width transparent hit area, so a
+  click anywhere on a row selects it (previously only the painted dot/label/chip
+  were clickable).

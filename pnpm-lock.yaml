@@ -125,6 +125,101 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
+  examples/svg-api:
+    dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^3.0.58
+        version: 3.0.58(zod@3.25.76)
+      '@kibadist/agentui-ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
+      '@kibadist/agentui-nest':
+        specifier: workspace:*
+        version: link:../../packages/nest
+      '@kibadist/agentui-protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@kibadist/agentui-validate':
+        specifier: workspace:*
+        version: link:../../packages/validate
+      '@nestjs/common':
+        specifier: ^11.0.0
+        version: 11.1.14(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core':
+        specifier: ^11.0.0
+        version: 11.1.14(@nestjs/common@11.1.14(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.14)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/platform-express':
+        specifier: ^11.0.0
+        version: 11.1.14(@nestjs/common@11.1.14(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.14)
+      ai:
+        specifier: ^6.0.0
+        version: 6.0.104(zod@3.25.76)
+      better-sqlite3:
+        specifier: ^11.8.0
+        version: 11.10.0
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^7.6.12
+        version: 7.6.13
+      '@types/node':
+        specifier: ^25.3.0
+        version: 25.9.1
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  examples/svg-app:
+    dependencies:
+      '@kibadist/agentui-protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@kibadist/agentui-react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@kibadist/agentui-svg':
+        specifier: workspace:*
+        version: link:../../packages/svg
+      '@kibadist/agentui-validate':
+        specifier: workspace:*
+        version: link:../../packages/validate
+      next:
+        specifier: ^15.2.0
+        version: 15.5.12(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^25.3.0
+        version: 25.9.1
+      '@types/react':
+        specifier: ^19.0.8
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.14)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
   packages/ai:
     dependencies:
       '@kibadist/agentui-protocol':

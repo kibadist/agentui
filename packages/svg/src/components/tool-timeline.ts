@@ -194,6 +194,19 @@ export class ToolTimeline extends AgentUIElement<TimelineData> {
       g.setAttribute("filter", `url(#${DEFS_IDS.glow})`);
     }
 
+    // Transparent full-row hit area so the whole row is clickable, not just the
+    // painted glyphs (SVG hit-tests painted pixels only).
+    g.append(
+      svg("rect", {
+        class: "tt-hit",
+        x: 0,
+        y: cy - rowH / 2,
+        width: SVG_W,
+        height: rowH,
+        fill: "transparent",
+      }),
+    );
+
     // Dot + selection ring.
     g.append(
       svg("circle", { class: "tt-dot", cx: SPINE_X, cy, r: DOT_R }),

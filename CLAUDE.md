@@ -64,12 +64,17 @@ Verify with `pnpm --filter @kibadist/agentui-site build` — broken sidebar slug
 
 ## Examples
 
-One full-featured example — a **clinic assistant** — split across two workspace packages (both `private`, not published). `pnpm dev` runs both.
+Two example app pairs, each split across two `private` (unpublished) workspace packages. Both follow the same architecture: a NestJS backend seeds an in-memory **SQLite** DB (`better-sqlite3`), exposes read-only query tools to the agent via `runAgentLoop`'s `extraTools`, runs real Anthropic via `ANTHROPIC_API_KEY` (`.env`, `--env-file-if-exists`) with a **DB-backed mock fallback** when unset (zero-setup), and a Next.js App Router frontend renders a whitelisted registry + chips/quick-actions, wired over SSE (`NEXT_PUBLIC_API_URL`).
 
-- `examples/nest-api/` (`:3001`) — NestJS backend. Seeds an in-memory **SQLite** DB (`better-sqlite3`) with 5 patients + vitals/medications/appointments, exposes read-only DB query tools to the agent via `runAgentLoop`'s `extraTools`, and renders results as healthcare components. Real Anthropic via `ANTHROPIC_API_KEY` (`.env`, loaded with `--env-file-if-exists`); **DB-backed mock fallback** when unset, so it runs with zero setup. `test-client.sh` is a curl smoke test.
-- `examples/next-app/` (`:3000`) — Next.js App Router frontend. Healthcare component registry (`patient-list`, `patient-card`, `vitals-panel`, `medication-list`, `appointment-list`, `text-block`) + DB-related suggestion chips. Clicking a `patient-list` row sends a `patient.view` action to drill in. Pairs with `nest-api` (`NEXT_PUBLIC_API_URL`).
+**Clinic assistant** (`pnpm dev`) — healthcare React components.
+- `examples/nest-api/` (`:3001`) — 5 patients + vitals/medications/appointments. `test-client.sh` is a curl smoke test.
+- `examples/next-app/` (`:3000`) — registry (`patient-list`, `patient-card`, `vitals-panel`, `medication-list`, `appointment-list`, `text-block`) + suggestion chips. Clicking a `patient-list` row sends a `patient.view` action.
 
-The backend's allowed component types (`COMPONENT_DEFS` in `agent.service.ts`) and the frontend registry schemas (`components/schemas.ts`) mirror each other — keep them in sync when changing component props.
+**Agent observability** (`pnpm dev:svg`) — renders the SVG-native Web Components from `@kibadist/agentui-svg`.
+- `examples/svg-api/` (`:3003`) — seeds an "agent runs" DB (3 recorded runs: deploy-investigation, intake-summary, competitor-research) with steps/edges/memory/states; `list_runs`/`get_run` tools.
+- `examples/svg-app/` (`:3002`) — registry of thin React wrappers around the custom elements (`workflow-canvas`, `tool-timeline`, `review-checkpoint`, `memory-map`, `state-machine`, `text-block`) + quick-action buttons. The SVG package is **registered client-side only** (its classes extend `HTMLElement`, undefined during SSR — see `components/svg-element.tsx`, dynamic `import("@kibadist/agentui-svg/register")` in an effect). Selecting a node/item/state sends an `agent.inspect` action; checkpoint decisions send `agent.decision`.
+
+In each pair the backend's allowed component types (`COMPONENT_DEFS` in `agent.service.ts`) and the frontend registry schemas (`components/schemas.ts`) mirror each other — keep them in sync when changing component props.
 
 ## Gotchas
 
