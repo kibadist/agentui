@@ -1,6 +1,6 @@
 {
   "name": "@kibadist/agentui-ai",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "AgentUI adapter for Vercel AI SDK — works with any provider (OpenAI, Anthropic, Google, etc.)",
   "license": "MIT",
   "repository": {
