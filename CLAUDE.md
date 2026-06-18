@@ -18,7 +18,7 @@ pnpm clean         # remove dist/
 pnpm test          # vitest run (jsdom; packages/*/test/**)
 pnpm test:watch
 
-pnpm dev           # builds, then runs nest-api (:3001) + next-app (:3000)
+pnpm dev           # builds, then runs the clinic example: nest-api (:3001) + next-app (:3000)
 pnpm dev:api
 pnpm dev:app
 ```
@@ -66,20 +66,12 @@ Verify with `pnpm --filter @kibadist/agentui-site build` — broken sidebar slug
 
 ## Examples
 
-All examples are workspace members but **not published**, and each runs on its own port so several can run at once. The mock-backed examples need no API key; only `nest-api` talks to a real LLM.
+One full-featured example — a **clinic assistant** — split across two workspace packages (both `private`, not published). `pnpm dev` runs both.
 
-**Split backend + frontend (real LLM):**
+- `examples/nest-api/` (`:3001`) — NestJS backend. Seeds an in-memory **SQLite** DB (`better-sqlite3`) with 5 patients + vitals/medications/appointments, exposes read-only DB query tools to the agent via `runAgentLoop`'s `extraTools`, and renders results as healthcare components. Real Anthropic via `ANTHROPIC_API_KEY` (`.env`, loaded with `--env-file-if-exists`); **DB-backed mock fallback** when unset, so it runs with zero setup. `test-client.sh` is a curl smoke test.
+- `examples/next-app/` (`:3000`) — Next.js App Router frontend. Healthcare component registry (`patient-list`, `patient-card`, `vitals-panel`, `medication-list`, `appointment-list`, `text-block`) + DB-related suggestion chips. Clicking a `patient-list` row sends a `patient.view` action to drill in. Pairs with `nest-api` (`NEXT_PUBLIC_API_URL`).
 
-- `examples/nest-api/` (`:3001`) — NestJS backend, Anthropic agent via `runAgentLoop`. Reads `ANTHROPIC_API_KEY` from `.env`; falls back to mock UI events if unset. `test-client.sh` is a curl smoke test for the session/stream/action endpoints.
-- `examples/next-app/` (`:3000`) — Next.js App Router frontend with a custom component registry. Pairs with `nest-api` (set `NEXT_PUBLIC_API_URL`). Shows `useAgentStream`, `AgentRenderer`, action/state providers, and `AgentDevTools`.
-
-**Single-process, mock backend (no API key, no Nest server):**
-
-- `examples/chat-starter/` (`:3010`) — minimal Next.js; the mock backend lives in `/api/agent/*` route handlers. Start here.
-- `examples/support-bot/` (`:3011`) — multi-turn agent UI: tool calls, reasoning trace, file-upload stub.
-- `examples/internal-tools/` (`:3012`) — agent embedded as a side panel in a CRUD app (the "agent inside an app shell" pattern); demonstrates `ui.reset`.
-
-Run any of them with `pnpm --filter @kibadist/agentui-example-<name> dev` (after `pnpm build`).
+The backend's allowed component types (`COMPONENT_DEFS` in `agent.service.ts`) and the frontend registry schemas (`components/schemas.ts`) mirror each other — keep them in sync when changing component props.
 
 ## Gotchas
 

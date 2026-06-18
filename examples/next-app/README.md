@@ -1,33 +1,32 @@
-# next-app
+# Clinic example — frontend (`next-app`)
 
-Next.js App Router frontend with a **custom component registry**. This is the "frontend" half of the full-stack demo — it talks to the [`nest-api`](../nest-api) backend (`:3001`) over SSE + action POSTs.
+The UI for the AgentUI clinic assistant. A Next.js App Router app that renders the agent's healthcare components and sends user actions back over SSE. It pairs with the [`nest-api`](../nest-api) backend (`:3001`), which owns the SQLite database and the agent loop.
 
 ## Run
 
-Start the backend first (see [`nest-api`](../nest-api)), then:
-
 ```bash
-pnpm install            # at the repo root
-pnpm build              # builds all workspace packages
-pnpm --filter @kibadist/agentui-example-next-app dev
+pnpm install                 # at the repo root
+pnpm build                   # build all workspace packages first
+pnpm dev                     # starts nest-api (:3001) + next-app (:3000)
 # open http://localhost:3000
 ```
 
-The API base defaults to `http://localhost:3001`; override with `NEXT_PUBLIC_API_URL` if the backend runs elsewhere. If the backend is down you'll see a "Connection error" screen pointing at the expected URL.
+`pnpm dev` runs both halves. The API base defaults to `http://localhost:3001`; override with `NEXT_PUBLIC_API_URL`. If the backend is down you'll see a connection-error screen.
 
 ## What's inside
 
-- `app/page.tsx` — creates a session on mount (`POST /agent/session`), then renders `AgentSession`:
-  - `useAgentStream({ url, sessionId })` → `{ state, status, store }` (SSE-backed).
-  - `AgentStateProvider` + `AgentActionProvider` wrap the tree so components can read state and send actions.
-  - `AgentRenderer` renders `state.nodes` through the registry; `ToastList` renders `state.toasts`.
-  - `ChatInput` submits `chat.send` `ActionEvent`s; a header badge reflects connection `status`.
-  - `AgentDevTools` (from `@kibadist/agentui-react/devtools`) is mounted for live inspection.
-- `components/registry.ts` — the **security boundary**: `createRegistry({...})` maps five whitelisted types to React components + Zod prop schemas.
-- `components/*.tsx` — the components themselves (`text-block`, `info-card`, `action-card`, `data-table`, `status-badge`) and their `schemas.ts`.
+- `app/page.tsx` — creates a session on mount, then wires `useAgentStream` → `AgentStateProvider`/`AgentActionProvider` → `AgentRenderer` (renders nodes) + `ToastList`. `ChatInput` and `SuggestionChips` send `chat.send` actions; `AgentDevTools` is mounted (top-right, collapsed).
+- `components/suggestion-chips.tsx` — DB-related starter prompts ("List all patients", "Today's appointments", "Patients with abnormal vitals", …).
+- `components/registry.ts` — the **security boundary**: `createRegistry` maps the whitelisted healthcare component types to React components + Zod prop schemas. Only registered types render.
+- Healthcare components:
+  - `patient-list` — clickable roster; a row click sends a `patient.view` action (MRN) to drill in.
+  - `patient-card` — one patient's demographics + status.
+  - `vitals-panel` — latest vitals; **flags out-of-range values itself** using a client-side copy of the reference ranges (mirrors the backend), so the agent only sends raw numbers.
+  - `medication-list`, `appointment-list` — tabular records.
+  - `text-block` — natural-language summaries.
 
-These five types mirror the `COMPONENT_DEFS` the `nest-api` agent is allowed to emit — the registry is what enforces that only registered types render.
+The component types and prop shapes mirror the backend's `COMPONENT_DEFS` in `nest-api/src/agent/agent.service.ts` — keep the two in sync.
 
 ## Customizing
 
-Add a component by writing it + its prop schema, then registering it in `components/registry.ts`. To render the new type, the backend agent must also be allowed to emit it (see `nest-api`'s `COMPONENT_DEFS`).
+Add a component by writing it + its prop schema in `components/`, then registering it in `components/registry.ts`. For the agent to emit the new type, also add it to the backend's `COMPONENT_DEFS`.

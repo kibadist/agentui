@@ -29,12 +29,12 @@ This file tracks the remaining external steps required to flip `@kibadist/agentu
 
 - [ ] **Docs site v1** — Nextra scaffold + content port + hosting at `docs.kibadist.io/agentui`. Covers the stack decision, scaffolding, hostname, and content port (Getting Started, concept guides, examples, migration, changelog). ([DET-169](https://linear.app/detailing-app/issue/DET-169))
 - [ ] **API Reference** — typed reference page per published package. Recommended: auto-generate via `@microsoft/api-extractor`. Blocked by DET-169. ([DET-170](https://linear.app/detailing-app/issue/DET-170))
-- [ ] **Interactive playground.** StackBlitz iframe rendering `examples/chat-starter` on the docs Getting Started page. Blocked by DET-169. ([DET-171](https://linear.app/detailing-app/issue/DET-171))
+- [ ] **Interactive playground.** A browser-runnable demo on the docs Getting Started page. Note: the clinic example now requires a backend (SQLite + agent), so a single-process StackBlitz embed no longer fits — needs a hosted backend or a mock-only variant. ([DET-171](https://linear.app/detailing-app/issue/DET-171))
 - [ ] **SEO polish.** Per-page `<title>`/`<meta description>`, sitemap, OG cards. (Folded into DET-169 as part of Nextra setup; split out if it grows.)
 
 ## Launch
 
-- [ ] **Showcase app.** Deploy `examples/support-bot` (or a richer demo) to a public URL. Wire a real LLM behind it (Anthropic via `@kibadist/agentui-llm`'s `fromAnthropic` is the lowest-lift option). ([DET-172](https://linear.app/detailing-app/issue/DET-172))
+- [ ] **Showcase app.** Deploy the clinic example (`examples/nest-api` + `examples/next-app`) to a public URL with a real LLM behind it. ([DET-172](https://linear.app/detailing-app/issue/DET-172))
 - [ ] **Blog post.** "Introducing AgentUI" — motivation, the typed-event approach, how it compares to alternatives, code snippet, links to the docs and showcase. ([DET-173](https://linear.app/detailing-app/issue/DET-173))
 - [x] **v1.0 release.** Published 2026-05-20. Stability surface in [STABILITY.md](./STABILITY.md), migration in [MIGRATION-1.0.md](./MIGRATION-1.0.md). External-adopter validation moved post-launch — issues with the migration will be tracked under the `stability` label.
 - [ ] **Syndication.** HN (Show HN, Tuesday 9-11am PT), Twitter/X thread, Reddit (r/reactjs + r/LocalLLaMA + r/programming), dev.to cross-post. Blocked by DET-166, DET-172, DET-173. ([DET-174](https://linear.app/detailing-app/issue/DET-174))

@@ -1,21 +1,24 @@
 import { createRegistry } from "@kibadist/agentui-react";
 import { TextBlock } from "./text-block";
-import { InfoCard } from "./info-card";
-import { ActionCard } from "./action-card";
-import { DataTable } from "./data-table";
-import { StatusBadge } from "./status-badge";
+import { PatientCard } from "./patient-card";
+import { PatientList } from "./patient-list";
+import { VitalsPanel } from "./vitals-panel";
+import { MedicationList } from "./medication-list";
+import { AppointmentList } from "./appointment-list";
 import {
   textBlockSchema,
-  infoCardSchema,
-  actionCardSchema,
-  dataTableSchema,
-  statusBadgeSchema,
+  patientCardSchema,
+  patientListSchema,
+  vitalsPanelSchema,
+  medicationListSchema,
+  appointmentListSchema,
 } from "./schemas";
 
 export const registry = createRegistry({
   "text-block": { component: TextBlock, propsSchema: textBlockSchema },
-  "info-card": { component: InfoCard, propsSchema: infoCardSchema },
-  "action-card": { component: ActionCard, propsSchema: actionCardSchema },
-  "data-table": { component: DataTable, propsSchema: dataTableSchema },
-  "status-badge": { component: StatusBadge, propsSchema: statusBadgeSchema },
+  "patient-card": { component: PatientCard, propsSchema: patientCardSchema },
+  "patient-list": { component: PatientList, propsSchema: patientListSchema },
+  "vitals-panel": { component: VitalsPanel, propsSchema: vitalsPanelSchema },
+  "medication-list": { component: MedicationList, propsSchema: medicationListSchema },
+  "appointment-list": { component: AppointmentList, propsSchema: appointmentListSchema },
 });

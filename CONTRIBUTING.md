@@ -42,15 +42,12 @@ pnpm --filter @kibadist/agentui-react test
 pnpm --filter @kibadist/agentui-protocol build
 ```
 
-Starter templates (under `examples/`) get their own dev ports:
+The clinic example (under `examples/`) uses two dev ports:
 
-| Example          | Port |
-| ---------------- | ---- |
-| `next-app`       | 3000 |
-| `nest-api`       | 3001 |
-| `chat-starter`   | 3010 |
-| `support-bot`    | 3011 |
-| `internal-tools` | 3012 |
+| Package    | Port |
+| ---------- | ---- |
+| `next-app` | 3000 |
+| `nest-api` | 3001 |
 
 ## Test bar
 

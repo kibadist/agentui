@@ -88,10 +88,6 @@ All long-form documentation lives at **[kibadist.github.io/agentui](https://kiba
 - [LLM adapters](https://kibadist.github.io/agentui/guides/llm-adapters/)
 - [JSON Schema export](https://kibadist.github.io/agentui/guides/json-schema-export/)
 
-### Guides — Tooling
-
-- [CLI generator](https://kibadist.github.io/agentui/guides/cli-generator/)
-
 ### Reference
 
 - [Packages](https://kibadist.github.io/agentui/packages/) — full package matrix + dependency graph
@@ -120,23 +116,22 @@ See [Packages](https://kibadist.github.io/agentui/packages/) for the dependency 
 
 ---
 
-## Starter templates
+## Example
 
-Three reference projects in `examples/`. Each runs standalone with a mock SSE backend (no separate Nest server needed).
+One full-featured reference example in `examples/` — a **clinic assistant**. An LLM agent queries a SQLite database (5 seeded patients, vitals, medications, appointments) through read-only tools and renders the results as typed healthcare components. It's split across two packages:
 
-| Example | Port | Demonstrates |
+| Package | Port | Role |
 |---|---|---|
-| [`chat-starter`](./examples/chat-starter) | 3010 | Minimal Next.js + `<AgentRoot>` + a single-process mock SSE backend |
-| [`support-bot`](./examples/support-bot) | 3011 | Multi-turn agent with tool calls, reasoning trace, and file upload stub |
-| [`internal-tools`](./examples/internal-tools) | 3012 | Agent embedded as a side panel in a mock CRUD app |
-
-Run any of them:
+| [`nest-api`](./examples/nest-api) | 3001 | NestJS backend: SQLite DB, agent loop, DB query tools |
+| [`next-app`](./examples/next-app) | 3000 | Next.js frontend: healthcare component registry, suggestion chips |
 
 ```bash
 pnpm install
 pnpm build
-pnpm --filter @kibadist/agentui-example-chat-starter dev
+pnpm dev          # runs both; open http://localhost:3000
 ```
+
+Works with no API key (database-backed mock responses); set `ANTHROPIC_API_KEY` in `examples/nest-api/.env` for a real model. See the [example docs](https://kibadist.github.io/agentui/examples/).
 
 ---
 

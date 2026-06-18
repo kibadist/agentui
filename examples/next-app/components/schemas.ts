@@ -1,43 +1,71 @@
 import { z } from "zod";
-import type { ComponentDef } from "@kibadist/agentui-validate";
+
+/**
+ * Prop schemas for the healthcare component registry. Mirrors the backend's
+ * COMPONENT_DEFS in nest-api's agent.service.ts — keep the two in sync. These
+ * give the renderer runtime prop validation (the security boundary), and the
+ * agent only emits component types registered here.
+ */
 
 export const textBlockSchema = z.object({
-  title: z.string().optional().describe("heading text"),
-  body: z.string().describe("markdown or plain text content"),
+  title: z.string().optional(),
+  body: z.string(),
 });
 
-export const infoCardSchema = z.object({
-  title: z.string().describe("card heading"),
-  description: z.string().describe("card body text"),
-  icon: z.string().optional().describe("emoji icon"),
+export const patientCardSchema = z.object({
+  name: z.string(),
+  mrn: z.string(),
+  age: z.number(),
+  sex: z.string(),
+  condition: z.string(),
+  status: z.string(),
 });
 
-export const actionCardSchema = z.object({
-  title: z.string().describe("card heading"),
-  description: z.string().describe("body text"),
-  actions: z
-    .array(z.object({ name: z.string(), label: z.string() }))
-    .describe("buttons the user can click"),
+export const patientListSchema = z.object({
+  title: z.string().optional(),
+  patients: z.array(
+    z.object({
+      name: z.string(),
+      mrn: z.string(),
+      age: z.number(),
+      condition: z.string(),
+      status: z.string(),
+    }),
+  ),
 });
 
-export const dataTableSchema = z.object({
-  title: z.string().optional().describe("table heading"),
-  columns: z.array(z.string()).describe("column headers"),
-  rows: z.array(z.array(z.string())).describe("row data"),
+export const vitalsPanelSchema = z.object({
+  patientName: z.string(),
+  recordedAt: z.string(),
+  heartRate: z.number(),
+  systolic: z.number(),
+  diastolic: z.number(),
+  tempC: z.number(),
+  spo2: z.number(),
 });
 
-export const statusBadgeSchema = z.object({
-  label: z.string().describe("badge text"),
-  variant: z
-    .enum(["info", "success", "warning", "error"])
-    .describe("color/style"),
+export const medicationListSchema = z.object({
+  title: z.string().optional(),
+  medications: z.array(
+    z.object({
+      name: z.string(),
+      dose: z.string(),
+      frequency: z.string(),
+      startedOn: z.string(),
+    }),
+  ),
 });
 
-/** Component definitions used by both the registry and describeComponents() */
-export const componentDefs: Record<string, ComponentDef> = {
-  "text-block": { propsSchema: textBlockSchema },
-  "info-card": { propsSchema: infoCardSchema },
-  "action-card": { propsSchema: actionCardSchema },
-  "data-table": { propsSchema: dataTableSchema },
-  "status-badge": { propsSchema: statusBadgeSchema },
-};
+export const appointmentListSchema = z.object({
+  title: z.string().optional(),
+  appointments: z.array(
+    z.object({
+      patientName: z.string(),
+      mrn: z.string(),
+      scheduledFor: z.string(),
+      reason: z.string(),
+      provider: z.string(),
+      status: z.string(),
+    }),
+  ),
+});

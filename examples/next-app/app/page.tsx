@@ -13,6 +13,7 @@ import { AgentDevTools } from "@kibadist/agentui-react/devtools";
 import { registry } from "@/components/registry";
 import { ChatInput } from "@/components/chat-input";
 import { ToastList } from "@/components/toast-list";
+import { SuggestionChips } from "@/components/suggestion-chips";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -34,7 +35,7 @@ export default function Home() {
         <h2>Connection error</h2>
         <p style={{ color: "#f87171" }}>{error}</p>
         <p style={{ color: "#888" }}>
-          Make sure the nest-api is running on {API_BASE}
+          Make sure the clinic API (nest-api) is running on {API_BASE}
         </p>
       </div>
     );
@@ -105,7 +106,7 @@ function AgentSession({ sessionId }: { sessionId: string }) {
             gap: 12,
           }}
         >
-          <h1 style={{ fontSize: 18, margin: 0 }}>agentui</h1>
+          <h1 style={{ fontSize: 18, margin: 0 }}>🏥 Clinic Assistant</h1>
           <span
             style={{
               fontSize: 12,
@@ -133,7 +134,7 @@ function AgentSession({ sessionId }: { sessionId: string }) {
         <main style={{ flex: 1, padding: 24, overflow: "auto" }}>
           {state.nodes.length === 0 && (
             <p style={{ color: "#666" }}>
-              Send a message to get started.
+              Ask about patients, vitals, medications, or appointments — or tap a suggestion below.
             </p>
           )}
           <AgentRenderer state={state} registry={registry} />
@@ -142,7 +143,8 @@ function AgentSession({ sessionId }: { sessionId: string }) {
         {/* Toasts */}
         <ToastList toasts={state.toasts} />
 
-        {/* Input */}
+        {/* Suggestions + input */}
+        <SuggestionChips onSend={sendMessage} disabled={status !== "open"} />
         <ChatInput onSend={sendMessage} disabled={status !== "open"} />
 
         {/* DevTools */}

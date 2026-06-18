@@ -19,15 +19,11 @@ pnpm install
 # Build all packages
 pnpm build
 
-# Add your API key (Anthropic, OpenAI, DeepSeek, or Google — all supported)
-echo "ANTHROPIC_API_KEY=sk-ant-your-key-here" > examples/nest-api/.env
-echo "PORT=3001" >> examples/nest-api/.env
-
 # Run backend (:3001) + frontend (:3000) together
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). This runs the [clinic assistant example](./examples.md) — an agent that queries a SQLite database and renders healthcare UI.
 
 ```bash
 # Or run individually
@@ -35,43 +31,38 @@ pnpm dev:api   # NestJS backend on :3001
 pnpm dev:app   # Next.js frontend on :3000
 ```
 
-## Try it live
+### Optional: use a real LLM
 
-No clone required — the [`chat-starter`](https://github.com/kibadist/agentui/tree/main/examples/chat-starter) example runs in your browser below. It uses a mock SSE backend (in-process Next.js route handlers), so there's no API key to set. Send a message, then edit `app/page.tsx` or `components/registry.tsx` and watch the change reflect live.
+The example works **with no API key** — the backend serves database-backed mock responses. To use a real model (Anthropic, OpenAI, DeepSeek, or Google — all supported), add a key:
 
-<iframe
-  title="AgentUI chat-starter — live StackBlitz playground"
-  src="https://stackblitz.com/github/kibadist/agentui/tree/main/examples/chat-starter?embed=1&file=app%2Fpage.tsx&view=preview&hideNavigation=1&theme=dark"
-  loading="lazy"
-  style="width:100%;height:640px;border:1px solid var(--sl-color-gray-5);border-radius:8px;"
-  allow="cross-origin-isolated"
-></iframe>
-
-> Cold boots take a few seconds while StackBlitz installs the published `@kibadist/agentui-*` packages. If the embed doesn't load, [open it in a new tab](https://stackblitz.com/github/kibadist/agentui/tree/main/examples/chat-starter?file=app%2Fpage.tsx).
+```bash
+cp examples/nest-api/.env.example examples/nest-api/.env
+# edit examples/nest-api/.env and set ANTHROPIC_API_KEY, then restart
+```
 
 ## Example Prompts
 
-Try these once you have the dev server running:
+Try these once the dev server is running, or tap a suggestion chip in the UI:
 
 ```
-Show me a summary of recent sales
+List all patients
 ```
-→ Renders a `stat-card` grid + `data-table`
+→ Renders a clickable `patient-list` roster
 
 ```
-Compare pricing plans for a SaaS product
+Which patients have abnormal vitals?
 ```
-→ Renders a structured comparison `data-table`
+→ Renders flagged `vitals-panel`s plus a summary
 
 ```
-Create a project task board with backlog, in progress, and done columns
+Show me everything for patient MRN-1003
 ```
-→ Renders a `task-board` with draggable cards
+→ Renders a `patient-card`, `vitals-panel`, and `medication-list`
 
 ```
-Show system health status for production servers
+What appointments are scheduled this week?
 ```
-→ Renders `stat-card` components with live-style indicators
+→ Renders an `appointment-list`
 
 ## Related
 

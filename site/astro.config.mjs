@@ -71,7 +71,7 @@ export default defineConfig({
             { label: "Getting started", slug: "getting-started" },
             { label: "Concepts", slug: "concepts" },
             { label: "Wire protocol", slug: "wire-protocol" },
-            { label: "Examples", slug: "examples" },
+            { label: "Example", slug: "examples" },
           ],
         },
         {
@@ -106,13 +106,6 @@ export default defineConfig({
             { label: "Server companion (Node)", slug: "guides/server-node" },
             { label: "LLM adapters", slug: "guides/llm-adapters" },
             { label: "JSON Schema export", slug: "guides/json-schema-export" },
-          ],
-        },
-        {
-          label: "Guides — Tooling",
-          collapsed: true,
-          items: [
-            { label: "CLI generator", slug: "guides/cli-generator" },
           ],
         },
         {
