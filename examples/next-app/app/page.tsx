@@ -146,7 +146,7 @@ function AgentSession({ sessionId }: { sessionId: string }) {
         <ChatInput onSend={sendMessage} disabled={status !== "open"} />
 
         {/* DevTools */}
-        <AgentDevTools />
+        <AgentDevTools position="tr" defaultCollapsed />
         </div>
       </AgentActionProvider>
     </AgentStateProvider>

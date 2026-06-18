@@ -37,6 +37,22 @@ describe("<AgentDevTools />", () => {
     expect(screen.getByRole("slider")).toBeTruthy();
   });
 
+  it("starts collapsed with defaultCollapsed (header only, no body/scrubber)", () => {
+    const store = createAgentStore();
+    render(
+      <Wrap store={store}>
+        <AgentDevTools enabled defaultCollapsed />
+      </Wrap>,
+    );
+    expect(screen.getByText(/AgentDevTools/i)).toBeTruthy();
+    expect(screen.queryByRole("slider")).toBeNull();
+    expect(screen.queryByTestId("event-log-panel")).toBeNull();
+    // Expanding via the chevron reveals the body.
+    fireEvent.click(screen.getByLabelText("Expand"));
+    expect(screen.getByRole("slider")).toBeTruthy();
+    expect(screen.getByTestId("event-log-panel")).toBeTruthy();
+  });
+
   it("renders null and does NOT subscribe when enabled=false", () => {
     const store = createAgentStore();
     const spy = vi.spyOn(store, "subscribeAction");

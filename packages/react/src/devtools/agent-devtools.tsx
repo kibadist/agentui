@@ -17,6 +17,8 @@ export interface AgentDevToolsProps {
   enabled?: boolean;
   /** Corner anchor. Default: "br". */
   position?: "br" | "bl" | "tr" | "tl";
+  /** Start collapsed (header only). Default: false. */
+  defaultCollapsed?: boolean;
   /** Ring buffer cap. Default 500. */
   maxEvents?: number;
 }
@@ -105,10 +107,14 @@ function computeLatencyStats(events: ReturnType<typeof useAgentDevToolsRecorder>
   return { mean, p99 };
 }
 
-function AgentDevToolsImpl({ position = "br", maxEvents = 500 }: AgentDevToolsProps) {
+function AgentDevToolsImpl({
+  position = "br",
+  defaultCollapsed = false,
+  maxEvents = 500,
+}: AgentDevToolsProps) {
   const [hidden, setHidden] = useState(false);
   const { events } = useAgentDevToolsRecorder({ maxEvents });
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [scrubPos, setScrubPos] = useState(0);
   const liveStickRef = useRef(true);
   const [filters, setFilters] = useState<EventLogFilters>({

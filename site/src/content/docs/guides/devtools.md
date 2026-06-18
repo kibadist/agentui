@@ -20,6 +20,8 @@ export default function Page() {
 
 Defaults to enabled in non-production. For production opt-in, set `NEXT_PUBLIC_AGENTUI_DEVTOOLS=1` or pass `<AgentDevTools enabled />`. Because the panel lives at a separate subpath, apps that never `import "@kibadist/agentui-react/devtools"` get zero bytes of DevTools code in their production bundle.
 
+Layout props: `position` anchors the panel to a corner (`"br"` default, `"bl"`, `"tr"`, `"tl"`), and `defaultCollapsed` starts it as a header-only strip (click the chevron to expand) — e.g. `<AgentDevTools position="tr" defaultCollapsed />`.
+
 The panel shows:
 
 - **Event log** — every wire event with one-line summary, filterable by category (`ui`/`tool`/`reasoning`/`optimistic`/`session`) and searchable.
