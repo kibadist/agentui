@@ -19,7 +19,6 @@ PACKAGES=(
   packages/llm
   packages/react
   packages/nest
-  packages/openai
   packages/ai
   packages/next
 )

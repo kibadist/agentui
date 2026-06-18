@@ -107,7 +107,7 @@ pnpm release:dry    # bump only, no publish/commit
 The script:
 
 1. Runs `pnpm typecheck` and `pnpm build`.
-2. Bumps all `packages/*/package.json` versions in sync (except deprecated `packages/openai/`).
+2. Bumps all `packages/*/package.json` versions in sync.
 3. Publishes in dependency order: `protocol` → `validate` → `react` → `nest` → `ai` → `next`.
 4. Commits the bump and creates a `v<version>` git tag. Push tags manually.
 

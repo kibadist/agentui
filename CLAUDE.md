@@ -40,8 +40,6 @@ protocol   pure TS types, zero deps
   └── next                 SSE + action proxy for Next.js App Router
 ```
 
-`packages/openai` is **deprecated** — excluded from the release script, marked deprecated on npm. Don't add features there; use `@kibadist/agentui-ai`.
-
 ## Conventions
 
 - **ESM-only.** Every package has `"type": "module"`. Relative imports **must** include the `.js` extension (e.g. `import { x } from "./foo.js"`) even though the source is `.ts`. Omitting the extension breaks Node ESM resolution at runtime.
