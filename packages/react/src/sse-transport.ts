@@ -70,7 +70,11 @@ export async function connectSse(opts: SseTransportOptions): Promise<void> {
     opts.onEvent(raw, currentId);
   }
 
-  function processLine(line: string) {
+  function processLine(rawLine: string) {
+    // Lines are split on "\n"; tolerate CRLF-terminated streams by dropping a
+    // trailing "\r" so the event boundary (blank line) and field values match
+    // the SSE spec regardless of the server's line endings.
+    const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
     if (line === "") {
       flushEvent();
       return;

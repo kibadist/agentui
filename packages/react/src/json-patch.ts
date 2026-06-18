@@ -14,6 +14,12 @@ function parsePointer(pointer: string): string[] | { error: string } {
   return parts.map((seg) => seg.replace(/~1/g, "/").replace(/~0/g, "~"));
 }
 
+/** True when `prefix` is a strict ancestor path of `path` (proper prefix). */
+function isProperPrefix(prefix: string[], path: string[]): boolean {
+  if (prefix.length >= path.length) return false;
+  return prefix.every((seg, i) => seg === path[i]);
+}
+
 function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (typeof a !== typeof b) return false;
@@ -155,6 +161,13 @@ function applyOp(value: unknown, op: JsonPatchOp): { ok: true; value: unknown } 
     case "move": {
       const from = parsePointer(op.from);
       if ("error" in from) return { ok: false, error: from.error };
+      // RFC 6902: a location cannot be moved into one of its own children.
+      if (isProperPrefix(from, path)) {
+        return {
+          ok: false,
+          error: `cannot move into own descendant: ${op.from} -> ${op.path}`,
+        };
+      }
       const got = getAt(value, from);
       if (!got.ok) return got;
       const removed = removeAt(value, from);

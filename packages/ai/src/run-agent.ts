@@ -61,6 +61,12 @@ export async function runAgentLoop(
     maxSteps = 10,
   } = opts;
 
+  if (messages === undefined && prompt === undefined) {
+    throw new Error(
+      "[agentui] runAgentLoop requires either `messages` or `prompt`.",
+    );
+  }
+
   const uiTool = createUIEmitterTool({ allowedTypes, sessionId, onUIEvent });
   const tools = {
     [UI_EMITTER_TOOL_NAME]: uiTool,

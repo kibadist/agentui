@@ -76,7 +76,7 @@ export class AgentService {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (apiKey) {
       const anthropic = createAnthropic({ apiKey });
-      this.model = anthropic("claude-sonnet-4-20250514");
+      this.model = anthropic("claude-sonnet-4-6");
       this.logger.log("Anthropic model initialized");
     } else {
       this.logger.warn(

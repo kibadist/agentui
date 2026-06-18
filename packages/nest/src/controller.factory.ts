@@ -1,5 +1,6 @@
 import { map } from "rxjs";
 import type { Observable } from "rxjs";
+import { NotFoundException } from "@nestjs/common";
 import type { UIEvent, ActionEvent } from "@kibadist/agentui-protocol";
 import { parseActionEvent } from "@kibadist/agentui-validate";
 import type { AgentSessionService } from "./session.service.js";
@@ -58,7 +59,10 @@ export function createAgentController(opts: AgentControllerOptions) {
     stream(sessionId: string): Observable<SseMessageEvent> {
       const session = sessionService.get(sessionId);
       if (!session) {
-        throw new Error(`Session not found: ${sessionId}`);
+        // 404 rather than an unhandled 500 — a client reconnecting with a
+        // stale/expired session id (server restart, TTL eviction) can detect
+        // this and create a fresh session instead of crashing the handler.
+        throw new NotFoundException(`Session not found: ${sessionId}`);
       }
       return sessionService.uiStream(sessionId).pipe(
         map((event: UIEvent) => ({
@@ -71,7 +75,7 @@ export function createAgentController(opts: AgentControllerOptions) {
     async action(sessionId: string, body: unknown): Promise<{ ok: true }> {
       const session = sessionService.get(sessionId);
       if (!session) {
-        throw new Error(`Session not found: ${sessionId}`);
+        throw new NotFoundException(`Session not found: ${sessionId}`);
       }
       const action = parseActionEvent(body);
       sessionService.emitAction(sessionId, action);

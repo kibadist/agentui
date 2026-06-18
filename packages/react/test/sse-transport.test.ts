@@ -79,6 +79,19 @@ describe("connectSse", () => {
     expect(events).toEqual(["line1\nline2"]);
   });
 
+  it("parses CRLF-terminated streams (strips trailing \\r)", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(mockResponse(`id: abc\r\ndata: hello\r\n\r\n`));
+    const events: Array<{ raw: string; id: string | undefined }> = [];
+    await connectSse({
+      url: "x",
+      signal: new AbortController().signal,
+      onEvent: (raw, id) => events.push({ raw, id }),
+      onOpen: () => {},
+      onError: () => {},
+    });
+    expect(events).toEqual([{ raw: "hello", id: "abc" }]);
+  });
+
   it("emits SseHttpError on non-2xx", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(new Response("nope", { status: 401 }));
     let err: Error | null = null;

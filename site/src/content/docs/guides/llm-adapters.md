@@ -9,7 +9,7 @@ import { fromAnthropic } from "@kibadist/agentui-llm";
 
 const anthropic = new Anthropic();
 const stream = anthropic.messages.stream({
-  model: "claude-sonnet-4-5",
+  model: "claude-sonnet-4-6",
   messages: [{ role: "user", content: userMessage }],
 });
 

@@ -86,6 +86,11 @@ describe("applyPatch", () => {
       if (!result.ok) return;
       expect(result.value).toEqual({ b: 2, c: 1 });
     });
+
+    it("rejects moving a location into its own descendant (RFC 6902)", () => {
+      const result = applyPatch({ a: { b: 1 } }, [{ op: "move", from: "/a", path: "/a/b/c" }]);
+      expect(result.ok).toBe(false);
+    });
   });
 
   describe("copy op", () => {
