@@ -37,5 +37,5 @@ The cleanup sweep starts automatically and its timer is `unref`-ed, so it never 
 
 ## Related
 
-- [Server companion (Node)](./server-node.md)
-- [`<AgentRoot>`](./agent-root.md)
+- [Server companion (Node)](../server-node/)
+- [`<AgentRoot>`](../agent-root/)

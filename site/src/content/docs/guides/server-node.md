@@ -69,5 +69,5 @@ export async function GET() {
 
 ## Related
 
-- [LLM adapters](./llm-adapters.md)
-- [JSON Schema export](./json-schema-export.md)
+- [LLM adapters](../llm-adapters/)
+- [JSON Schema export](../json-schema-export/)

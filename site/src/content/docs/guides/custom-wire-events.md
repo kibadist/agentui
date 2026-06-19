@@ -121,12 +121,12 @@ Avoid bare names (`refresh`, `update`) — they read like protocol ops and risk 
 
 ## Failure modes
 
-- **Custom event arrived but listener didn't fire.** Check that the event passes the base envelope (`v: 1`, `id`, `ts`, `sessionId`). If not, the transport drops it via `onInvalidEvent` (which `<AgentRoot>` does not surface — see [stream resilience](./stream-resilience/) for the parse-error counter).
+- **Custom event arrived but listener didn't fire.** Check that the event passes the base envelope (`v: 1`, `id`, `ts`, `sessionId`). If not, the transport drops it via `onInvalidEvent` (which `<AgentRoot>` does not surface — see [stream resilience](../stream-resilience/) for the parse-error counter).
 - **`event.op === "host.foo"` doesn't narrow in TypeScript.** That's expected — TS doesn't know about your custom op shape. Cast via `as unknown as YourCustomEvent` after the runtime check.
 - **Schema validation rejects a custom event.** Almost always the base envelope: missing `sessionId`, wrong `v`, empty `op` string. The validation error message includes the path.
 
 ## See also
 
-- [State selectors](./state-selectors/) — the broader hook surface that `subscribeAction` lives on
-- [Wire protocol](../wire-protocol/) — the reserved ops your custom names must avoid
-- [Stream resilience](./stream-resilience/) — how invalid events are surfaced
+- [State selectors](../state-selectors/) — the broader hook surface that `subscribeAction` lives on
+- [Wire protocol](../../wire-protocol/) — the reserved ops your custom names must avoid
+- [Stream resilience](../stream-resilience/) — how invalid events are surfaced

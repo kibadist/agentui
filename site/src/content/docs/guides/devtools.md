@@ -31,4 +31,4 @@ The panel shows:
 
 ## Related
 
-- [Testing](./testing.md)
+- [Testing](../testing/)

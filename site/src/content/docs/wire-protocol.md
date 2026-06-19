@@ -114,5 +114,5 @@ Wire-event types (`UIEvent`, `UIAppendEvent`, etc.) are re-exported from `@kibad
 
 ## Related
 
-- [Concepts](./concepts.md)
-- [JSON Schema export](./guides/json-schema-export.md)
+- [Concepts](../concepts/)
+- [JSON Schema export](../guides/json-schema-export/)

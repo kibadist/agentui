@@ -12,5 +12,5 @@ The files are regenerated from the Zod schemas via `pnpm schema:generate`. A `pn
 
 ## Related
 
-- [Wire Protocol](../wire-protocol.md)
-- [Server companion (Node)](./server-node.md)
+- [Wire Protocol](../../wire-protocol/)
+- [Server companion (Node)](../server-node/)

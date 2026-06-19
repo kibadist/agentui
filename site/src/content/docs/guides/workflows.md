@@ -51,4 +51,4 @@ function Header() {
 
 ## Related
 
-- [Tool calls](./tool-calls.md)
+- [Tool calls](../tool-calls/)

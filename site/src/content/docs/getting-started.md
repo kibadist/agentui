@@ -23,7 +23,7 @@ pnpm build
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). This runs the [clinic assistant example](./examples.md) — an agent that queries a SQLite database and renders healthcare UI.
+Open [http://localhost:3000](http://localhost:3000). This runs the [clinic assistant example](../examples/) — an agent that queries a SQLite database and renders healthcare UI.
 
 ```bash
 # Or run individually
@@ -66,5 +66,5 @@ What appointments are scheduled this week?
 
 ## Related
 
-- [Concepts](./concepts.md)
-- [`<AgentRoot>` guide](./guides/agent-root.md)
+- [Concepts](../concepts/)
+- [`<AgentRoot>` guide](../guides/agent-root/)

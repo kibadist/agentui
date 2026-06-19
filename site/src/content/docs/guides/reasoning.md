@@ -35,4 +35,4 @@ For multi-segment rendering, use `useReasoning()` which returns the full ordered
 
 ## Related
 
-- [Tool calls](./tool-calls.md)
+- [Tool calls](../tool-calls/)

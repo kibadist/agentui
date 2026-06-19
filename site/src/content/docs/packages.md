@@ -33,5 +33,5 @@ flowchart BT
 
 ## Related
 
-- [Server companion guide](./guides/server-node.md)
-- [LLM adapters guide](./guides/llm-adapters.md)
+- [Server companion guide](../guides/server-node/)
+- [LLM adapters guide](../guides/llm-adapters/)

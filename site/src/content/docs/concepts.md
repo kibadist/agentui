@@ -108,5 +108,5 @@ User interactions are sent back as `ActionEvent`s — the agent can react to the
 
 ## Related
 
-- [Wire Protocol](./wire-protocol.md)
-- [Getting Started](./getting-started.md)
+- [Wire Protocol](../wire-protocol/)
+- [Getting Started](../getting-started/)

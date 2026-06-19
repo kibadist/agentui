@@ -33,5 +33,5 @@ const status = useAgentSelector(
 
 ## Related
 
-- [`<AgentRoot>`](./agent-root.md)
-- [Testing](./testing.md)
+- [`<AgentRoot>`](../agent-root/)
+- [Testing](../testing/)

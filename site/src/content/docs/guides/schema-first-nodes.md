@@ -30,5 +30,5 @@ The legacy object form `createRegistry({ "type": { component, propsSchema } })` 
 
 ## Related
 
-- [Renderer](./renderer.md)
-- [Wire Protocol](../wire-protocol.md)
+- [Renderer](../renderer/)
+- [Wire Protocol](../../wire-protocol/)

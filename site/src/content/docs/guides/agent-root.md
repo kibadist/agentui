@@ -61,6 +61,6 @@ All hooks accept an optional `id` argument to target a specific agent: `useAgent
 
 ## Related
 
-- [State selectors](./state-selectors.md)
-- [Renderer](./renderer.md)
-- [Server companion (Node)](./server-node.md)
+- [State selectors](../state-selectors/)
+- [Renderer](../renderer/)
+- [Server companion (Node)](../server-node/)

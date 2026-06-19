@@ -11,4 +11,4 @@ description: "AgentUI is a good fit when you need an LLM to **compose structured
 
 ## Related
 
-- [Concepts](./concepts.md)
+- [Concepts](../concepts/)

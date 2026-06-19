@@ -34,5 +34,5 @@ Emitted metrics (all timings in ms):
 
 ## Related
 
-- [DevTools](./devtools.md)
-- [Testing](./testing.md)
+- [DevTools](../devtools/)
+- [Testing](../testing/)
