@@ -20,5 +20,5 @@ Composition order is `slot → range → filter → hiddenTypes`. All five defau
 
 ## Related
 
-- [`<AgentRoot>`](./agent-root.md)
-- [State selectors](./state-selectors.md)
+- [`<AgentRoot>`](../agent-root/)
+- [State selectors](../state-selectors/)

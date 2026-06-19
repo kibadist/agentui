@@ -47,4 +47,4 @@ function ConfirmButton({ quoteId, sessionId }: { quoteId: string; sessionId: str
 
 ## Related
 
-- [Tool calls](./tool-calls.md)
+- [Tool calls](../tool-calls/)

@@ -28,5 +28,5 @@ Also exposes `pushEvent(state, event)` and `replayConversation(events)` for pure
 
 ## Related
 
-- [State selectors](./state-selectors.md)
-- [DevTools](./devtools.md)
+- [State selectors](../state-selectors/)
+- [DevTools](../devtools/)

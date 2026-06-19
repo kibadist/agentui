@@ -205,4 +205,4 @@ customElements.define("my-canvas", WorkflowCanvas); // or one under your own tag
 ## Related
 
 - [Architecture & API contract](https://github.com/kibadist/agentui/blob/main/packages/svg/ARCHITECTURE.md)
-- [Concepts](../concepts.md)
+- [Concepts](../../concepts/)

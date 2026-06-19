@@ -29,4 +29,4 @@ Each provider's SDK is a *peer-dependency* of `@kibadist/agentui-llm` — instal
 
 ## Related
 
-- [Server companion (Node)](./server-node.md)
+- [Server companion (Node)](../server-node/)

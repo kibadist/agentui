@@ -41,5 +41,5 @@ function ToolStatusPill({ id }: { id: string }) {
 
 ## Related
 
-- [Reasoning](./reasoning.md)
-- [Optimistic updates](./optimistic.md)
+- [Reasoning](../reasoning/)
+- [Optimistic updates](../optimistic/)
