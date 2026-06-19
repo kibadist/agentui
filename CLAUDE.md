@@ -62,6 +62,17 @@ The Starlight site at `site/src/content/docs/` (published to https://kibadist.gi
 
 Verify with `pnpm --filter @kibadist/agentui-site build` — broken sidebar slugs or content collection schema errors fail the build.
 
+### Cross-page doc links (this build does NOT catch broken ones)
+
+Starlight 0.39 does **not** rewrite relative `.md` links, and the build does not validate links, so a wrong link ships as a live 404. Each page publishes at a **trailing-slash directory URL** (`/agentui/<slug>/`), so a relative link resolves *into* that directory. Rules for linking one doc page to another:
+
+- **Never** write `./foo.md` or `../foo.md`. From `.../use-cases/` a `./concepts.md` resolves to `/agentui/use-cases/concepts.md` → 404.
+- Link to the target's **clean URL** (no `.md`) and add **one extra `../`** vs. the file path, because each page is its own directory:
+  - top-level page → top-level page (e.g. `use-cases.md` → concepts): `../concepts/`
+  - guide → sibling guide (e.g. `guides/testing.md` → devtools): `../devtools/`
+  - guide → top-level page (e.g. `guides/json-schema-export.md` → wire-protocol): `../../wire-protocol/`
+- After adding/changing links, build the site and confirm in `site/dist/` that no `href` still contains `.md` (`grep -rn 'href="[^"]*\.md' site/dist`) and that targets resolve to real `index.html` files.
+
 ## Examples
 
 One full-featured example — a **clinic assistant** — split across two workspace packages (both `private`, not published). `pnpm dev` runs both.
